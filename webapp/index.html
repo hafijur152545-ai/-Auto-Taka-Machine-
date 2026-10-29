@@ -1,111 +1,181 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Auto Taka Machine</title>
-<link rel="stylesheet" href="style.css">
+<title>Auto Taka Machine - Premium V2.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 25%,#f8f7ff 50%,#e8eaff 75%,#dbeafe 100%);min-height:100vh;display:flex;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent}
+.phone{width:100%;max-width:420px;min-height:100vh;background:linear-gradient(180deg,#fcfcff 0%,#f5f3ff 100%);position:relative;box-shadow:0 0 0 1px rgba(124,58,237,0.08),0 20px 60px rgba(124,58,237,0.15);overflow:hidden}
+.phone::before{content:'';position:absolute;top:-150px;left:-100px;width:300px;height:300px;background:radial-gradient(circle,#a78bfa40,transparent 70%);filter:blur(40px);pointer-events:none}
+.phone::after{content:'';position:absolute;bottom:-100px;right:-80px;width:250px;height:250px;background:radial-gradient(circle,#93c5fd40,transparent 70%);filter:blur(40px);pointer-events:none}
+.app{position:relative;z-index:2;padding:16px 18px 110px}
+.top-pill{display:flex;justify-content:center;margin:8px 0 14px}
+.status-pill{background:#111827;color:#fff;padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 8px 20px rgba(0,0,0,0.15)}
+.dot{width:10px;height:10px;border-radius:50%;background:#f472b6;box-shadow:0 0 10px #f472b6;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.premium-badge{display:flex;justify-content:center;margin:10px 0 6px}
+.p-badge{background:#fff;border:1px solid #e9e5ff;padding:6px 14px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:0.5px;color:#6b7280;display:flex;align-items:center;gap:6px;box-shadow:0 2px 10px rgba(124,58,237,0.08)}
+.title-wrap{text-align:center;margin:8px 0 4px}
+.title-wrap h1{font-family:'Poppins',sans-serif;font-size:32px;font-weight:800;line-height:1.1;color:#111827}
+.title-wrap h1 span{background:linear-gradient(90deg,#7c3aed,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{font-size:13px;color:#6b7280;margin-top:4px}
+.profile-section{background:#fff;border-radius:22px;padding:16px;margin:14px 0 8px;box-shadow:0 4px 20px rgba(0,0,0,0.04),0 1px 3px rgba(0,0,0,0.03);border:1px solid #f3f0ff;display:flex;align-items:center;gap:12px}
+.avatar-box{position:relative;flex-shrink:0}
+.avatar-box img{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid #ede9fe}
+.tick{position:absolute;bottom:-2px;right:-2px;background:#22d3ee;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#000;font-weight:800;border:2px solid #fff}
+.profile-info h3{font-size:15px;font-weight:700;color:#111827}
+.profile-info p{font-size:11px;color:#9ca3af;margin-top:2px}
+.balance-row{display:flex;gap:10px;margin:10px 0 16px}
+.bal-card{flex:1;background:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.04);border:1px solid #f5f3ff;display:flex;flex-direction:column;gap:4px}
+.bal-card small{font-size:10px;font-weight:600;letter-spacing:0.5px;color:#9ca3af;text-transform:uppercase}
+.bal-card b{font-size:15px;font-weight:700;color:#111827}
+.bal-card.pending b{color:#7c3aed}
+.automation-label{display:flex;align-items:center;gap:12px;margin:18px 0 10px;color:#9ca3af;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.automation-label::before,.automation-label::after{content:'';flex:1;height:1px;background:#e9e5ff}
+.card{border-radius:20px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all 0.2s;position:relative;margin:10px 0;user-select:none}
+.card:active{transform:scale(0.98)}
+.card.white{background:#fff;border:1.5px solid #e9e5ff;box-shadow:0 4px 20px rgba(124,58,237,0.06)}
+.card.white:hover{box-shadow:0 8px 30px rgba(124,58,237,0.12);border-color:#ddd6fe}
+.card.dark{background:#1e293b;border:1px solid #1e293b;box-shadow:0 8px 24px rgba(30,41,59,0.25);color:#fff}
+.card.light{background:#fff5f7;border:1px solid #ffe4e6;box-shadow:0 2px 12px rgba(0,0,0,0.03);color:#991b1b}
+.card.yellow{background:linear-gradient(90deg,#fef08a,#fde047);border:1px solid #fde047;box-shadow:0 4px 16px rgba(253,224,71,0.3);color:#422006}
+.ic{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.ic.blue{background:#eff6ff;color:#2563eb}
+.ic.dark{background:#2d3748;color:#a78bfa}
+.ic.pink{background:#fff1f2;color:#e11d48}
+.ic.yellow{background:rgba(0,0,0,0.08);color:#000}
+.txt{flex:1}
+.txt b{font-size:15px;font-weight:700;display:block}
+.txt small{font-size:12px;opacity:0.65;display:block;margin-top:2px;font-weight:500}
+.arrow-circle{width:36px;height:36px;background:#2563eb;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0;box-shadow:0 4px 12px rgba(37,99,235,0.3)}
+.green-dot{width:12px;height:12px;background:#22c55e;border-radius:50%;box-shadow:0 0 0 4px rgba(34,197,94,0.15),0 0 12px #22c55e;display:none;animation:glowDot 1.5s infinite}
+@keyframes glowDot{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+.support-card{background:#fff;border:1px solid #e9e5ff;border-radius:20px;padding:14px 16px;display:flex;align-items:center;justify-content:center;gap:10px;margin:20px 0 10px;box-shadow:0 4px 16px rgba(0,0,0,0.04);cursor:pointer;font-weight:600;color:#374151;font-size:14px}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.admin-grid .card{margin:0;padding:14px}
+.footer{text-align:center;margin:18px 0 0;color:#9ca3af;font-size:10px;letter-spacing:2px;font-weight:600}
+.nav{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);width:calc(100% - 36px);max-width:384px;background:rgba(17,24,39,0.92);backdrop-filter:blur(20px);border-radius:100px;padding:6px;display:flex;justify-content:space-between;box-shadow:0 20px 40px rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);z-index:20}
+.nav button{flex:1;background:transparent;border:none;color:rgba(255,255,255,0.5);padding:10px 18px;border-radius:100px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.3s;cursor:pointer}
+.nav button.active{background:#fff;color:#111827;box-shadow:0 4px 16px rgba(255,255,255,0.2)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-box{background:#fff;border-radius:24px;padding:24px;width:100%;max-width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.bar-wrap{width:100%;height:10px;background:#f3f0ff;border-radius:100px;margin:16px 0;overflow:hidden}
+.bar{height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:100px;transition:width 1s linear}
+.profile-view{display:none}
+.profile-card{background:#fff;border-radius:24px;padding:24px;text-align:center;margin-top:10px;box-shadow:0 8px 30px rgba(0,0,0,0.06);border:1px solid #f3f0ff}
+.big-avatar{width:88px;height:88px;border-radius:50%;border:3px solid #ede9fe;object-fit:cover}
+.bal-box{display:flex;justify-content:space-around;margin-top:18px;background:#f9f7ff;padding:14px;border-radius:16px;border:1px solid #f3f0ff}
+.bal-box div{display:flex;flex-direction:column;gap:4px}
+.bal-box small{font-size:10px;color:#9ca3af;font-weight:600;letter-spacing:0.5px;text-transform:uppercase}
+.bal-box b{font-size:14px;color:#111827}
+</style>
 </head>
 <body>
 <div class="phone">
 <div class="app">
-  <div class="status" id="statusBar">🟢 Bot Ready</div>
-  
-  <div id="homePage">
-    <div class="top">
-      <div class="daily-box">
-        <small>Today</small>
-        <b id="dailyCount">0</b>
-        <span>Ads</span>
-      </div>
-      <div class="profile-center">
-        <div class="avatar-ring">
-          <img id="homePhoto" src="dev.jpg">
-          <div class="tick">✓</div>
-        </div>
-        <h2 id="homeName">E Noyon</h2>
-        <p>Main Belenc : <span id="mainBal">10.20</span> TK</p>
-        <p class="dim">Pending Belenc : <span id="pendingBal">5.10</span> TK</p>
-      </div>
-      <button class="vpn-btn" id="vpnBtn">
-        <span>🌐</span>
-        <small>Kajer VPN</small>
-      </button>
-    </div>
-
-    <div class="list">
-      <div class="card white-card" id="watchAdBtn">
-        <div class="ic blue">👁️</div>
-        <div class="txt"><b>Watch Ad</b><small>1 Ads Price = 0.50 TK</small></div>
-        <span class="arrow">→</span>
-      </div>
-      <div class="card dark-card" id="autoBtn">
-        <div class="ic dark">⚡</div>
-        <div class="txt"><b>Start Auto Ads</b><small id="autoSmall">Refresh every 15 seconds</small></div>
-        <div class="green-dot" id="autoDot"></div>
-      </div>
-      <div class="card light-card" id="stopBtn">
-        <div class="ic red">⏹️</div>
-        <div class="txt"><b>Stop Auto Ads</b></div>
-      </div>
-      <div class="card yellow-card" id="confirmBtn">
-        <div class="ic yellow">✅</div>
-        <div class="txt"><b>Confirm Pending Belenc</b></div>
-      </div>
-    </div>
-
-    <div class="promo-box">
-      <div class="glow"></div>
-      <img id="promoImg" src="dev.jpg" alt="Developer">
-      <div class="promo-overlay">Developer - E Noyon</div>
-    </div>
-    
-    <div class="developer-text">Developer : E Noyon | @noyonfb1020</div>
-
-    <div class="bottom-actions">
-      <button class="bchan" id="channelBtn">
-        <div class="circ blue">📢</div>
-        <small>Bot Channel</small>
-      </button>
-      <button class="badmin" id="adminBtn">
-        <div class="circ green">👤</div>
-        <small>Admin</small>
-      </button>
-    </div>
+<div class="top-pill"><div class="status-pill" id="statusBar"><div class="dot"></div> Bot Ready - Stopped</div></div>
+<div class="premium-badge"><div class="p-badge">👑 PREMIUM V2.1</div></div>
+<div class="title-wrap"><h1>Auto Taka <span>Machine</span></h1><p class="subtitle">Maximize your earnings with auto-loop.</p></div>
+<div id="homePage">
+  <div class="profile-section">
+    <div class="avatar-box"><img id="homePhoto" src="https://i.pravatar.cc/150?img=3"><div class="tick">✓</div></div>
+    <div class="profile-info"><h3 id="homeName">E Noyon</h3><p>Today <span id="dailyCount">2</span> Ads Watched • Verified</p></div>
   </div>
-
-  <div id="profilePage" style="display:none">
-    <h2 style="text-align:center;color:white;margin-top:20px">👤 My Profile</h2>
-    <div class="profile-card">
-      <img id="profilePhoto" src="dev.jpg" class="big-avatar">
-      <h3 id="profileName">E Noyon</h3>
-      <p id="profileUsername">@username</p>
-      <p id="profileId">ID: 123456</p>
-      <div class="bal-box">
-        <div><small>Main</small><b id="pMain">10.20 TK</b></div>
-        <div><small>Pending</small><b id="pPending">5.10 TK</b></div>
-        <div><small>Total Ads</small><b id="pAds">0</b></div>
-      </div>
-    </div>
+  <div class="balance-row">
+    <div class="bal-card main"><small>Main Balance</small><b><span id="mainBal">16.30</span> TK</b></div>
+    <div class="bal-card pending"><small>Pending Balance</small><b><span id="pendingBal">0.00</span> TK</b></div>
   </div>
-
-  <div class="nav">
-    <button id="homeNav" class="active" onclick="showHome()">🏠 Home</button>
-    <button id="profileNav" onclick="showProfile()">👤 Profile</button>
+  <div class="automation-label">Manual</div>
+  <div class="card white" id="watchAdBtn"><div class="ic blue">👁️</div><div class="txt"><b>Watch Ad</b><small>1 Ads Price = 0.50 TK</small></div><div class="arrow-circle">→</div></div>
+  <div class="automation-label">Automation</div>
+  <div class="card dark" id="autoBtn"><div class="ic dark">⚡</div><div class="txt"><b>Start Auto Loop</b><small id="autoSmall">Refresh every 15 seconds</small></div><div class="green-dot" id="autoDot"></div></div>
+  <div class="card light" id="stopBtn"><div class="ic pink">■</div><div class="txt"><b>Stop System</b></div></div>
+  <div class="card yellow" id="confirmBtn"><div class="ic yellow">✅</div><div class="txt"><b>Confirm Pending Balance</b></div></div>
+  <div class="admin-grid">
+    <div class="card white" id="channelBtn" style="margin:0"><div class="ic blue">📢</div><div class="txt"><b style="font-size:13px">Bot Channel</b></div></div>
+    <div class="card white" id="adminBtn" style="margin:0"><div class="ic blue">👤</div><div class="txt"><b style="font-size:13px">Admin</b></div></div>
   </div>
-
-  <div class="modal" id="fakeAdModal">
-    <div class="modal-box">
-      <h3>📢 Ad Playing...</h3>
-      <p>Demo Ad <span id="adTimer">15</span>s</p>
-      <div class="bar-wrap"><div class="bar" id="bar"></div></div>
-      <small>Fake SDK - Wait 15 sec</small>
-    </div>
+  <div class="admin-grid" style="margin-top:10px">
+    <div class="card white" id="vpnBtn" style="margin:0"><div class="ic blue">🌐</div><div class="txt"><b style="font-size:13px">Kajer VPN</b></div></div>
+    <div class="card white" id="adminPanelBtn" style="margin:0;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-color:#ddd6fe"><div class="ic dark">⚙️</div><div class="txt"><b style="font-size:13px">Admin Panel</b></div></div>
   </div>
-
+  <div class="support-card" id="supportBtn"><span style="width:28px;height:28px;background:#0ea5e9;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff">✈️</span> Support & Updates</div>
+  <div class="footer">DESIGNED BY MSR</div>
+</div>
+<div id="profilePage" class="profile-view">
+  <div class="profile-card"><img id="profilePhoto" src="https://i.pravatar.cc/150?img=3" class="big-avatar"><h3 id="profileName" style="margin-top:12px">E Noyon</h3><p id="profileUsername" style="font-size:13px;color:#6b7280">@username</p><p id="profileId" style="font-size:12px;color:#9ca3af;margin-top:4px">ID: 123456</p><div class="bal-box"><div><small>Main</small><b id="pMain">16.30 TK</b></div><div><small>Pending</small><b id="pPending">0.00 TK</b></div><div><small>Total Ads</small><b id="pAds">2</b></div></div></div>
+</div>
+<div class="nav"><button id="homeNav" class="active" onclick="showHome()">🏠 Home</button><button id="profileNav" onclick="showProfile()">👤 Profile</button></div>
+<div class="modal" id="fakeAdModal"><div class="modal-box"><h3 style="font-weight:800;font-size:18px">📢 Ad Playing...</h3><p style="margin-top:8px;color:#6b7280">Please wait <span id="adTimer">15</span>s</p><div class="bar-wrap"><div class="bar" id="bar"></div></div><small style="color:#9ca3af">Fake SDK - Wait to earn</small></div></div>
+<div class="modal" id="adminModal"><div class="modal-box" style="text-align:left"><h3 style="font-weight:800;font-size:18px;margin-bottom:12px">⚙️ Admin Panel</h3><div style="display:grid;gap:10px"><label style="font-size:12px;font-weight:600;color:#6b7280">Set Main Balance</label><input id="adminMainInput" type="number" step="0.01" style="padding:10px 14px;border-radius:12px;border:1.5px solid #e9e5ff;outline:none"><label style="font-size:12px;font-weight:600;color:#6b7280;margin-top:6px">Set Pending Balance</label><input id="adminPendingInput" type="number" step="0.01" style="padding:10px 14px;border-radius:12px;border:1.5px solid #e9e5ff;outline:none"><label style="font-size:12px;font-weight:600;color:#6b7280;margin-top:6px">Today Ads</label><input id="adminAdsInput" type="number" style="padding:10px 14px;border-radius:12px;border:1.5px solid #e9e5ff;outline:none"><div style="display:flex;gap:10px;margin-top:12px"><button onclick="saveAdmin()" style="flex:1;background:#1e293b;color:#fff;border:none;padding:12px;border-radius:12px;font-weight:700;cursor:pointer">Save</button><button onclick="closeAdmin()" style="flex:1;background:#f3f0ff;color:#6b7280;border:none;padding:12px;border-radius:12px;font-weight:600;cursor:pointer">Close</button></div></div></div></div>
 </div>
 </div>
-<script src="script.js"></script>
+<script>
+window.FakeAds={show:()=>new Promise(res=>{
+  const m=document.getElementById("fakeAdModal"), t=document.getElementById("adTimer"), b=document.getElementById("bar");
+  m.style.display="flex"; let c=15; t.innerText=c; b.style.width="0%";
+  let iv=setInterval(()=>{c--; t.innerText=c; b.style.width=((15-c)/15*100)+"%"; if(c<=0){clearInterval(iv); m.style.display="none"; res(true);}},1000);
+})};
+let mainBal=parseFloat(localStorage.getItem("mainBal")||"16.30"), pendingBal=parseFloat(localStorage.getItem("pendingBal")||"0.00"), dailyAds=parseInt(localStorage.getItem("dailyAds")||"2"), autoI=null, countI=null, sec=15;
+function upd(){
+  document.getElementById("mainBal").innerText=mainBal.toFixed(2);
+  document.getElementById("pendingBal").innerText=pendingBal.toFixed(2);
+  document.getElementById("dailyCount").innerText=dailyAds;
+  const pM=document.getElementById("pMain"), pP=document.getElementById("pPending"), pA=document.getElementById("pAds");
+  if(pM) pM.innerText=mainBal.toFixed(2)+" TK";
+  if(pP) pP.innerText=pendingBal.toFixed(2)+" TK";
+  if(pA) pA.innerText=dailyAds;
+  localStorage.setItem("mainBal",mainBal);localStorage.setItem("pendingBal",pendingBal);localStorage.setItem("dailyAds",dailyAds);
+}
+upd();
+async function one(){
+  const sb=document.getElementById("statusBar");
+  if(sb) sb.innerHTML='<div class="dot"></div> Ad Playing - 15s';
+  await window.FakeAds.show();
+  pendingBal+=0.50; dailyAds++; upd();
+  if(sb) sb.innerHTML='<div class="dot"></div> +0.50 TK Added';
+  setTimeout(()=>{if(sb) sb.innerHTML='<div class="dot"></div> Bot Ready - Stopped';},1500);
+}
+document.getElementById("watchAdBtn").onclick=one;
+document.getElementById("autoBtn").onclick=()=>{
+  if(autoI) return;
+  const dot=document.getElementById("autoDot"); if(dot) dot.style.display="block";
+  const sb=document.getElementById("statusBar"); if(sb) sb.innerHTML='<div class="dot"></div> AUTO: Running';
+  sec=15; one();
+  autoI=setInterval(()=>{one(); sec=15;},15000);
+  countI=setInterval(()=>{const sm=document.getElementById("autoSmall"); if(sm) sm.innerText="Refresh in "+sec+"s - Auto Running..."; sec--; if(sec<0) sec=15;},1000);
+};
+document.getElementById("stopBtn").onclick=()=>{
+  clearInterval(autoI); clearInterval(countI); autoI=null; countI=null;
+  const dot=document.getElementById("autoDot"); if(dot) dot.style.display="none";
+  const sb=document.getElementById("statusBar"); if(sb) sb.innerHTML='<div class="dot"></div> Bot Ready - Stopped';
+  const sm=document.getElementById("autoSmall"); if(sm) sm.innerText="Refresh every 15 seconds";
+  const m=document.getElementById("fakeAdModal"); if(m) m.style.display="none";
+};
+document.getElementById("confirmBtn").onclick=()=>{
+  if(pendingBal<=0) return alert("❌ Pending 0 TK!");
+  mainBal+=pendingBal; pendingBal=0; upd();
+  const sb=document.getElementById("statusBar"); if(sb) sb.innerHTML='<div class="dot"></div> Confirmed!';
+  alert("✅ Pending Confirmed to Main Balance!");
+};
+function showHome(){document.getElementById("homePage").style.display="block";document.getElementById("profilePage").style.display="none";document.getElementById("homeNav").classList.add("active");document.getElementById("profileNav").classList.remove("active");}
+function showProfile(){document.getElementById("homePage").style.display="none";document.getElementById("profilePage").style.display="block";document.getElementById("profileNav").classList.add("active");document.getElementById("homeNav").classList.remove("active");}
+function openAdmin(){document.getElementById("adminModal").style.display="flex";document.getElementById("adminMainInput").value=mainBal;document.getElementById("adminPendingInput").value=pendingBal;document.getElementById("adminAdsInput").value=dailyAds;}
+function closeAdmin(){document.getElementById("adminModal").style.display="none";}
+function saveAdmin(){const m=parseFloat(document.getElementById("adminMainInput").value);const p=parseFloat(document.getElementById("adminPendingInput").value);const a=parseInt(document.getElementById("adminAdsInput").value);if(!isNaN(m)) mainBal=m;if(!isNaN(p)) pendingBal=p;if(!isNaN(a)) dailyAds=a;upd();closeAdmin();alert("✅ Admin Saved!");}
+const tg=window.Telegram?.WebApp;
+if(tg){try{tg.ready();tg.expand();tg.setHeaderColor("#f8f7ff");tg.setBackgroundColor("#f8f7ff");const u=tg.initDataUnsafe?.user;if(u){const name=(u.first_name||"")+(u.last_name?" "+u.last_name:"");const username=u.username?"@"+u.username:"@user";const photo=u.photo_url||"https://i.pravatar.cc/150?img=3";const hn=document.getElementById("homeName");const hp=document.getElementById("homePhoto");const pn=document.getElementById("profileName");const pp=document.getElementById("profilePhoto");const pu=document.getElementById("profileUsername");const pi=document.getElementById("profileId");if(hn) hn.innerText=name||"E Noyon";if(hp) hp.src=photo;if(pn) pn.innerText=name||"E Noyon";if(pp) pp.src=photo;if(pu) pu.innerText=username;if(pi) pi.innerText="ID: "+(u.id||"");}}catch(e){}}
+document.getElementById("vpnBtn").onclick=()=>window.open("https://play.google.com/store/apps/details?id=free.vpnaustralia.unlimited.tunnel.proxy.secure.hotspot","_blank");
+document.getElementById("channelBtn").onclick=()=>window.open("https://t.me/SmartWorkCommunity","_blank");
+document.getElementById("adminBtn").onclick=()=>window.open("https://t.me/noyonfb1020","_blank");
+document.getElementById("adminPanelBtn").onclick=openAdmin;
+document.getElementById("supportBtn").onclick=()=>window.open("https://t.me/SmartWorkCommunity","_blank");
+document.getElementById("fakeAdModal").onclick=(e)=>{if(e.target.id==="fakeAdModal") e.target.style.display="none";};
+document.getElementById("adminModal").onclick=(e)=>{if(e.target.id==="adminModal") e.target.style.display="none";};
+</script>
 </body>
 </html>
