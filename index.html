@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto Taka Machine</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<div class="phone">
+<div class="app">
+  <div class="status" id="statusBar">Bot Ready</div>
+  <div id="homePage">
+    <div class="top">
+      <div class="daily"><small>Today</small><b id="dailyCount">0</b><span>Ads</span></div>
+      <div class="profile-center"><div class="avatar-ring"><img id="homePhoto" src="https://i.pravatar.cc/150?img=3"><div class="tick">✓</div></div>
+      <h2 id="homeName">E Noyon</h2><p>Main Belenc : <span id="mainBal">10.20</span> TK</p><p class="dim">Pending Belenc : <span id="pendingBal">5.10</span> TK</p></div>
+      <button class="vpn" id="vpnBtn">🌐<small>Kajer VPN</small></button>
+    </div>
+    <div class="list">
+      <div class="card" id="watchAdBtn"><div class="ic">👁️</div><div class="txt"><b>Watch Ad</b><small>1 Ads Price = 0.50 TK</small></div><span>→</span></div>
+      <div class="card dark" id="autoBtn"><div class="ic">⚡</div><div class="txt"><b>Start Auto Ads</b><small id="autoSmall">Refresh every 15 seconds</small></div><div class="green-dot" id="autoDot"></div></div>
+      <div class="card light" id="stopBtn"><div class="ic">⏹️</div><div class="txt"><b>Stop Auto Ads</b></div></div>
+      <div class="card yellow" id="confirmBtn"><div class="ic">✅</div><div class="txt"><b>Confirm Pending Belenc</b></div></div>
+    </div>
+    <div class="promo-box"><img id="promoImg" src="dev.jpg"><div class="glow"></div><p style="position:relative;z-index:3;color:white;margin:5px 0 0;font-size:12px">Developer - E Noyon</p></div>
+    <div class="developer">Developer : E Noyon | @noyonfb1020</div>
+    <div class="bottom-actions">
+      <button class="bchan" id="channelBtn"><div class="circ blue">📢</div><small>Bot Channel</small></button>
+      <button class="badmin" id="adminBtn"><div class="circ green">👤</div><small>Admin</small></button>
+    </div>
+  </div>
+  <div id="profilePage" style="display:none">
+    <h2 style="text-align:center;color:white">👤 My Profile</h2>
+    <div class="profile-card">
+      <img id="profilePhoto" src="https://i.pravatar.cc/150?img=3" class="big-avatar">
+      <h3 id="profileName">E Noyon</h3>
+      <p id="profileUsername">@username</p>
+      <p id="profileId">ID: 123456</p>
+      <div class="bal-box"><div><small>Main</small><b id="pMain">10.20 TK</b></div><div><small>Pending</small><b id="pPending">5.10 TK</b></div><div><small>Total Ads</small><b id="pAds">0</b></div></div>
+    </div>
+  </div>
+  <div class="nav"><button id="homeNav" class="active" onclick="showHome()">🏠 Home</button><button id="profileNav" onclick="showProfile()">👤 Profile</button></div>
+  <div class="modal" id="fakeAdModal"><div class="modal-box"><h3>📢 Fake Ad Playing</h3><p>Demo Ad <span id="adTimer">3</span>s</p><div class="bar-wrap"><div class="bar" id="bar"></div></div><small>Fake SDK - Real Ad না</small></div></div>
+</div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
