@@ -3,7 +3,6 @@ from flask import Flask, send_from_directory
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEBAPP_DIR = os.path.join(BASE_DIR, 'webapp')
-
 if not os.path.exists(WEBAPP_DIR):
     WEBAPP_DIR = BASE_DIR
 
