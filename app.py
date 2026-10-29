@@ -1,4 +1,3 @@
-
 import os
 import asyncio
 from flask import Flask, request, send_from_directory
@@ -12,7 +11,6 @@ app = Flask(__name__)
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://auto-taka-machine.onrender.com")
 
-# === Telegram Bot Setup (Webhook Mode) ===
 from telegram import Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes
 
@@ -23,12 +21,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(kb)
     )
 
-# Global Application
+# Global Application - Initialize ONCE
 application = None
+main_loop = None
+
 if BOT_TOKEN:
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
-    print("Bot application created (Webhook mode)")
+    # Create main event loop and initialize
+    main_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(main_loop)
+    try:
+        main_loop.run_until_complete(application.initialize())
+        print("✅ Bot initialized successfully")
+        # Auto set webhook on startup
+        webhook_url = f"{WEBAPP_URL}/webhook"
+        main_loop.run_until_complete(application.bot.set_webhook(url=webhook_url))
+        print(f"✅ Webhook auto-set to {webhook_url}")
+    except Exception as e:
+        print(f"Init Error: {e}")
 
 @app.route('/')
 def home():
@@ -40,46 +51,49 @@ def files(path):
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    if not application or not BOT_TOKEN:
-        return "Bot not configured", 500
+    if not application or not BOT_TOKEN or not main_loop:
+        return "Bot not initialized", 500
     try:
         data = request.get_json(force=True)
         update = Update.de_json(data, application.bot)
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(application.process_update(update))
-        loop.close()
+        # Use main_loop, don't create new one, don't close it
+        main_loop.run_until_complete(application.process_update(update))
         return "ok", 200
     except Exception as e:
         print(f"Webhook Error: {e}")
+        import traceback
+        traceback.print_exc()
         return f"Error: {e}", 500
 
 @app.route('/setwebhook')
 def set_webhook():
-    if not application or not BOT_TOKEN:
+    if not application or not BOT_TOKEN or not main_loop:
         return "BOT_TOKEN missing", 500
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
         webhook_url = f"{WEBAPP_URL}/webhook"
-        result = loop.run_until_complete(application.bot.set_webhook(url=webhook_url))
-        loop.close()
-        return f"✅ Webhook set successfully!<br>URL: {webhook_url}<br>Result: {result}<br><br>Now go to Telegram and send /start"
+        result = main_loop.run_until_complete(application.bot.set_webhook(url=webhook_url))
+        info = main_loop.run_until_complete(application.bot.get_me())
+        return f"✅ Webhook set!<br>Bot: @{info.username}<br>URL: {webhook_url}<br>Result: {result}<br><br>Now send /start in Telegram"
     except Exception as e:
-        return f"Failed to set webhook: {e}", 500
+        import traceback
+        traceback.print_exc()
+        return f"❌ Failed: {e}", 500
 
-@app.route('/deletewebhook')
-def delete_webhook():
-    if not application or not BOT_TOKEN:
-        return "BOT_TOKEN missing", 500
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(application.bot.delete_webhook())
-        loop.close()
-        return f"Webhook deleted: {result}"
-    except Exception as e:
-        return f"Error: {e}", 500
+@app.route('/check')
+def check():
+    token_len = len(BOT_TOKEN) if BOT_TOKEN else 0
+    return f"""
+    <h2>🔍 Bot Check</h2>
+    BOT_TOKEN exists: {bool(BOT_TOKEN)}<br>
+    BOT_TOKEN length: {token_len}<br>
+    WEBAPP_URL: {WEBAPP_URL}<br>
+    App initialized: {application is not None}<br>
+    Loop exists: {main_loop is not None}<br>
+    WEBAPP_DIR: {WEBAPP_DIR}<br>
+    Files: {os.listdir(WEBAPP_DIR) if os.path.exists(WEBAPP_DIR) else 'NOT FOUND'}<br>
+    <br><a href='/setwebhook'>Set Webhook</a><br>
+    <a href='/'>Go to App</a>
+    """
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
