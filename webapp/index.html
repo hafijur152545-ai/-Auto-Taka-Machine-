@@ -1,123 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Auto Taka Machine</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Adspark SDK - তোমার দেওয়া SDK -->
-  <script src="https://adspark-tma.top/api/public/sdk.js?k=64"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Auto Taka Machine</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://adspark-tma.top/api/public/sdk.js?k=64"></script>
 </head>
 <body>
 <div class="phone">
-  <div class="app">
-    <div id="statusBar" class="status">🟢 Bot Ready - 15s Ad System</div>
+  <!-- Top Status -->
+  <div id="topStatus" class="top-status">BOT READY</div>
 
-    <div class="top">
-      <div class="daily-box">
-        <small>Daily Ads</small>
-        <b id="dailyCount">0</b>
-        <span>Today</span>
-      </div>
-
-      <div class="profile-center">
-        <div class="avatar-ring">
-          <img id="homePhoto" src="https://via.placeholder.com/88" alt="avatar" />
-          <div class="tick">✓</div>
-        </div>
-        <h2 id="homeName">Loading...</h2>
-        <p class="dim">Premium User</p>
-      </div>
-
-      <button id="vpnBtn" class="vpn-btn">
-        <span>🛡️</span>
-        <small>VPN</small>
-      </button>
-    </div>
-
-    <div id="homePage">
-      <div class="list">
-        <div id="watchAdBtn" class="card white-card">
-          <div class="ic blue">📺</div>
-          <div class="txt"><b>Watch Ad (15s)</b><small>Tap to earn +0.50 TK - Real Ad</small></div>
-          <div class="arrow">▶️</div>
-        </div>
-
-        <div id="autoBtn" class="card dark-card">
-          <div class="ic dark">⚡</div>
-          <div class="txt"><b>Auto Mode - 15s</b><small id="autoSmall">Refresh every 15 seconds</small></div>
-          <div id="autoDot" class="green-dot"></div>
-        </div>
-
-        <div id="stopBtn" class="card light-card">
-          <div class="ic red">🛑</div>
-          <div class="txt"><b>Stop Auto</b><small>Stop automatic ads</small></div>
-        </div>
-
-        <div id="confirmBtn" class="card yellow-card">
-          <div class="ic yellow">💰</div>
-          <div class="txt"><b>Confirm & Transfer</b><small>Pending → Main Balance</small></div>
-          <div class="arrow">💸</div>
-        </div>
-      </div>
-
-      <div class="promo-box">
-        <div class="glow"></div>
-        <img src="https://via.placeholder.com/400x220/7c3aed/ffffff?text=Premium+Offer" alt="promo" />
-        <div class="promo-overlay">🔥 Premium Offer</div>
-      </div>
-
-      <p class="developer-text">Developer: Noyon • Version 3.0 - Fixed Ads</p>
-
-      <div class="bottom-actions">
-        <div id="channelBtn" class="bchan">
-          <div class="circ blue">📢</div>
-          <small>Channel</small>
-        </div>
-        <div id="adminBtn" class="badmin">
-          <div class="circ green">👤</div>
-          <small>Admin</small>
+  <!-- Profile Header Card -->
+  <div class="profile-header">
+    <div class="ph-left">
+      <div class="avatar-sm"><span id="avatarInitial">AM</span></div>
+      <div class="ph-info">
+        <b id="userName">Alex Morgan</b>
+        <div class="ph-sub">
+          <small>UID: <span id="userId">000000</span></small>
+          <span class="verified">Today 1 Ads • Verified <span class="dot-v">✓</span></span>
         </div>
       </div>
     </div>
-
-    <div id="profilePage" style="display:none">
-      <div class="profile-card">
-        <img id="profilePhoto" class="big-avatar" src="https://via.placeholder.com/110" alt="" />
-        <h2 id="profileName">E Noyon</h2>
-        <p id="profileUsername" class="dim">@user</p>
-        <p id="profileId" class="dim">ID: 123456</p>
-        <div class="bal-box">
-          <div><small>Main Balance</small><b id="pMain">10.20 TK</b></div>
-          <div><small>Pending</small><b id="pPending">5.10 TK</b></div>
-          <div><small>Ads</small><b id="pAds">0</b></div>
-        </div>
-        <div class="bal-box" style="margin-top:10px">
-          <div><small>Main</small><b id="mainBal">10.20</b></div>
-          <div><small>Pending</small><b id="pendingBal">5.10</b></div>
-        </div>
-      </div>
+    <div class="automation-badge">
+      <small>AUTOMATION</small>
+      <span id="autoStatus">IDLE</span>
     </div>
   </div>
 
-  <div class="nav">
-    <button id="homeNav" class="active" onclick="showHome()">🏠 Home</button>
-    <button id="profileNav" onclick="showProfile()">👤 Profile</button>
+  <!-- Balance Cards -->
+  <div class="balance-row">
+    <div class="bal-card">
+      <div class="bal-top"><small>MAIN BALANCE</small><span>$</span></div>
+      <b id="mainBal">0.00 TK</b>
+      <small class="bal-sub">0 TK • VERIFIED</small>
+    </div>
+    <div class="bal-card dark">
+      <div class="bal-top"><small>PENDING</small><span>S</span></div>
+      <b id="pendingBal">0.00 TK</b>
+      <small class="bal-sub">Ready to confirm</small>
+    </div>
+  </div>
+
+  <!-- Today / Auto Off -->
+  <div class="info-row">
+    <div class="info-card">
+      <small>TODAY <span id="todayCount">0</span> Ads</small>
+      <div class="progress"><div id="todayProgress" class="prog-fill"></div></div>
+      <small class="dim"><span id="todayPercent">0.0%</span> of daily</small>
+    </div>
+    <div class="info-card auto-off" id="autoOffCard">
+      <small>AUTO OFF</small>
+      <div class="off-dot"></div>
+    </div>
+  </div>
+
+  <!-- Watch Ad Button -->
+  <button id="watchAdBtn" class="watch-btn">
+    <span>Watch Ad (+0.50 TK)</span>
+    <span class="play-icon">▶</span>
+  </button>
+
+  <!-- Auto Loop / Stop -->
+  <div class="action-row">
+    <button id="autoBtn" class="action-btn">
+      <span class="icon">⇄</span> Auto Loop
+    </button>
+    <button id="stopBtn" class="action-btn danger">
+      <span class="icon">○</span> Stop
+    </button>
+  </div>
+
+  <!-- Confirm Balance -->
+  <button id="confirmBtn" class="confirm-card">
+    <div class="cc-left">
+      <div class="check-icon">✓</div>
+      <div>
+        <b>Confirm Balance</b>
+        <small id="confirmText">0/500 ads • +3.2%</small>
+      </div>
+    </div>
+    <span class="arrow">→</span>
+  </button>
+
+  <!-- Channel / Admin -->
+  <div class="action-row">
+    <button id="channelBtn" class="action-btn light"><span>🔗</span> Bot Channel</button>
+    <button id="adminBtn" class="action-btn light"><span>👤</span> Admin</button>
+  </div>
+
+  <button id="vpnBtn" class="vpn-btn">KAJER VPN</button>
+  <button id="adminPanelBtn" class="vpn-btn outline">ADMIN PANEL</button>
+
+  <div class="footer">NEH • PREMIUM V2.4</div>
+
+  <!-- Home Page bottom nav is outside scroll -->
+</div>
+
+<!-- Profile Page (hidden) -->
+<div id="profilePage" class="phone" style="display:none">
+  <div class="top-status">BOT READY</div>
+  <div class="profile-header">
+    <div class="ph-left">
+      <div class="avatar-sm"><span id="pAvatarInitial">AM</span></div>
+      <div class="ph-info">
+        <b id="pUserName">Alex Morgan</b>
+        <small>UID: <span id="pUserId">000000</span></small>
+      </div>
+    </div>
+    <div class="automation-badge"><small>STATUS</small><span id="pStatus">ACTIVE</span></div>
+  </div>
+  <div class="balance-row">
+    <div class="bal-card"><div class="bal-top"><small>MAIN BALANCE</small></div><b id="pMainBal">0.00 TK</b><small id="pMainSub">0 TK</small></div>
+    <div class="bal-card dark"><div class="bal-top"><small>PENDING</small></div><b id="pPendingBal">0.50 TK</b><small>Just now</small></div>
+  </div>
+  <div class="info-row">
+    <div class="info-card"><small>TOTAL ADS</small><b id="pTotalAds">1 Ads</b><small class="dim" id="pTotalPercent">0.2% of daily</small></div>
+    <div class="info-card"><small>REFERRALS</small><b id="pRefs">0 Referrals</b><small class="dim">10% bonus active</small></div>
+  </div>
+  <div class="referral-box">
+    <b>Referral Program</b><small>Invite friends and get 10% of their earnings. Bonus credited instantly.</small>
+    <div class="ref-link-row"><input id="refLink" value="https://t.me/AutoTakaMachineBot?start=..." readonly><button id="copyRef">Copy</button></div>
+    <div class="ref-stats"><span>Total Referred: <b id="refCount">0</b></span><span style="color:#22c55e"><span id="refEarn">+0</span> TK earned</span></div>
+  </div>
+  <div class="withdraw-box">
+    <b>Earnings & Withdraw</b>
+    <div class="balance-row"><div class="bal-card"><small>CURRENT BALANCE</small><b id="wBal">0.00 TK</b></div><div class="bal-card"><small>MIN WITHDRAW</small><b>0 TK</b><small>Select method</small></div></div>
+    <small>SELECT METHOD</small>
+    <div class="method-row"><button class="method-btn">bKash</button><button class="method-btn">Nagad</button><button class="method-btn">Rocket</button></div>
+    <input class="input" placeholder="01XXXXXXXXX"><input class="input" placeholder="Amount TK">
+    <div class="action-row"><button class="action-btn light">History</button><button class="action-btn primary">Request Withdraw</button></div>
+    <div class="history-box"><b>Withdraw History</b><small>0 records</small><div class="no-history">No history yet<br><small>Contact Admin for Support</small></div></div>
+  </div>
+  <div class="footer">NEH • PREMIUM V2.4</div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <button id="homeNav" class="bn-active" onclick="showHome()"><span>⌂</span> Home</button>
+  <button id="profileNav" onclick="showProfile()"><span>👤</span> Profile</button>
+</div>
+
+<!-- Ad Toast - Video style -->
+<div id="adToast" class="ad-toast hidden">
+  <div id="adToastLoading" class="ad-toast-inner loading">
+    <div class="toast-icon"><div class="spinner"></div></div>
+    <div class="toast-text"><small>MANUAL</small><b>Loading Ad...</b></div>
+    <div class="toast-right"></div>
+  </div>
+  <div id="adToastSuccess" class="ad-toast-inner success" style="display:none">
+    <div class="toast-icon success"><span>✓</span></div>
+    <div class="toast-text"><small>COMPLETED</small><b id="toastSuccessText">Ad Served</b></div>
+    <div class="toast-right success"><span>✓</span></div>
   </div>
 </div>
 
-<!-- Ad Modal - 15s -->
-<div id="fakeAdModal" class="modal">
-  <div class="modal-box">
-    <h3>📢 Advertisement - 15s</h3>
-    <p>Ad is playing...</p>
-    <div class="bar-wrap"><div id="bar" class="bar"></div></div>
-    <h2 id="adTimer">15</h2>
-    <small>Please wait 15 seconds</small>
-  </div>
-</div>
+<div id="adCompletedBanner" class="completed-banner hidden">Ad Completed! +0.50 TK</div>
 
-<script src="script.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
