@@ -425,3 +425,62 @@ body:has(#profilePage[style*="block"]) #topStatus {
   background: #0f172a !important;
   color: white !important;
 }
+
+
+
+/* ===== FINAL FIX - Avatar soja gol + Alex 95px + Gap + Loading gol ===== */
+.profile-avatar, #avatarWrap, .ph-avatar {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+}
+.profile-avatar img, #avatarWrap img, .ph-avatar img, .user-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  display: block !important;
+}
+
+/* Alex Card 95px */
+#alexCard, .profile-header, .user-card, .ph-card {
+  min-height: 95px !important;
+  height: 95px !important;
+  max-height: 95px !important;
+  padding: 12px 16px !important;
+}
+
+/* Confirm Pending Balance text */
+#confirmBtn, .confirm-btn {
+  font-size: 14px !important;
+}
+
+/* Gap - Admin, Bot Channel, VPN, Admin Panel halka niche, samanno gap */
+.action-row {
+  margin-top: 12px !important;
+  margin-bottom: 6px !important;
+  gap: 10px !important;
+}
+#vpnBtn, #adminPanelBtn {
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+/* Ad Loading - aro sundor, gol, 4 kona na */
+.top-status.loading, .top-status.completed {
+  border-radius: 24px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25) !important;
+  backdrop-filter: blur(8px) !important;
+}
+.top-status.loading .status-icon, .top-status.completed .status-icon {
+  border-radius: 50% !important;
+}
+
+/* Bot Ready pill more gol */
+.top-status.ready {
+  border-radius: 24px !important;
+  padding: 8px 20px !important;
+}
