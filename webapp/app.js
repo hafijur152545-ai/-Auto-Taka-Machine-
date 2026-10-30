@@ -1,197 +1,184 @@
 
-// ===== ADS SYSTEM FIXED - 15 SEC + REAL SDK =====
-let AD_DURATION = 15; // 15 second fixed
+// ===== CONFIG - 15-18 SEC =====
+const AD_DURATION = 15; // চাইলে 18 করে দাও
+let mainBal = parseFloat(localStorage.getItem("mainBal") || "0.00");
+let pendingBal = parseFloat(localStorage.getItem("pendingBal") || "0.00");
+let todayAds = parseInt(localStorage.getItem("todayAds") || "0");
+let totalAds = parseInt(localStorage.getItem("totalAds") || "0");
+let autoI = null, countI = null;
 
-// Real Ad Function using Adspark SDK
+function upd() {
+  document.getElementById("mainBal").innerText = mainBal.toFixed(2) + " TK";
+  document.getElementById("pendingBal").innerText = pendingBal.toFixed(2) + " TK";
+  const pMain = document.getElementById("pMainBal"), pPend = document.getElementById("pPendingBal");
+  if(pMain) pMain.innerText = mainBal.toFixed(2) + " TK";
+  if(pPend) pPend.innerText = pendingBal.toFixed(2) + " TK";
+  document.getElementById("todayCount").innerText = todayAds;
+  document.getElementById("pTotalAds").innerText = totalAds + " Ads";
+  document.getElementById("todayPercent").innerText = (todayAds/500*100).toFixed(1) + "%";
+  document.getElementById("pTotalPercent").innerText = (todayAds/500*100).toFixed(1) + "% of daily";
+  document.getElementById("todayProgress").style.width = Math.min(todayAds/500*100,100) + "%";
+  document.getElementById("confirmText").innerText = totalAds + "/500 ads • +3.2%";
+  document.getElementById("wBal").innerText = mainBal.toFixed(2) + " TK";
+  localStorage.setItem("mainBal", mainBal);
+  localStorage.setItem("pendingBal", pendingBal);
+  localStorage.setItem("todayAds", todayAds);
+  localStorage.setItem("totalAds", totalAds);
+}
+upd();
+
+// Toast helpers like video
+function showToastLoading() {
+  const toast = document.getElementById("adToast");
+  const load = document.getElementById("adToastLoading");
+  const succ = document.getElementById("adToastSuccess");
+  load.style.display = "flex";
+  succ.style.display = "none";
+  toast.classList.remove("hidden");
+}
+function showToastSuccess() {
+  const load = document.getElementById("adToastLoading");
+  const succ = document.getElementById("adToastSuccess");
+  const banner = document.getElementById("adCompletedBanner");
+  load.style.display = "none";
+  succ.style.display = "flex";
+  banner.classList.remove("hidden");
+  document.getElementById("topStatus").innerText = "Ad Completed! +0.50 TK";
+  setTimeout(() => {
+    document.getElementById("adToast").classList.add("hidden");
+    banner.classList.add("hidden");
+    document.getElementById("topStatus").innerText = "BOT READY";
+  }, 2500);
+}
+function hideToast() {
+  document.getElementById("adToast").classList.add("hidden");
+}
+
+// Real Ad with SDK + 15-18 sec timer like video
 async function showRealAd() {
-  return new Promise(async (resolve) => {
-    const modal = document.getElementById("fakeAdModal");
-    const timerEl = document.getElementById("adTimer");
-    const bar = document.getElementById("bar");
-    
-    // Try Real SDK first
-    try {
-      // SDK check - তোমার SDK অনুযায়ী
-      if (window.Adspark && typeof window.Adspark.showAd === 'function') {
-        console.log("Trying Adspark.showAd...");
-        await window.Adspark.showAd();
-        console.log("✅ Real Ad Shown via Adspark.showAd");
-        resolve(true);
-        return;
-      }
-      if (window.showAd && typeof window.showAd === 'function') {
-        console.log("Trying window.showAd...");
-        await window.showAd();
-        console.log("✅ Real Ad Shown via window.showAd");
-        resolve(true);
-        return;
-      }
-      if (window.AdsparkSDK && typeof window.AdsparkSDK.show === 'function') {
-        await window.AdsparkSDK.show();
-        resolve(true);
-        return;
-      }
-      // If SDK exposes Ads object
-      if (window.adspark && window.adspark.show) {
-        await window.adspark.show();
-        resolve(true);
-        return;
-      }
-    } catch (e) {
-      console.log("SDK Ad failed, fallback to timer:", e);
+  showToastLoading();
+  document.getElementById("autoStatus").innerText = "LOADING";
+  
+  // Try Real SDK first
+  let realAdShown = false;
+  try {
+    if (window.Adspark && typeof window.Adspark.showAd === 'function') {
+      console.log("Calling Adspark.showAd...");
+      await window.Adspark.showAd();
+      realAdShown = true;
+    } else if (window.showAd && typeof window.showAd === 'function') {
+      await window.showAd();
+      realAdShown = true;
+    } else if (window.AdsparkSDK && window.AdsparkSDK.show) {
+      await window.AdsparkSDK.show();
+      realAdShown = true;
     }
+  } catch(e) {
+    console.log("Real Ad failed, using timer", e);
+  }
 
-    // Fallback: 15s timer modal (always works)
-    modal.style.display = "flex";
-    let c = AD_DURATION;
-    timerEl.innerText = c;
-    bar.style.width = "0%";
-    let iv = setInterval(() => {
-      c--;
-      timerEl.innerText = c;
-      bar.style.width = ((AD_DURATION - c) / AD_DURATION * 100) + "%";
-      if (c <= 0) {
-        clearInterval(iv);
-        modal.style.display = "none";
+  // 15-18 sec timer (video style - Manual Loading)
+  return new Promise((resolve) => {
+    let elapsed = 0;
+    const interval = setInterval(() => {
+      elapsed++;
+      // Update toast text with countdown like video had?
+      if (elapsed >= AD_DURATION) {
+        clearInterval(interval);
         resolve(true);
       }
     }, 1000);
   });
 }
 
-// FakeAds wrapper for compatibility
-window.FakeAds = { show: showRealAd };
-
-// ===== BALANCE SYSTEM =====
-let mainBal = parseFloat(localStorage.getItem("mainBal") || "10.20");
-let pendingBal = parseFloat(localStorage.getItem("pendingBal") || "5.10");
-let dailyAds = parseInt(localStorage.getItem("dailyAds") || "0");
-let autoI = null, countI = null, sec = AD_DURATION;
-
-function upd() {
-  document.getElementById("mainBal").innerText = mainBal.toFixed(2);
-  document.getElementById("pendingBal").innerText = pendingBal.toFixed(2);
-  document.getElementById("dailyCount").innerText = dailyAds;
-  const pM = document.getElementById("pMain"), pP = document.getElementById("pPending"), pA = document.getElementById("pAds");
-  if (pM) pM.innerText = mainBal.toFixed(2) + " TK";
-  if (pP) pP.innerText = pendingBal.toFixed(2) + " TK";
-  if (pA) pA.innerText = dailyAds;
-  localStorage.setItem("mainBal", mainBal);
-  localStorage.setItem("pendingBal", pendingBal);
-  localStorage.setItem("dailyAds", dailyAds);
-}
-upd();
-
-async function one() {
-  const sb = document.getElementById("statusBar");
-  if (sb) sb.innerText = "📢 Ad Playing - 15s";
+async function oneAd() {
   const success = await showRealAd();
   if (success) {
     pendingBal += 0.50;
-    dailyAds++;
+    todayAds++;
+    totalAds++;
     upd();
-    if (sb) sb.innerText = "✅ +0.50 TK - Next in 15s";
+    showToastSuccess();
+    document.getElementById("autoStatus").innerText = "IDLE";
   } else {
-    if (sb) sb.innerText = "❌ Ad Failed - Try Again";
+    hideToast();
+    document.getElementById("autoStatus").innerText = "FAILED";
   }
 }
 
-document.getElementById("watchAdBtn").onclick = one;
+document.getElementById("watchAdBtn").onclick = oneAd;
 
 document.getElementById("autoBtn").onclick = () => {
   if (autoI) return;
-  const dot = document.getElementById("autoDot");
-  if (dot) dot.style.display = "block";
-  const sb = document.getElementById("statusBar");
-  if (sb) sb.innerText = "⚡ AUTO MODE: Running (15s)";
-  sec = AD_DURATION;
-  one();
-  autoI = setInterval(() => { one(); sec = AD_DURATION; }, AD_DURATION * 1000);
-  countI = setInterval(() => {
-    const sm = document.getElementById("autoSmall");
-    if (sm) sm.innerText = "Refresh in " + sec + "s - Auto Running...";
-    sec--;
-    if (sec < 0) sec = AD_DURATION;
-  }, 1000);
+  document.getElementById("autoOffCard").innerHTML = "<small>AUTO ON</small><div class='off-dot' style='background:#22c55e;border-color:#22c55e'></div>";
+  document.getElementById("autoStatus").innerText = "ACTIVE";
+  oneAd();
+  autoI = setInterval(oneAd, AD_DURATION * 1000);
 };
 
 document.getElementById("stopBtn").onclick = () => {
-  clearInterval(autoI); clearInterval(countI);
-  autoI = null; countI = null;
-  const dot = document.getElementById("autoDot");
-  if (dot) dot.style.display = "none";
-  const sb = document.getElementById("statusBar");
-  if (sb) sb.innerText = "🟢 Bot Ready - Stopped";
-  const sm = document.getElementById("autoSmall");
-  if (sm) sm.innerText = "Refresh every 15 seconds";
-  const m = document.getElementById("fakeAdModal");
-  if (m) m.style.display = "none";
+  clearInterval(autoI);
+  autoI = null;
+  document.getElementById("autoOffCard").innerHTML = "<small>AUTO OFF</small><div class='off-dot'></div>";
+  document.getElementById("autoStatus").innerText = "IDLE";
+  hideToast();
+  document.getElementById("topStatus").innerText = "BOT READY";
 };
 
 document.getElementById("confirmBtn").onclick = () => {
-  if (pendingBal <= 0) return alert("❌ Pending Balance 0 TK!");
+  if (pendingBal <= 0) return alert("❌ No pending balance!");
+  if (totalAds < 1) return alert("Watch at least 1 ad!");
   mainBal += pendingBal;
   pendingBal = 0;
   upd();
-  alert("✅ Confirm Done! Main Balance Added!");
+  alert("✅ Confirmed! Added to Main Balance");
 };
 
 function showHome() {
-  document.getElementById("homePage").style.display = "block";
+  document.querySelector(".phone").style.display = "block";
   document.getElementById("profilePage").style.display = "none";
-  document.getElementById("homeNav").classList.add("active");
-  document.getElementById("profileNav").classList.remove("active");
+  document.getElementById("homeNav").classList.add("bn-active");
+  document.getElementById("profileNav").classList.remove("bn-active");
 }
 function showProfile() {
-  document.getElementById("homePage").style.display = "none";
+  document.querySelector(".phone").style.display = "none";
   document.getElementById("profilePage").style.display = "block";
-  document.getElementById("profileNav").classList.add("active");
-  document.getElementById("homeNav").classList.remove("active");
+  document.getElementById("profileNav").classList.add("bn-active");
+  document.getElementById("homeNav").classList.remove("bn-active");
 }
 
-// Telegram WebApp Auto Profile
+// Telegram Profile
 const tg = window.Telegram?.WebApp;
 if (tg) {
   try {
-    tg.ready();
-    tg.expand();
-    tg.setHeaderColor("#6d28d9");
-    tg.setBackgroundColor("#6d28d9");
+    tg.ready(); tg.expand();
     const u = tg.initDataUnsafe?.user;
     if (u) {
       const name = (u.first_name || "") + (u.last_name ? " " + u.last_name : "");
-      const username = u.username ? "@" + u.username : "@" + (u.id || "user");
-      const photo = u.photo_url || "https://via.placeholder.com/88";
-      const homeName = document.getElementById("homeName");
-      const homePhoto = document.getElementById("homePhoto");
-      const profileName = document.getElementById("profileName");
-      const profilePhoto = document.getElementById("profilePhoto");
-      const profileUsername = document.getElementById("profileUsername");
-      const profileId = document.getElementById("profileId");
-      if (homeName) homeName.innerText = name || "E Noyon";
-      if (homePhoto) homePhoto.src = photo;
-      if (profileName) profileName.innerText = name || "E Noyon";
-      if (profilePhoto) profilePhoto.src = photo;
-      if (profileUsername) profileUsername.innerText = username;
-      if (profileId) profileId.innerText = "ID: " + (u.id || "123456");
+      const initial = (u.first_name?.[0] || "A") + (u.last_name?.[0] || "M");
+      document.getElementById("userName").innerText = name || "Alex Morgan";
+      document.getElementById("pUserName").innerText = name || "Alex Morgan";
+      document.getElementById("avatarInitial").innerText = initial.toUpperCase();
+      document.getElementById("pAvatarInitial").innerText = initial.toUpperCase();
+      document.getElementById("userId").innerText = u.id || "000000";
+      document.getElementById("pUserId").innerText = u.id || "000000";
     }
-  } catch (e) { console.log("TG Error", e); }
+  } catch(e){console.log(e)}
 }
 
-document.getElementById("vpnBtn").onclick = () => window.open("https://play.google.com/store/apps/details?id=free.vpnaustralia.unlimited.tunnel.proxy.secure.hotspot", "_blank");
-document.getElementById("channelBtn").onclick = () => window.open("https://t.me/SmartWorkCommunity", "_blank");
-document.getElementById("adminBtn").onclick = () => window.open("https://t.me/noyonfb1020", "_blank");
+// Links
+document.getElementById("channelBtn").onclick = () => window.open("https://t.me/SmartWorkCommunity","_blank");
+document.getElementById("adminBtn").onclick = () => window.open("https://t.me/noyonfb1020","_blank");
+document.getElementById("vpnBtn").onclick = () => window.open("https://play.google.com/store/apps/details?id=free.vpnaustralia.unlimited.tunnel.proxy.secure.hotspot","_blank");
+document.getElementById("copyRef").onclick = () => {
+  navigator.clipboard.writeText(document.getElementById("refLink").value);
+  alert("Copied!");
+};
 
-console.log("✅ Auto Taka Machine Loaded - Fixed 15s + SDK Integrated");
-
-// Check SDK loaded
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    if (window.Adspark || window.showAd || window.AdsparkSDK) {
-      console.log("✅ Adspark SDK Detected:", window.Adspark || window.showAd);
-      document.getElementById("statusBar").innerText = "✅ SDK Ready - 15s Ads";
-    } else {
-      console.log("⚠️ SDK not found, using fallback timer");
-    }
-  }, 1000);
-});
+console.log("✅ Auto Taka Machine V2.4 - Video Design + 15s Ad + SDK");
+setTimeout(() => {
+  if (window.Adspark || window.showAd) {
+    console.log("✅ SDK Ready");
+    document.getElementById("topStatus").innerText = "BOT READY - SDK OK";
+  }
+}, 1000);
