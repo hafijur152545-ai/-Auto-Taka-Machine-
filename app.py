@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, Response
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEBAPP_DIR = os.path.join(BASE_DIR, 'webapp')
@@ -10,24 +10,35 @@ WEBAPP_URL = os.getenv("WEBAPP_URL", "https://auto-taka-machine.onrender.com")
 
 @app.route('/')
 def home():
-    # Most robust way - try all possible paths
-    index_path = os.path.join(WEBAPP_DIR, 'index.html')
-    if os.path.exists(index_path):
-        return send_from_directory(WEBAPP_DIR, 'index.html')
-    # fallback
-    if os.path.exists(os.path.join(BASE_DIR, 'index.html')):
-        return send_from_directory(BASE_DIR, 'index.html')
-    return f"<h3>index.html not found</h3>BASE={BASE_DIR}<br>WEBAPP={WEBAPP_DIR}<br>BASE files={os.listdir(BASE_DIR)}<br>WEBAPP exists={os.path.exists(WEBAPP_DIR)}", 404
+    # Direct read - no send_from_directory - faster, no timeout
+    for p in [os.path.join(WEBAPP_DIR, 'index.html'), os.path.join(BASE_DIR, 'webapp', 'index.html'), os.path.join(BASE_DIR, 'index.html')]:
+        if os.path.exists(p):
+            try:
+                with open(p, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                return Response(content, mimetype='text/html')
+            except Exception as e:
+                return f"Read error: {e} path={p}", 500
+    return "index.html not found in any location", 404
 
 @app.route('/<path:path>')
 def static_files(path):
-    # Try webapp first
-    full = os.path.join(WEBAPP_DIR, path)
-    if os.path.exists(full):
-        return send_from_directory(WEBAPP_DIR, path)
-    full2 = os.path.join(BASE_DIR, path)
-    if os.path.exists(full2):
-        return send_from_directory(BASE_DIR, path)
+    # Direct read for css/js
+    for base in [WEBAPP_DIR, os.path.join(BASE_DIR, 'webapp'), BASE_DIR]:
+        full = os.path.join(base, path)
+        if os.path.exists(full):
+            try:
+                with open(full, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                # Set correct mimetype
+                if path.endswith('.css'):
+                    return Response(content, mimetype='text/css')
+                elif path.endswith('.js'):
+                    return Response(content, mimetype='application/javascript')
+                else:
+                    return Response(content)
+            except Exception as e:
+                return f"Error reading {path}: {e}", 500
     return f"File not found: {path}", 404
 
 @app.route('/webhook', methods=['POST'])
@@ -64,11 +75,10 @@ def webhook():
 @app.route('/setwebhook')
 def set_webhook():
     if not BOT_TOKEN:
-        return "❌ BOT_TOKEN missing in Render Environment Variables", 500
+        return "❌ BOT_TOKEN missing in Render Environment", 500
     try:
-        from telegram.ext import Application
+        from telegram.ext import Application, CommandHandler
         from telegram import WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
-        from telegram.ext import CommandHandler
         import asyncio
 
         async def start(update, context):
@@ -103,7 +113,7 @@ def check():
         webapp_files = os.listdir(WEBAPP_DIR)[:20]
     except: pass
     return f"""
-    <h2>✅ Bot Check - V3 Minimal</h2>
+    <h2>✅ Bot Check - V4 Direct Read</h2>
     BOT_TOKEN set: {bool(BOT_TOKEN)} (len={len(BOT_TOKEN) if BOT_TOKEN else 0})<br>
     WEBAPP_URL: {WEBAPP_URL}<br>
     BASE_DIR: {BASE_DIR}<br>
