@@ -314,6 +314,12 @@ function setButtonActive(active) {
 
 
 // ===== CLEAN AD FLOW - Only video animation, no double toast, no blue button =====
+
+
+
+
+
+// ===== FINAL AD FLOW - 2 sec Ads Confirm after ad close, then balance + thinner loading =====
 async function watchAdFlow() {
   if(autoRunning) {
     showCenterModal("Auto Running","Auto Loop চলছে, আগে Stop করো");
@@ -325,15 +331,18 @@ async function watchAdFlow() {
   setTopStatus("manual_loading");
   await new Promise(r => setTimeout(r, 2000));
   
-  const BOT_USERNAME = "autotakamachine_bot";
-const tg = window.Telegram?.WebApp;
+  const tg = window.Telegram?.WebApp;
   const userId = tg?.initDataUnsafe?.user?.id || 0;
   try {
     if (typeof showAdspark === 'function') await showAdspark({ ymid: userId });
     else if (typeof showAdsparkPopup === 'function') await showAdsparkPopup({ ymid: userId });
   } catch(e){}
   
-  // Ad closed - now show completed and add balance
+  // Ad closed - 2 sec Ads Confirm loading
+  setTopStatus("confirming");
+  await new Promise(r => setTimeout(r, 2000));
+  
+  // Now increase balance
   pendingBal += 0.50; todayAds++; totalAds++; upd();
   setTopStatus("completed");
   if(autoStatus) autoStatus.innerText = "IDLE";
@@ -348,13 +357,17 @@ async function autoLoopFlow() {
     await new Promise(r => setTimeout(r, 2000));
     if(!autoRunning) break;
     
-    const BOT_USERNAME = "autotakamachine_bot";
-const tg = window.Telegram?.WebApp;
+    const tg = window.Telegram?.WebApp;
     const userId = tg?.initDataUnsafe?.user?.id || 0;
     try {
       if (typeof showAdspark === 'function') await showAdspark({ ymid: userId });
       else if (typeof showAdsparkPopup === 'function') await showAdsparkPopup({ ymid: userId });
     } catch(e){}
+    if(!autoRunning) break;
+    
+    // 2 sec confirm loading after ad close
+    setTopStatus("confirming");
+    await new Promise(r => setTimeout(r, 2000));
     if(!autoRunning) break;
     
     pendingBal += 0.50; todayAds++; totalAds++; upd();
@@ -466,31 +479,35 @@ if(savedGuideline) document.getElementById("adminGuidelines").innerText = savedG
 console.log("✅ Auto Taka Machine FINAL PREMIUM - All Tasks Combined");
 
 // ===== VIDEO ANIMATION - Bot Ready -> Loading -> Completed -> Ready =====
+
 function setTopStatus(state, text) {
   const top = document.getElementById('topStatus');
   if(!top) return;
   
-  top.classList.remove('ready','loading','completed','shrink');
+  top.classList.remove('ready','loading','completed','shrink','confirming');
   
   if(state === 'ready') {
     top.className = 'top-status ready';
     top.innerHTML = '<span class="status-dot"></span><span>Bot Ready</span>';
   } else if(state === 'manual_loading') {
     top.className = 'top-status loading';
-    top.innerHTML = '<div class="status-icon">👁️</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">MANUAL</small><b style="font-size:14px">Loading Ad...</b></div>';
+    top.innerHTML = '<div class="status-icon">👁️</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">MANUAL</small><b style="font-size:13px">Loading Ad...</b></div>';
   } else if(state === 'auto_loading') {
     top.className = 'top-status loading';
-    top.innerHTML = '<div class="status-icon">🔄</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">AUTO</small><b style="font-size:14px">Loading Ad...</b></div>';
+    top.innerHTML = '<div class="status-icon">🔄</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">AUTO</small><b style="font-size:13px">Loading Ad...</b></div>';
+  } else if(state === 'confirming') {
+    top.className = 'top-status loading confirming';
+    top.innerHTML = '<div class="status-icon" style="background:#f59e0b !important">⏳</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">ADS CONFIRM</small><b style="font-size:13px">Confirming...</b></div>';
   } else if(state === 'completed') {
     top.className = 'top-status completed';
-    top.innerHTML = '<div class="status-icon">✓</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">COMPLETED</small><b style="font-size:14px">Ad Served</b></div>';
-    // Auto back to ready after 1.5s with shrink animation
+    top.innerHTML = '<div class="status-icon">✓</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">COMPLETED</small><b style="font-size:13px">Ad Served</b></div>';
     setTimeout(() => {
       top.classList.add('shrink');
       setTimeout(() => setTopStatus('ready'), 350);
     }, 1500);
   }
 }
+
 
 // Initialize as ready
 setTimeout(() => setTopStatus('ready'), 100);
