@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Auto Taka Machine</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Adspark SDK - তোমার দেওয়া SDK -->
+  <script src="https://adspark-tma.top/api/public/sdk.js?k=64"></script>
+</head>
+<body>
+<div class="phone">
+  <div class="app">
+    <div id="statusBar" class="status">🟢 Bot Ready - 15s Ad System</div>
+
+    <div class="top">
+      <div class="daily-box">
+        <small>Daily Ads</small>
+        <b id="dailyCount">0</b>
+        <span>Today</span>
+      </div>
+
+      <div class="profile-center">
+        <div class="avatar-ring">
+          <img id="homePhoto" src="https://via.placeholder.com/88" alt="avatar" />
+          <div class="tick">✓</div>
+        </div>
+        <h2 id="homeName">Loading...</h2>
+        <p class="dim">Premium User</p>
+      </div>
+
+      <button id="vpnBtn" class="vpn-btn">
+        <span>🛡️</span>
+        <small>VPN</small>
+      </button>
+    </div>
+
+    <div id="homePage">
+      <div class="list">
+        <div id="watchAdBtn" class="card white-card">
+          <div class="ic blue">📺</div>
+          <div class="txt"><b>Watch Ad (15s)</b><small>Tap to earn +0.50 TK - Real Ad</small></div>
+          <div class="arrow">▶️</div>
+        </div>
+
+        <div id="autoBtn" class="card dark-card">
+          <div class="ic dark">⚡</div>
+          <div class="txt"><b>Auto Mode - 15s</b><small id="autoSmall">Refresh every 15 seconds</small></div>
+          <div id="autoDot" class="green-dot"></div>
+        </div>
+
+        <div id="stopBtn" class="card light-card">
+          <div class="ic red">🛑</div>
+          <div class="txt"><b>Stop Auto</b><small>Stop automatic ads</small></div>
+        </div>
+
+        <div id="confirmBtn" class="card yellow-card">
+          <div class="ic yellow">💰</div>
+          <div class="txt"><b>Confirm & Transfer</b><small>Pending → Main Balance</small></div>
+          <div class="arrow">💸</div>
+        </div>
+      </div>
+
+      <div class="promo-box">
+        <div class="glow"></div>
+        <img src="https://via.placeholder.com/400x220/7c3aed/ffffff?text=Premium+Offer" alt="promo" />
+        <div class="promo-overlay">🔥 Premium Offer</div>
+      </div>
+
+      <p class="developer-text">Developer: Noyon • Version 3.0 - Fixed Ads</p>
+
+      <div class="bottom-actions">
+        <div id="channelBtn" class="bchan">
+          <div class="circ blue">📢</div>
+          <small>Channel</small>
+        </div>
+        <div id="adminBtn" class="badmin">
+          <div class="circ green">👤</div>
+          <small>Admin</small>
+        </div>
+      </div>
+    </div>
+
+    <div id="profilePage" style="display:none">
+      <div class="profile-card">
+        <img id="profilePhoto" class="big-avatar" src="https://via.placeholder.com/110" alt="" />
+        <h2 id="profileName">E Noyon</h2>
+        <p id="profileUsername" class="dim">@user</p>
+        <p id="profileId" class="dim">ID: 123456</p>
+        <div class="bal-box">
+          <div><small>Main Balance</small><b id="pMain">10.20 TK</b></div>
+          <div><small>Pending</small><b id="pPending">5.10 TK</b></div>
+          <div><small>Ads</small><b id="pAds">0</b></div>
+        </div>
+        <div class="bal-box" style="margin-top:10px">
+          <div><small>Main</small><b id="mainBal">10.20</b></div>
+          <div><small>Pending</small><b id="pendingBal">5.10</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button id="homeNav" class="active" onclick="showHome()">🏠 Home</button>
+    <button id="profileNav" onclick="showProfile()">👤 Profile</button>
+  </div>
+</div>
+
+<!-- Ad Modal - 15s -->
+<div id="fakeAdModal" class="modal">
+  <div class="modal-box">
+    <h3>📢 Advertisement - 15s</h3>
+    <p>Ad is playing...</p>
+    <div class="bar-wrap"><div id="bar" class="bar"></div></div>
+    <h2 id="adTimer">15</h2>
+    <small>Please wait 15 seconds</small>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
