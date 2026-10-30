@@ -1,99 +1,112 @@
+
 import os
 import asyncio
-from flask import Flask, request, send_from_directory
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-WEBAPP_DIR = os.path.join(BASE_DIR, 'webapp')
-if not os.path.exists(WEBAPP_DIR):
-    WEBAPP_DIR = BASE_DIR
-
-app = Flask(__name__)
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-WEBAPP_URL = os.getenv("WEBAPP_URL", "https://auto-taka-machine.onrender.com")
-
-from telegram import Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
+import logging
+from flask import Flask, request, jsonify, send_from_directory
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, ContextTypes
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    kb = [[InlineKeyboardButton("🤖 Auto Taka Machine 🔥 Open", web_app=WebAppInfo(url=WEBAPP_URL))]]
-    await update.message.reply_text(
-        f"Hello {update.effective_user.first_name}!\n\n🔥 Auto Taka Machine Ready!\nOpen the app:",
-        reply_markup=InlineKeyboardMarkup(kb)
-    )
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Global Application - Initialize ONCE
-application = None
-main_loop = None
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+WEBAPP_URL = os.environ.get("WEBAPP_URL", "https://auto-taka-machine.onrender.com")
 
-if BOT_TOKEN:
-    application = Application.builder().token(BOT_TOKEN).build()
-    application.add_handler(CommandHandler("start", start))
-    # Create main event loop and initialize
-    main_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(main_loop)
+if not BOT_TOKEN:
+    logger.warning("BOT_TOKEN not set!")
+
+app = Flask(__name__)
+
+# Telegram Application - persistent loop fix
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+
+telegram_app = None
+
+async def init_bot():
+    global telegram_app
     try:
-        main_loop.run_until_complete(application.initialize())
-        print("✅ Bot initialized successfully")
-        # Auto set webhook on startup
-        webhook_url = f"{WEBAPP_URL}/webhook"
-        main_loop.run_until_complete(application.bot.set_webhook(url=webhook_url))
-        print(f"✅ Webhook auto-set to {webhook_url}")
+        telegram_app = Application.builder().token(BOT_TOKEN).build()
+        telegram_app.add_handler(CommandHandler("start", start_command))
+        await telegram_app.initialize()
+        await telegram_app.start()
+        # Set webhook
+        if WEBAPP_URL:
+            webhook_url = f"{WEBAPP_URL}/webhook"
+            await telegram_app.bot.set_webhook(url=webhook_url)
+            logger.info(f"✅ Webhook set to {webhook_url}")
+        logger.info("✅ Bot initialized successfully")
+        return True
     except Exception as e:
-        print(f"Init Error: {e}")
+        logger.error(f"Bot init error: {e}")
+        return False
 
-@app.route('/')
-def home():
-    return send_from_directory(WEBAPP_DIR, 'index.html')
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        keyboard = [
+            [InlineKeyboardButton("💰 Open Auto Taka Machine", web_app=WebAppInfo(url=WEBAPP_URL))]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text(
+            "🤖 *Auto Taka Machine* 🔥\n\nWelcome! Click below to open premium mini app and start earning!",
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
+    except Exception as e:
+        logger.error(f"Start command error: {e}")
 
-@app.route('/<path:path>')
-def files(path):
-    return send_from_directory(WEBAPP_DIR, path)
+# Initialize on startup
+try:
+    loop.run_until_complete(init_bot())
+except Exception as e:
+    logger.error(f"Startup error: {e}")
 
-@app.route('/webhook', methods=['POST'])
+@app.route("/")
+def index():
+    return send_from_directory("webapp", "index.html")
+
+@app.route("/webapp/<path:path>")
+def serve_webapp(path):
+    return send_from_directory("webapp", path)
+
+@app.route("/webhook", methods=["POST"])
 def webhook():
-    if not application or not BOT_TOKEN or not main_loop:
-        return "Bot not initialized", 500
     try:
         data = request.get_json(force=True)
-        update = Update.de_json(data, application.bot)
-        # Use main_loop, don't create new one, don't close it
-        main_loop.run_until_complete(application.process_update(update))
-        return "ok", 200
+        update = Update.de_json(data, telegram_app.bot)
+        loop.create_task(telegram_app.process_update(update))
+        return "OK", 200
     except Exception as e:
-        print(f"Webhook Error: {e}")
-        import traceback
-        traceback.print_exc()
-        return f"Error: {e}", 500
+        logger.error(f"Webhook error: {e}")
+        return "Error", 500
 
-@app.route('/setwebhook')
+@app.route("/setwebhook")
 def set_webhook():
-    if not application or not BOT_TOKEN or not main_loop:
-        return "BOT_TOKEN missing", 500
     try:
-        webhook_url = f"{WEBAPP_URL}/webhook"
-        result = main_loop.run_until_complete(application.bot.set_webhook(url=webhook_url))
-        info = main_loop.run_until_complete(application.bot.get_me())
-        return f"✅ Webhook set!<br>Bot: @{info.username}<br>URL: {webhook_url}<br>Result: {result}<br><br>Now send /start in Telegram"
+        async def set_wh():
+            webhook_url = f"{WEBAPP_URL}/webhook"
+            await telegram_app.bot.set_webhook(url=webhook_url)
+            return webhook_url
+        url = loop.run_until_complete(set_wh())
+        return jsonify({"status": "✅ Webhook set successfully", "url": url})
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return f"❌ Failed: {e}", 500
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/check')
+@app.route("/check")
 def check():
-    token_len = len(BOT_TOKEN) if BOT_TOKEN else 0
-    return f"""
-    <h2>🔍 Bot Check</h2>
-    BOT_TOKEN exists: {bool(BOT_TOKEN)}<br>
-    BOT_TOKEN length: {token_len}<br>
-    WEBAPP_URL: {WEBAPP_URL}<br>
-    App initialized: {application is not None}<br>
-    Loop exists: {main_loop is not None}<br>
-    WEBAPP_DIR: {WEBAPP_DIR}<br>
-    Files: {os.listdir(WEBAPP_DIR) if os.path.exists(WEBAPP_DIR) else 'NOT FOUND'}<br>
-    <br><a href='/setwebhook'>Set Webhook</a><br>
-    <a href='/'>Go to App</a>
-    """
+    files = {
+        "index.html": os.path.exists("webapp/index.html"),
+        "style.css": os.path.exists("webapp/style.css"),
+        "script.js": os.path.exists("webapp/script.js"),
+    }
+    return jsonify({
+        "BOT_TOKEN_exists": bool(BOT_TOKEN),
+        "BOT_TOKEN_length": len(BOT_TOKEN) if BOT_TOKEN else 0,
+        "WEBAPP_URL": WEBAPP_URL,
+        "App_initialized": telegram_app is not None,
+        "files": files
+    })
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
