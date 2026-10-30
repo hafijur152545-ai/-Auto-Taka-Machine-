@@ -484,3 +484,70 @@ body:has(#profilePage[style*="block"]) #topStatus {
   border-radius: 24px !important;
   padding: 8px 20px !important;
 }
+
+
+
+/* ===== FIX - Loading chikon 4/5 - ager cheye chikon + UID pasapasi + Support gap + animation ===== */
+.top-status.loading, .top-status.completed, .top-status.confirming {
+  padding: 10px 14px !important;
+  min-height: 52px !important;
+  max-height: 56px !important;
+  font-size: 12px !important;
+}
+.top-status.loading .status-icon, .top-status.completed .status-icon, .top-status.confirming .status-icon {
+  width: 30px !important;
+  height: 30px !important;
+  font-size: 14px !important;
+}
+
+/* UID pasapasi - UID: number ek line e */
+.ph-sub, .uid-line {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+}
+.ph-sub small, .uid-line small {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 4px !important;
+  white-space: nowrap !important;
+}
+#userId, #pUserId {
+  display: inline !important;
+  margin-left: 2px !important;
+}
+
+/* Support buttons - dager niche halka niche + gap + animation */
+.action-row {
+  margin-top: 16px !important;
+  position: relative !important;
+}
+.action-row::before {
+  content: '' !important;
+  position: absolute !important;
+  top: -10px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 60px !important;
+  height: 3px !important;
+  background: linear-gradient(90deg, transparent, #e5e7eb, transparent) !important;
+  border-radius: 2px !important;
+  animation: supportLine 2s ease-in-out infinite !important;
+}
+@keyframes supportLine {
+  0% { opacity: 0.3; width: 40px; }
+  50% { opacity: 1; width: 70px; }
+  100% { opacity: 0.3; width: 40px; }
+}
+#vpnBtn, #adminPanelBtn {
+  margin-top: 10px !important;
+  animation: supportBtnFade 0.6s ease-out !important;
+}
+@keyframes supportBtnFade {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
