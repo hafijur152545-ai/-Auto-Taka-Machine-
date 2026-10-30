@@ -17,7 +17,6 @@ if not BOT_TOKEN:
 
 app = Flask(__name__)
 
-# Telegram Application - persistent loop fix
 loop = asyncio.new_event_loop()
 asyncio.set_event_loop(loop)
 
@@ -30,7 +29,6 @@ async def init_bot():
         telegram_app.add_handler(CommandHandler("start", start_command))
         await telegram_app.initialize()
         await telegram_app.start()
-        # Set webhook
         if WEBAPP_URL:
             webhook_url = f"{WEBAPP_URL}/webhook"
             await telegram_app.bot.set_webhook(url=webhook_url)
@@ -43,9 +41,7 @@ async def init_bot():
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        keyboard = [
-            [InlineKeyboardButton("💰 Open Auto Taka Machine", web_app=WebAppInfo(url=WEBAPP_URL))]
-        ]
+        keyboard = [[InlineKeyboardButton("💰 Open Auto Taka Machine", web_app=WebAppInfo(url=WEBAPP_URL))]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(
             "🤖 *Auto Taka Machine* 🔥\n\nWelcome! Click below to open premium mini app and start earning!",
@@ -53,17 +49,29 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='Markdown'
         )
     except Exception as e:
-        logger.error(f"Start command error: {e}")
+        logger.error(f"Start error: {e}")
 
-# Initialize on startup
 try:
     loop.run_until_complete(init_bot())
 except Exception as e:
     logger.error(f"Startup error: {e}")
 
+# --- FIXED ROUTES FOR MULTI FILE ---
 @app.route("/")
 def index():
     return send_from_directory("webapp", "index.html")
+
+# Serve CSS, JS, etc from webapp folder when requested from root
+@app.route("/<path:path>")
+def serve_static(path):
+    # Try webapp folder first
+    webapp_path = os.path.join("webapp", path)
+    if os.path.exists(webapp_path):
+        return send_from_directory("webapp", path)
+    # Try root
+    if os.path.exists(path):
+        return send_from_directory(".", path)
+    return f"File not found: {path}", 404
 
 @app.route("/webapp/<path:path>")
 def serve_webapp(path):
@@ -98,13 +106,16 @@ def check():
         "index.html": os.path.exists("webapp/index.html"),
         "style.css": os.path.exists("webapp/style.css"),
         "script.js": os.path.exists("webapp/script.js"),
+        "light-effect.css": os.path.exists("webapp/light-effect.css"),
+        "light-effect.js": os.path.exists("webapp/light-effect.js"),
     }
     return jsonify({
         "BOT_TOKEN_exists": bool(BOT_TOKEN),
         "BOT_TOKEN_length": len(BOT_TOKEN) if BOT_TOKEN else 0,
         "WEBAPP_URL": WEBAPP_URL,
         "App_initialized": telegram_app is not None,
-        "files": files
+        "files": files,
+        "message": "All files should be True"
     })
 
 if __name__ == "__main__":
