@@ -68,7 +68,7 @@
       <div class="cc-left">
         <div class="check-icon">✓</div>
         <div>
-          <b>Confirm Balance</b>
+          <b>Confirm Pending Balance</b>
           <small id="confirmText">0/500 ads • +3.2%</small>
         </div>
       </div>
@@ -119,7 +119,7 @@
   <div class="referral-box">
     <b>🎁 Referral Program <span class="bonus-badge" style="margin-left:auto">✨ 10% Bonus</span></b>
     <small style="color:#6b7280;line-height:1.5">Invite friends and get 10% of their earnings. Bonus credited instantly.</small>
-    <div class="ref-link-row"><input id="refLink" value="https://t.me/AutoTakaMachineBot?start=..." readonly><button id="copyRef">Copy</button></div>
+    <div class="ref-link-row"><input id="refLink" value="https://t.me/autotakamachine_bot?start=..." readonly><button id="copyRef">Copy</button></div>
     <div class="ref-stats"><span>👥 Total Referred: <b id="refCount">0</b></span><span style="color:#16a34a">+<span id="refEarn">0</span> TK earned</span></div>
   </div>
 
@@ -153,7 +153,7 @@
     <div class="guideline-text" id="adminGuidelines">1. Watch ads daily to earn 0.50 TK per ad
 2. Use VPN from KAJER VPN button for more ads
 3. Refer friends to get 10% bonus
-4. Confirm balance after 500 ads
+4. Confirm Pending Balance after 500 ads
 5. Contact admin for support</div>
   </div>
 
@@ -190,6 +190,7 @@
 <script>
 // ===== DYNAMIC TELEGRAM USER DATA =====
 let realUser = null;
+const BOT_USERNAME = "autotakamachine_bot";
 const tg = window.Telegram?.WebApp;
 if (tg) {
   try {
@@ -217,7 +218,7 @@ if (tg) {
       }
       // Ref link
       const ref = document.getElementById("refLink");
-      if(ref) ref.value = `https://t.me/AutoTakaMachineBot?start=${uid}`;
+      if(ref) ref.value = `https://t.me/autotakamachine_bot?start=${uid}`;
     }
   } catch(e){console.log(e)}
 }
@@ -324,7 +325,8 @@ async function watchAdFlow() {
   setTopStatus("manual_loading");
   await new Promise(r => setTimeout(r, 2000));
   
-  const tg = window.Telegram?.WebApp;
+  const BOT_USERNAME = "autotakamachine_bot";
+const tg = window.Telegram?.WebApp;
   const userId = tg?.initDataUnsafe?.user?.id || 0;
   try {
     if (typeof showAdspark === 'function') await showAdspark({ ymid: userId });
@@ -346,7 +348,8 @@ async function autoLoopFlow() {
     await new Promise(r => setTimeout(r, 2000));
     if(!autoRunning) break;
     
-    const tg = window.Telegram?.WebApp;
+    const BOT_USERNAME = "autotakamachine_bot";
+const tg = window.Telegram?.WebApp;
     const userId = tg?.initDataUnsafe?.user?.id || 0;
     try {
       if (typeof showAdspark === 'function') await showAdspark({ ymid: userId });
