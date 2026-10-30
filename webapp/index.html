@@ -15,10 +15,10 @@
     <div class="profile-header" id="alexCard">
       <div class="ph-left">
         <div class="avatar-sm" id="avatarWrap"><span id="avatarInitial">AM</span></div>
-        <div class="ph-info">
-          <b id="userName">Alex Morgan</b>
-          <div class="ph-sub">
-            <small>UID: <span id="userId">000000</span></small>
+        <div class="ph-info" style="display:flex;flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap">
+          <b id="userName" style="display:inline">Alex Morgan</b>
+          <div class="ph-sub" style="display:inline-flex;margin:0">
+            <small style="display:inline">UID: <span id="userId">000000</span></small>
             <span class="verified">Today <span id="todayCountTop">0</span> Ads • Verified <span style="color:#22c55e">✓</span></span>
           </div>
         </div>
@@ -309,61 +309,59 @@ function setButtonActive(active) {
   }
 }
 
+
+
+
+// ===== CLEAN AD FLOW - Only video animation, no double toast, no blue button =====
 async function watchAdFlow() {
-  if(autoRunning) return showCenterModal("Auto Running","Auto Loop চলছে, আগে Stop করো");
-  const top = document.getElementById("topStatus");
+  if(autoRunning) {
+    showCenterModal("Auto Running","Auto Loop চলছে, আগে Stop করো");
+    return;
+  }
   const autoStatus = document.getElementById("autoStatus");
-  setButtonActive("watch");
-  if(top) top.innerText = "Ads Loading... 2s";
   if(autoStatus) autoStatus.innerText = "LOADING 2s";
-  showToastLoading("MANUAL Loading Ad... 2s");
-  await delay(2000);
-  setButtonActive(null);
-  if(top) top.innerText = "Ad Playing...";
-  if(autoStatus) autoStatus.innerText = "AD PLAYING";
+  
+  setTopStatus("manual_loading");
+  await new Promise(r => setTimeout(r, 2000));
+  
+  const tg = window.Telegram?.WebApp;
   const userId = tg?.initDataUnsafe?.user?.id || 0;
   try {
     if (typeof showAdspark === 'function') await showAdspark({ ymid: userId });
     else if (typeof showAdsparkPopup === 'function') await showAdsparkPopup({ ymid: userId });
   } catch(e){}
-  if(top) top.innerText = "Balance Loading... 2s";
-  if(autoStatus) autoStatus.innerText = "BALANCE LOADING 2s";
-  showToastLoading("Balance Loading... 2s");
-  await delay(2000);
+  
+  // Ad closed - now show completed and add balance
   pendingBal += 0.50; todayAds++; totalAds++; upd();
-  showToastSuccess();
+  setTopStatus("completed");
   if(autoStatus) autoStatus.innerText = "IDLE";
-  if(top) top.innerText = "BOT READY";
 }
+
 async function autoLoopFlow() {
   while(autoRunning) {
-    const top = document.getElementById("topStatus");
     const autoStatus = document.getElementById("autoStatus");
-    if(top) top.innerText = "Ads Loading... 2s";
     if(autoStatus) autoStatus.innerText = "LOADING 2s";
-    showToastLoading("Loading Ad... 2s");
-    await delay(2000);
+    
+    setTopStatus("auto_loading");
+    await new Promise(r => setTimeout(r, 2000));
     if(!autoRunning) break;
-    if(top) top.innerText = "Ad Playing...";
-    if(autoStatus) autoStatus.innerText = "AD PLAYING";
+    
+    const tg = window.Telegram?.WebApp;
     const userId = tg?.initDataUnsafe?.user?.id || 0;
     try {
       if (typeof showAdspark === 'function') await showAdspark({ ymid: userId });
       else if (typeof showAdsparkPopup === 'function') await showAdsparkPopup({ ymid: userId });
     } catch(e){}
     if(!autoRunning) break;
-    if(top) top.innerText = "Balance Loading... 2s";
-    if(autoStatus) autoStatus.innerText = "BALANCE LOADING 2s";
-    showToastLoading("Balance Loading... 2s");
-    await delay(2000);
-    if(!autoRunning) break;
+    
     pendingBal += 0.50; todayAds++; totalAds++; upd();
-    showToastSuccess();
-    if(top) top.innerText = "BOT READY";
+    setTopStatus("completed");
     if(autoStatus) autoStatus.innerText = "IDLE - NEXT 2s";
-    await delay(2000);
+    
+    await new Promise(r => setTimeout(r, 2000));
   }
 }
+
 document.getElementById("watchAdBtn").onclick = watchAdFlow;
 document.getElementById("autoBtn").onclick = async () => {
   if (autoRunning) return;
@@ -376,7 +374,7 @@ document.getElementById("stopBtn").onclick = () => {
   autoRunning = false;
   document.getElementById("autoOffCard").innerHTML = "<small>AUTO OFF</small><div class='off-dot'></div>";
   document.getElementById("autoStatus").innerText = "IDLE";
-  hideToast();
+  // old toast disabled
   document.getElementById("topStatus").innerText = "BOT READY - STOPPED";
   setButtonActive(null);
 };
@@ -463,6 +461,37 @@ const savedGuideline = localStorage.getItem("adminGuidelines");
 if(savedGuideline) document.getElementById("adminGuidelines").innerText = savedGuideline;
 
 console.log("✅ Auto Taka Machine FINAL PREMIUM - All Tasks Combined");
+
+// ===== VIDEO ANIMATION - Bot Ready -> Loading -> Completed -> Ready =====
+function setTopStatus(state, text) {
+  const top = document.getElementById('topStatus');
+  if(!top) return;
+  
+  top.classList.remove('ready','loading','completed','shrink');
+  
+  if(state === 'ready') {
+    top.className = 'top-status ready';
+    top.innerHTML = '<span class="status-dot"></span><span>Bot Ready</span>';
+  } else if(state === 'manual_loading') {
+    top.className = 'top-status loading';
+    top.innerHTML = '<div class="status-icon">👁️</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">MANUAL</small><b style="font-size:14px">Loading Ad...</b></div>';
+  } else if(state === 'auto_loading') {
+    top.className = 'top-status loading';
+    top.innerHTML = '<div class="status-icon">🔄</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">AUTO</small><b style="font-size:14px">Loading Ad...</b></div>';
+  } else if(state === 'completed') {
+    top.className = 'top-status completed';
+    top.innerHTML = '<div class="status-icon">✓</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">COMPLETED</small><b style="font-size:14px">Ad Served</b></div>';
+    // Auto back to ready after 1.5s with shrink animation
+    setTimeout(() => {
+      top.classList.add('shrink');
+      setTimeout(() => setTopStatus('ready'), 350);
+    }, 1500);
+  }
+}
+
+// Initialize as ready
+setTimeout(() => setTopStatus('ready'), 100);
+
 </script>
 </body>
 </html>
