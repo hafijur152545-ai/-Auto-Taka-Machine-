@@ -124,7 +124,7 @@ body{margin:0;background:#eef0ff;display:flex;flex-direction:column;align-items:
 #profilePage #topStatus,
 #profilePage #topStatusContainer,
 body:has(#profilePage[style*="block"]) #topStatus {
-  display: none !important;
+  /* enabled */
 }
 .phone #topStatus,
 #topStatus {
@@ -550,4 +550,177 @@ body:has(#profilePage[style*="block"]) #topStatus {
 @keyframes supportBtnFade {
   0% { opacity: 0; transform: translateY(10px); }
   100% { opacity: 1; transform: translateY(0); }
+}
+
+
+
+/* ===== FINAL DESIGN - NEH Logo + All Support Box + Premium Gap ===== */
+
+/* NEH Logo - Holud dag - premium hard style */
+#alexCard::after {
+  content: 'HEN';
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  z-index: 10;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* All Support Box - Chikon separator - 3rd image blue dag */
+.confirm-card, #confirmCard {
+  margin-bottom: 18px !important;
+  position: relative !important;
+}
+
+.support-divider {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  margin: 16px 0 12px 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+.support-divider::before,
+.support-divider::after {
+  content: '' !important;
+  flex: 1 !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent, #e5e7eb 50%, transparent) !important;
+}
+
+.support-divider span {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  color: #9ca3af !important;
+  text-transform: uppercase !important;
+  background: #f8fafc !important;
+  padding: 4px 12px !important;
+  border-radius: 20px !important;
+  border: 1px solid #f1f5f9 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+
+/* Support buttons - Nise halka nambe, besi fak na, alpo gap */
+.action-row {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+.action-row:first-of-type {
+  margin-top: 4px !important;
+}
+
+#vpnBtn, #adminPanelBtn {
+  margin-top: 8px !important;
+  margin-bottom: 6px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important;
+  transition: all 0.3s ease !important;
+}
+#vpnBtn:hover, #adminPanelBtn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
+}
+
+/* Premium style - Bot sundor */
+.ph-card, .balance-card, .stat-card, .action-card {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04) !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Alex Card 95px final */
+#alexCard {
+  min-height: 95px !important;
+  height: 95px !important;
+  max-height: 95px !important;
+}
+
+
+
+/* ===== FIX - HEN logo top right (sobuj dag) + Support buttons thakbe + small gap ===== */
+#alexCard::after {
+  display: none !important;
+}
+.neh-logo, .hen-logo {
+  display: none !important;
+}
+
+/* HEN top right badge */
+.hen-top-badge {
+  background: #0f172a !important;
+  color: white !important;
+  padding: 4px 14px !important;
+  border-radius: 16px !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: 1px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+}
+
+/* Support buttons - ager motoi thakbe, sudu alpo nise */
+#vpnBtn, #adminPanelBtn, #channelBtn, #adminBtn {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+
+
+/* HEN logo - sobuj dag - Alex card upore */
+#alexCard {
+  position: relative !important;
+}
+#alexCard::after {
+  content: 'HEN' !important;
+  display: block !important;
+  position: absolute !important;
+  top: -8px !important;
+  right: 12px !important;
+  background: #0f172a !important;
+  color: white !important;
+  padding: 4px 14px !important;
+  border-radius: 16px !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: 1px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  z-index: 20 !important;
+}
+
+/* Remove extra top HEN badge if duplicate */
+.hen-top-badge-extra {
+  display: none !important;
+}
+
+
+
+/* ===== FIX - Support buttons visible + HEN top + All Support Box gap ===== */
+#bottomButtons {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+#channelBtn, #adminBtn, #vpnBtn, #adminPanelBtn {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+#vpnBtn, #adminPanelBtn {
+  width: 72% !important;
+  max-width: 280px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: block !important;
 }
