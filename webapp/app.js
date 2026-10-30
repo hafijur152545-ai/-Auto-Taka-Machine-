@@ -1,11 +1,10 @@
 // ===== CONFIG - 15-18 SEC =====
-const AD_DURATION = 15;
+const AD_DURATION = 15; // চাইলে 18 করে দাও
 let mainBal = parseFloat(localStorage.getItem("mainBal") || "0.00");
 let pendingBal = parseFloat(localStorage.getItem("pendingBal") || "0.00");
 let todayAds = parseInt(localStorage.getItem("todayAds") || "0");
 let totalAds = parseInt(localStorage.getItem("totalAds") || "0");
-let autoI = null;
-
+let autoI = null, countI = null;
 function upd() {
   document.getElementById("mainBal").innerText = mainBal.toFixed(2) + " TK";
   document.getElementById("pendingBal").innerText = pendingBal.toFixed(2) + " TK";
@@ -25,7 +24,7 @@ function upd() {
   localStorage.setItem("totalAds", totalAds);
 }
 upd();
-
+// Toast helpers like video
 function showToastLoading() {
   const toast = document.getElementById("adToast");
   const load = document.getElementById("adToastLoading");
@@ -48,39 +47,44 @@ function showToastSuccess() {
     document.getElementById("topStatus").innerText = "BOT READY";
   }, 2500);
 }
-function hideToast() { document.getElementById("adToast").classList.add("hidden"); }
-
-// ===== FIXED ADS FUNCTION - AdSpark er asol code =====
+function hideToast() {
+  document.getElementById("adToast").classList.add("hidden");
+}
+// Real Ad with SDK + 15-18 sec timer like video - FIXED FOR K=34
 async function showRealAd() {
   showToastLoading();
   document.getElementById("autoStatus").innerText = "LOADING";
   const tg = window.Telegram?.WebApp;
   const userId = tg?.initDataUnsafe?.user?.id || 0;
-
   try {
-    // AdSpark er official function
     if (typeof showAdspark === 'function') {
       await showAdspark({ ymid: userId });
       return true;
     } else if (typeof showAdsparkPopup === 'function') {
       await showAdsparkPopup({ ymid: userId });
       return true;
-    } else {
-      console.log("SDK not ready yet, using timer");
-      // SDK load na hole 2 sec wait kore timer e jabe
-      await new Promise(r => setTimeout(r, 2000));
-      return true;
     }
   } catch(e) {
-    console.log("No ad available", e);
+    console.log("Real Ad failed", e);
+    // Ad na thakle failed dekhabe, fake taka dibe na - etai AdSpark er niyom
     hideToast();
     document.getElementById("autoStatus").innerText = "NO AD";
     document.getElementById("topStatus").innerText = "No Ad - Try Later";
     setTimeout(()=>{ document.getElementById("topStatus").innerText = "BOT READY"; }, 2000);
     return false;
   }
+  // SDK load na hole 15 sec timer
+  return new Promise((resolve) => {
+    let elapsed = 0;
+    const interval = setInterval(() => {
+      elapsed++;
+      if (elapsed >= AD_DURATION) {
+        clearInterval(interval);
+        resolve(true);
+      }
+    }, 1000);
+  });
 }
-
 async function oneAd() {
   const success = await showRealAd();
   if (success) {
@@ -89,4 +93,79 @@ async function oneAd() {
     totalAds++;
     upd();
     showToastSuccess();
-    document.getElementById("autoStatus").innerText
+    document.getElementById("autoStatus").innerText = "IDLE";
+  } else {
+    hideToast();
+    document.getElementById("autoStatus").innerText = "FAILED";
+  }
+}
+document.getElementById("watchAdBtn").onclick = oneAd;
+document.getElementById("autoBtn").onclick = () => {
+  if (autoI) return;
+  document.getElementById("autoOffCard").innerHTML = "<small>AUTO ON</small><div class='off-dot' style='background:#22c55e;border-color:#22c55e'></div>";
+  document.getElementById("autoStatus").innerText = "ACTIVE";
+  oneAd();
+  autoI = setInterval(oneAd, AD_DURATION * 1000);
+};
+document.getElementById("stopBtn").onclick = () => {
+  clearInterval(autoI);
+  autoI = null;
+  document.getElementById("autoOffCard").innerHTML = "<small>AUTO OFF</small><div class='off-dot'></div>";
+  document.getElementById("autoStatus").innerText = "IDLE";
+  hideToast();
+  document.getElementById("topStatus").innerText = "BOT READY";
+};
+document.getElementById("confirmBtn").onclick = () => {
+  if (pendingBal <= 0) return alert("❌ No pending balance!");
+  if (totalAds < 1) return alert("Watch at least 1 ad!");
+  mainBal += pendingBal;
+  pendingBal = 0;
+  upd();
+  alert("✅ Confirmed! Added to Main Balance");
+};
+function showHome() {
+  document.querySelector(".phone").style.display = "block";
+  document.getElementById("profilePage").style.display = "none";
+  document.getElementById("homeNav").classList.add("bn-active");
+  document.getElementById("profileNav").classList.remove("bn-active");
+}
+function showProfile() {
+  document.querySelector(".phone").style.display = "none";
+  document.getElementById("profilePage").style.display = "block";
+  document.getElementById("profileNav").classList.add("bn-active");
+  document.getElementById("homeNav").classList.remove("bn-active");
+}
+// Telegram Profile
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  try {
+    tg.ready();
+    tg.expand();
+    const u = tg.initDataUnsafe?.user;
+    if (u) {
+      const name = (u.first_name || "") + (u.last_name ? " " + u.last_name : "");
+      const initial = (u.first_name?.[0] || "A") + (u.last_name?.[0] || "M");
+      document.getElementById("userName").innerText = name || "Alex Morgan";
+      document.getElementById("pUserName").innerText = name || "Alex Morgan";
+      document.getElementById("avatarInitial").innerText = initial.toUpperCase();
+      document.getElementById("pAvatarInitial").innerText = initial.toUpperCase();
+      document.getElementById("userId").innerText = u.id || "000000";
+      document.getElementById("pUserId").innerText = u.id || "000000";
+    }
+  } catch(e){console.log(e)}
+}
+// Links
+document.getElementById("channelBtn").onclick = () => window.open("https://t.me/SmartWorkCommunity","_blank");
+document.getElementById("adminBtn").onclick = () => window.open("https://t.me/noyonfb1020","_blank");
+document.getElementById("vpnBtn").onclick = () => window.open("https://play.google.com/store/apps/details?id=free.vpnaustralia.unlimited.tunnel.proxy.secure.hotspot","_blank");
+document.getElementById("copyRef").onclick = () => {
+  navigator.clipboard.writeText(document.getElementById("refLink").value);
+  alert("Copied!");
+};
+console.log("✅ Auto Taka Machine V2.4 - Video Design + 15s Ad + SDK");
+setTimeout(() => {
+  if (typeof showAdspark === 'function' || typeof showAdsparkPopup === 'function') {
+    console.log("✅ SDK Ready");
+    document.getElementById("topStatus").innerText = "BOT READY - SDK OK";
+  }
+}, 1000);
