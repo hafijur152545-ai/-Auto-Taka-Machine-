@@ -1,154 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Auto Taka Machine</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://adspark-tma.top/api/public/sdk.js?k=34"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Auto Taka Machine</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://adspark-tma.top/api/public/sdk.js?k=34"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{margin:0;background:#eef0ff;display:flex;flex-direction:column;align-items:center;font-family:Inter,'Segoe UI',system-ui,sans-serif;-webkit-tap-highlight-color:transparent;min-height:100vh}
+.phone{width:100%;max-width:420px;background:linear-gradient(180deg,#f6f7ff 0%,#eef0ff 100%);min-height:100vh;padding:14px 14px 110px 14px;position:relative}
+.top-status{margin:8px auto 0;background:#fff;border-radius:999px;padding:7px 16px;font-size:11px;font-weight:800;letter-spacing:0.6px;box-shadow:0 4px 16px rgba(0,0,0,0.06);width:fit-content;display:flex;align-items:center;gap:7px;color:#111827;border:1px solid #f0f0f0;position:relative;z-index:5}
+.top-status::before{content:"";width:8px;height:8px;background:#22c55e;border-radius:50%;display:inline-block;box-shadow:0 0 0 3px #22c55e20}
+/* TASK 1: main solid moves down 8px as one block, except BOT READY */
+#mainContent{margin-top:14px;transition:all 0.2s} /* 6-8px extra down from original */
+.profile-header{background:#fff;border-radius:20px;padding:14px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 20px rgba(0,0,0,0.05);margin-bottom:12px;border:1px solid #f1f1f5}
+/* TASK 2: Alex Morgan card wider 12-16px each side */
+#alexCard{width:calc(100% + 28px);margin-left:-14px;margin-right:-14px; /* wider */ }
+.ph-left{display:flex;align-items:center;gap:10px}
+.avatar-sm{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#e0e7ff,#c7d2fe);color:#6d5cf6;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;border:2px solid #fff;box-shadow:0 2px 8px rgba(79,70,229,0.15);overflow:hidden}
+.avatar-sm img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.ph-info b{font-size:13.5px;display:block;color:#111827} .ph-sub{font-size:11px;color:#6b7280;margin-top:2px;display:flex;gap:6px;align-items:center}
+.verified{font-size:10px;color:#6b7280;background:#f9fafb;padding:2px 6px;border-radius:6px;border:1px solid #f0f0f0}
+.automation-badge{background:#f9fafb;border-radius:12px;padding:7px 12px;text-align:center;border:1px solid #eef0f0;min-width:78px}
+.automation-badge small{font-size:8px;display:block;color:#9ca3af;letter-spacing:0.8px;font-weight:700} .automation-badge span{font-size:11px;font-weight:800;color:#111827;margin-top:2px;display:block}
+.balance-row{display:flex;gap:10px;margin-bottom:12px}
+.bal-card{flex:1;background:#fff;border-radius:18px;padding:14px;box-shadow:0 4px 20px rgba(0,0,0,0.05);border:1px solid #f1f1f5}
+.bal-card.dark{background:#0f1115;color:white;border:1px solid #1f2937}
+.bal-top{display:flex;justify-content:space-between;font-size:9px;opacity:0.7;margin-bottom:8px;letter-spacing:0.5px;font-weight:700}
+.bal-card b{font-size:20px;display:block;letter-spacing:-0.5px} .bal-sub{font-size:10px;opacity:0.6;margin-top:5px;display:block}
+.info-row{display:flex;gap:10px;margin-bottom:14px}
+.info-card{flex:1;background:#fff;border-radius:16px;padding:12px;box-shadow:0 4px 16px rgba(0,0,0,0.04);border:1px solid #f1f1f5}
+.info-card small{font-size:11px;font-weight:600;color:#374151} .info-card .dim{color:#9ca3af;font-size:10px}
+.progress{height:5px;background:#f3f4f6;border-radius:10px;margin:8px 0;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);width:0%;transition:width 0.4s}
+.auto-off{display:flex;flex-direction:column;justify-content:center;align-items:center;background:#fff;border:1.5px dashed #e5e7eb !important}
+.off-dot{width:22px;height:22px;border-radius:50%;border:2.5px solid #e5e7eb;margin-top:6px;background:white}
+
+/* TASK 2 from first prompt: Auto Loop & Stop slightly thicker 4-6px */
+.watch-btn{width:100%;background:#0f1115;color:white;border:none;border-radius:18px;padding:18px 18px;font-size:14.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,0.18);border:1px solid #1f2937;transition:all 0.2s}
+.watch-btn:active{transform:scale(0.97)}
+.action-row{display:flex;gap:10px;margin-bottom:12px}
+.action-btn{flex:1;background:#fff;border:1px solid #e9e9ef;border-radius:14px;padding:16px 12px;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;color:#111827;box-shadow:0 2px 10px rgba(0,0,0,0.03);transition:all 0.2s} /* thicker: 16px padding vs 13px */
+.action-btn.danger{color:#ef4444}
+.action-btn:active{transform:scale(0.96)}
+.action-btn.active-auto{background:#22c55e !important;color:white !important;border-color:#22c55e !important}
+
+.confirm-card{width:100%;background:#fff;border:1px solid #e9e9ef;border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;text-align:left;box-shadow:0 2px 12px rgba(0,0,0,0.03)}
+.cc-left{display:flex;align-items:center;gap:12px}
+.check-icon{width:32px;height:32px;border-radius:50%;background:#0f1115;color:white;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+.confirm-card b{font-size:13.5px;display:block;color:#111827} .confirm-card small{font-size:11px;color:#6b7280;margin-top:2px;display:block}
+.arrow{color:#9ca3af;font-size:18px}
+
+/* Bottom 4 buttons slightly down 6-8px */
+#bottomButtons{margin-top:14px} /* extra down */
+
+.vpn-btn{width:100%;background:#0f1115;color:white;border:none;border-radius:16px;padding:15px;font-weight:800;font-size:13px;margin-bottom:10px;cursor:pointer;letter-spacing:0.8px;box-shadow:0 6px 16px rgba(0,0,0,0.15);border:1px solid #1f2937}
+.vpn-btn.outline{background:#fff;color:#111827;border:1.5px solid #e9e9ef;box-shadow:0 2px 10px rgba(0,0,0,0.03)}
+.footer{text-align:center;font-size:10px;color:#9ca3af;margin:22px 0 10px;letter-spacing:1.2px;font-weight:600}
+.bottom-nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);width:calc(100% - 28px);max-width:400px;background:#0f1115;border-radius:28px;display:flex;padding:7px;gap:6px;z-index:30;box-shadow:0 12px 32px rgba(0,0,0,0.25);border:1px solid #1f2937}
+.bottom-nav button{flex:1;background:transparent;color:#6b7280;border:none;border-radius:20px;padding:11px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:all 0.25s}
+.bottom-nav button.bn-active{background:#fff;color:#0f1115;box-shadow:0 4px 12px rgba(255,255,255,0.15)}
+
+/* TASK 3: Loading bar position - move up slightly, directly above Alex card, hide IDLE */
+.ad-toast{position:fixed;top:48px;left:50%;transform:translateX(-50%);width:92%;max-width:380px;z-index:50;transition:all 0.35s cubic-bezier(0.16,1,0.3,1)} /* moved up from 60+ to 48 to match yellow mark */
+.ad-toast.hidden{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(-20px) scale(0.96)}
+.ad-toast-inner{background:#0f1115;color:white;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 12px 32px rgba(0,0,0,0.25);border:1px solid #1f2937}
+.ad-toast-inner.success{border:1px solid #22c55e40}
+.toast-icon{width:36px;height:36px;border-radius:50%;background:#1f2937;display:flex;align-items:center;justify-content:center}
+.toast-icon.success{background:#22c55e20;color:#22c55e}
+.spinner{width:20px;height:20px;border:2.5px solid #334155;border-top:2.5px solid #60a5fa;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast-text small{font-size:9px;color:#9ca3af;display:block;letter-spacing:0.8px;font-weight:700;margin-bottom:2px}
+.toast-text b{font-size:13.5px}
+.toast-right{margin-left:auto;width:26px;height:26px;border-radius:50%;background:#1f2937;display:flex;align-items:center;justify-content:center}
+.toast-right.success{background:#22c55e;color:white}
+.completed-banner{position:fixed;top:66px;left:50%;transform:translateX(-50%);background:#0f1115;color:#22c55e;padding:10px 18px;border-radius:999px;font-size:12px;font-weight:700;z-index:49;border:1px solid #22c55e40;box-shadow:0 8px 24px rgba(0,0,0,0.15);transition:all 0.35s}
+.completed-banner.hidden{opacity:0;transform:translateX(-50%) translateY(-12px)}
+
+/* TASK 1 Popup centered */
+#centerModal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:86%;max-width:360px;background:#fff;border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,0.25);border:1px solid #f1f1f5;z-index:100;display:none;text-align:center}
+#centerModal.show{display:block;animation:popIn 0.3s cubic-bezier(0.16,1,0.3,1)}
+#centerModalOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99;display:none;backdrop-filter:blur(4px)}
+#centerModalOverlay.show{display:block}
+@keyframes popIn{from{opacity:0;transform:translate(-50%,-46%) scale(0.96)} to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+#centerModal b{font-size:15px;display:block;margin-bottom:8px}
+#centerModal small{font-size:12px;color:#6b7280;display:block;margin-bottom:14px;line-height:1.5}
+#centerModal button{background:#0f1115;color:white;border:none;border-radius:12px;padding:10px 20px;font-weight:700;cursor:pointer}
+
+/* Profile Page Styles */
+#profilePage{display:none}
+.profile-top-card{background:#fff;border-radius:20px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05);border:1px solid #f1f1f5;margin-bottom:12px;margin-top:14px}
+.profile-top-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.profile-user{display:flex;gap:12px;align-items:center}
+.profile-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#e0e7ff,#c7d2fe);color:#6d5cf6;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;border:2px solid #fff;overflow:hidden}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}
+.uid-badge{background:#f3f0ff;border:1px solid #e9e5ff;padding:3px 8px;border-radius:8px;font-size:11px;color:#6b7280;font-weight:600}
+.status-badge{background:#f0fdf4;border:1px solid #dcfce7;color:#16a34a;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px}
+.status-badge::before{content:"";width:6px;height:6px;background:#22c55e;border-radius:50%}
+.profile-balance-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.pb-card{background:#f8f7ff;border:1px solid #f1f0ff;border-radius:14px;padding:12px}
+.pb-card.dark{background:#0f1115;color:white;border-color:#1f2937}
+.pb-card small{font-size:9px;font-weight:700;letter-spacing:0.5px;opacity:0.7;display:block;margin-bottom:6px}
+.pb-card b{font-size:17px;display:block}
+.profile-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ps-card{background:#f9fafb;border:1px solid #f1f1f5;border-radius:14px;padding:12px}
+.ps-card small{font-size:9px;font-weight:700;letter-spacing:0.5px;color:#6b7280;display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.ps-card b{font-size:13px;color:#111827}
+.ps-card .dim{font-size:10px;color:#9ca3af;margin-top:4px;display:block}
+
+.referral-box,.withdraw-box,.history-box,.guideline-box{background:#fff;border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,0.04);border:1px solid #f1f1f5}
+.referral-box b,.withdraw-box b,.history-box b,.guideline-box b{font-size:13.5px;display:block;margin-bottom:8px;color:#111827;display:flex;align-items:center;gap:8px}
+.bonus-badge{background:#fef08a;border:1px solid #fde047;color:#854d0e;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800}
+.ref-link-row{display:flex;gap:8px;margin:12px 0}
+.ref-link-row input{flex:1;background:#f9fafb;border:1.5px solid #f1f1f5;border-radius:12px;padding:10px 12px;font-size:11px;font-weight:600}
+.ref-link-row button{background:#0f1115;color:white;border:none;border-radius:12px;padding:10px 16px;font-size:11px;font-weight:700;cursor:pointer}
+.ref-stats{display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-top:4px}
+.method-row{display:flex;gap:8px;margin:12px 0}
+.method-btn{flex:1;background:#f9fafb;border:1.5px solid #f1f1f5;border-radius:12px;padding:12px 8px;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center}
+.method-btn.selected{background:#0f1115;color:white;border-color:#0f1115;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+.method-btn b{display:block;font-size:12px} .method-btn small{display:block;font-size:10px;opacity:0.7;margin-top:2px}
+.input{width:100%;background:#f9fafb;border:1.5px solid #f1f1f5;border-radius:12px;padding:12px;margin:6px 0;font-size:12.5px;font-weight:500;outline:none}
+.action-btn.primary{background:#0f1115;color:white;border-color:#0f1115;width:100%;border-radius:12px;padding:12px;margin-top:6px}
+.no-history{text-align:center;padding:20px;color:#9ca3af;font-size:12px}
+.no-history small{font-size:11px}
+.guideline-text{font-size:11.5px;color:#4b5563;line-height:1.6;background:#f9fafb;border-radius:12px;padding:12px;border:1px dashed #e5e7eb;white-space:pre-line}
+</style>
 </head>
 <body>
-<div class="phone">
-  <!-- Top Status -->
+<div class="phone" id="homePage">
   <div id="topStatus" class="top-status">BOT READY</div>
-
-  <!-- Profile Header Card -->
-  <div class="profile-header">
-    <div class="ph-left">
-      <div class="avatar-sm"><span id="avatarInitial">AM</span></div>
-      <div class="ph-info">
-        <b id="userName">Alex Morgan</b>
-        <div class="ph-sub">
-          <small>UID: <span id="userId">000000</span></small>
-          <span class="verified">Today 1 Ads • Verified <span class="dot-v">✓</span></span>
+  <div id="mainContent">
+    <div class="profile-header" id="alexCard">
+      <div class="ph-left">
+        <div class="avatar-sm" id="avatarWrap"><span id="avatarInitial">AM</span></div>
+        <div class="ph-info">
+          <b id="userName">Alex Morgan</b>
+          <div class="ph-sub">
+            <small>UID: <span id="userId">000000</span></small>
+            <span class="verified">Today <span id="todayCountTop">0</span> Ads • Verified <span style="color:#22c55e">✓</span></span>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="automation-badge">
-      <small>AUTOMATION</small>
-      <span id="autoStatus">IDLE</span>
-    </div>
-  </div>
-
-  <!-- Balance Cards -->
-  <div class="balance-row">
-    <div class="bal-card">
-      <div class="bal-top"><small>MAIN BALANCE</small><span>$</span></div>
-      <b id="mainBal">0.00 TK</b>
-      <small class="bal-sub">0 TK • VERIFIED</small>
-    </div>
-    <div class="bal-card dark">
-      <div class="bal-top"><small>PENDING</small><span>S</span></div>
-      <b id="pendingBal">0.00 TK</b>
-      <small class="bal-sub">Ready to confirm</small>
-    </div>
-  </div>
-
-  <!-- Today / Auto Off -->
-  <div class="info-row">
-    <div class="info-card">
-      <small>TODAY <span id="todayCount">0</span> Ads</small>
-      <div class="progress"><div id="todayProgress" class="prog-fill"></div></div>
-      <small class="dim"><span id="todayPercent">0.0%</span> of daily</small>
-    </div>
-    <div class="info-card auto-off" id="autoOffCard">
-      <small>AUTO OFF</small>
-      <div class="off-dot"></div>
-    </div>
-  </div>
-
-  <!-- Watch Ad Button -->
-  <button id="watchAdBtn" class="watch-btn">
-    <span>Watch Ad (+0.50 TK)</span>
-    <span class="play-icon">▶</span>
-  </button>
-
-  <!-- Auto Loop / Stop -->
-  <div class="action-row">
-    <button id="autoBtn" class="action-btn">
-      <span class="icon">⇄</span> Auto Loop
-    </button>
-    <button id="stopBtn" class="action-btn danger">
-      <span class="icon">○</span> Stop
-    </button>
-  </div>
-
-  <!-- Confirm Balance -->
-  <button id="confirmBtn" class="confirm-card">
-    <div class="cc-left">
-      <div class="check-icon">✓</div>
-      <div>
-        <b>Confirm Balance</b>
-        <small id="confirmText">0/500 ads • +3.2%</small>
+      <div class="automation-badge">
+        <small>AUTOMATION</small>
+        <span id="autoStatus">IDLE</span>
       </div>
     </div>
-    <span class="arrow">→</span>
-  </button>
 
-  <!-- Channel / Admin -->
-  <div class="action-row">
-    <button id="channelBtn" class="action-btn light"><span>🔗</span> Bot Channel</button>
-    <button id="adminBtn" class="action-btn light"><span>👤</span> Admin</button>
+    <div class="balance-row">
+      <div class="bal-card">
+        <div class="bal-top"><small>MAIN BALANCE</small><span>$</span></div>
+        <b id="mainBal">0.00 TK</b>
+        <small class="bal-sub"><span id="mainSub">0 TK • VERIFIED</span></small>
+      </div>
+      <div class="bal-card dark">
+        <div class="bal-top"><small>PENDING</small><span>◷</span></div>
+        <b id="pendingBal">0.00 TK</b>
+        <small class="bal-sub">Ready to confirm</small>
+      </div>
+    </div>
+
+    <div class="info-row">
+      <div class="info-card">
+        <small>TODAY <span id="todayCount">0</span> Ads</small>
+        <div class="progress"><div id="todayProgress" class="prog-fill"></div></div>
+        <small class="dim"><span id="todayPercent">0.0%</span> of daily</small>
+      </div>
+      <div class="info-card auto-off" id="autoOffCard">
+        <small>AUTO OFF</small>
+        <div class="off-dot"></div>
+      </div>
+    </div>
+
+    <button id="watchAdBtn" class="watch-btn">
+      <span>Watch Ad (+0.50 TK)</span>
+      <span class="play-icon">▶</span>
+    </button>
+
+    <div class="action-row">
+      <button id="autoBtn" class="action-btn"><span>⇄</span> Auto Loop</button>
+      <button id="stopBtn" class="action-btn danger"><span>○</span> Stop</button>
+    </div>
+
+    <button id="confirmBtn" class="confirm-card">
+      <div class="cc-left">
+        <div class="check-icon">✓</div>
+        <div>
+          <b>Confirm Balance</b>
+          <small id="confirmText">0/500 ads • +3.2%</small>
+        </div>
+      </div>
+      <span class="arrow">→</span>
+    </button>
+
+    <div id="bottomButtons">
+      <div class="action-row">
+        <button id="channelBtn" class="action-btn light"><span>✈</span> Bot Channel</button>
+        <button id="adminBtn" class="action-btn light"><span>👤</span> Admin</button>
+      </div>
+      <button id="vpnBtn" class="vpn-btn">KAJER VPN</button>
+      <button id="adminPanelBtn" class="vpn-btn outline">ADMIN PANEL</button>
+      <div class="footer">NEH • PREMIUM V2.4</div>
+    </div>
   </div>
-
-  <button id="vpnBtn" class="vpn-btn">KAJER VPN</button>
-  <button id="adminPanelBtn" class="vpn-btn outline">ADMIN PANEL</button>
-
-  <div class="footer">NEH • PREMIUM V2.4</div>
-
-  <!-- Home Page bottom nav is outside scroll -->
 </div>
 
-<!-- Profile Page (hidden) -->
-<div id="profilePage" class="phone" style="display:none">
+<!-- PROFILE PAGE - PREMIUM LIKE SCREENSHOT 2 -->
+<div id="profilePage" class="phone">
   <div class="top-status">BOT READY</div>
-  <div class="profile-header">
-    <div class="ph-left">
-      <div class="avatar-sm"><span id="pAvatarInitial">AM</span></div>
-      <div class="ph-info">
-        <b id="pUserName">Alex Morgan</b>
-        <small>UID: <span id="pUserId">000000</span></small>
+  <div class="profile-top-card">
+    <div class="profile-top-header">
+      <div class="profile-user">
+        <div class="profile-avatar" id="pAvatarWrap"><span id="pAvatarInitial">AM</span></div>
+        <div>
+          <b id="pUserName" style="font-size:14px">Alex Morgan</b>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+            <span class="uid-badge">UID: <span id="pUserId">000000</span></span>
+            <span style="font-size:11px;color:#6b7280">Verified ✓</span>
+          </div>
+        </div>
       </div>
+      <div class="status-badge" id="pStatus">ACTIVE</div>
     </div>
-    <div class="automation-badge"><small>STATUS</small><span id="pStatus">ACTIVE</span></div>
+    <div class="profile-balance-grid">
+      <div class="pb-card"><small style="color:#7c3aed">MAIN BALANCE</small><b id="pMainBal">0.00 TK</b><small class="dim" id="pMainSub" style="font-size:10px">0 TK</small></div>
+      <div class="pb-card dark"><small>PENDING</small><b id="pPendingBal">0.00 TK</b><small style="font-size:10px;opacity:0.6">Ready to confirm</small></div>
+    </div>
+    <div class="profile-stats-grid">
+      <div class="ps-card"><small>📈 TOTAL EARNED</small><b id="pTotalEarned">0 TK</b></div>
+      <div class="ps-card"><small>📅 JOINED</small><b id="pJoined">Just now</b><span class="dim">Since Today</span></div>
+      <div class="ps-card"><small>▶ TOTAL ADS</small><b id="pTotalAds">0 Ads</b><span class="dim" id="pTotalPercent">0.0% of daily</span></div>
+      <div class="ps-card"><small>👥 REFERRALS</small><b id="pRefs">0 Referrals</b><span class="dim">10% bonus active</span></div>
+    </div>
   </div>
-  <div class="balance-row">
-    <div class="bal-card"><div class="bal-top"><small>MAIN BALANCE</small></div><b id="pMainBal">0.00 TK</b><small id="pMainSub">0 TK</small></div>
-    <div class="bal-card dark"><div class="bal-top"><small>PENDING</small></div><b id="pPendingBal">0.50 TK</b><small>Just now</small></div>
-  </div>
-  <div class="info-row">
-    <div class="info-card"><small>TOTAL ADS</small><b id="pTotalAds">1 Ads</b><small class="dim" id="pTotalPercent">0.2% of daily</small></div>
-    <div class="info-card"><small>REFERRALS</small><b id="pRefs">0 Referrals</b><small class="dim">10% bonus active</small></div>
-  </div>
+
   <div class="referral-box">
-    <b>Referral Program</b><small>Invite friends and get 10% of their earnings. Bonus credited instantly.</small>
+    <b>🎁 Referral Program <span class="bonus-badge" style="margin-left:auto">✨ 10% Bonus</span></b>
+    <small style="color:#6b7280;line-height:1.5">Invite friends and get 10% of their earnings. Bonus credited instantly.</small>
     <div class="ref-link-row"><input id="refLink" value="https://t.me/AutoTakaMachineBot?start=..." readonly><button id="copyRef">Copy</button></div>
-    <div class="ref-stats"><span>Total Referred: <b id="refCount">0</b></span><span style="color:#22c55e"><span id="refEarn">+0</span> TK earned</span></div>
+    <div class="ref-stats"><span>👥 Total Referred: <b id="refCount">0</b></span><span style="color:#16a34a">+<span id="refEarn">0</span> TK earned</span></div>
   </div>
+
   <div class="withdraw-box">
-    <b>Earnings & Withdraw</b>
-    <div class="balance-row"><div class="bal-card"><small>CURRENT BALANCE</small><b id="wBal">0.00 TK</b></div><div class="bal-card"><small>MIN WITHDRAW</small><b>0 TK</b><small>Select method</small></div></div>
-    <small>SELECT METHOD</small>
-    <div class="method-row"><button class="method-btn">bKash</button><button class="method-btn">Nagad</button><button class="method-btn">Rocket</button></div>
-    <input class="input" placeholder="01XXXXXXXXX"><input class="input" placeholder="Amount TK">
-    <div class="action-row"><button class="action-btn light">History</button><button class="action-btn primary">Request Withdraw</button></div>
-    <div class="history-box"><b>Withdraw History</b><small>0 records</small><div class="no-history">No history yet<br><small>Contact Admin for Support</small></div></div>
+    <b>📤 Earnings & Withdraw</b>
+    <div style="display:flex;gap:10px;margin:12px 0">
+      <div class="pb-card" style="flex:1"><small>CURRENT BALANCE</small><b id="wBal">0.00 TK</b></div>
+      <div class="pb-card" style="flex:1;background:#fefce8;border-color:#fef08a"><small>MIN WITHDRAW</small><b id="minWithdrawDisplay">0 TK</b><small style="font-size:10px">Select method</small></div>
+    </div>
+    <small style="font-size:11px;font-weight:700;color:#374151">SELECT METHOD</small>
+    <div class="method-row">
+      <button class="method-btn" data-method="bkash" onclick="selectMethod('bkash')"><b style="color:#e91e63">bKash</b><small id="bkashLimit">Min 0 TK</small></button>
+      <button class="method-btn" data-method="nagad" onclick="selectMethod('nagad')"><b style="color:#f57c00">Nagad</b><small id="nagadLimit">Min 0 TK</small></button>
+      <button class="method-btn" data-method="rocket" onclick="selectMethod('rocket')"><b style="color:#8e24aa">Rocket</b><small id="rocketLimit">Min 0 TK</small></button>
+    </div>
+    <input class="input" id="withdrawNumber" placeholder="01XXXXXXXXX (Number)">
+    <input class="input" id="withdrawAmount" placeholder="Amount TK" type="number">
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="action-btn light" style="flex:1" onclick="showHistory()"><span>🕘</span> History</button>
+      <button class="action-btn primary" style="flex:1" onclick="requestWithdraw()">Request Withdraw</button>
+    </div>
   </div>
-  <div class="footer">NEH • PREMIUM V2.4</div>
+
+  <div class="history-box">
+    <b>🕘 Withdraw History <span style="margin-left:auto;font-size:11px;color:#9ca3af" id="historyCount">0 records</span></b>
+    <div id="historyList"><div class="no-history">No history yet<br><small>Contact Admin for Support</small></div></div>
+  </div>
+
+  <div class="guideline-box">
+    <b>📋 Bot Guidelines <span style="margin-left:auto;font-size:10px;background:#f3f4f6;padding:4px 8px;border-radius:8px">RULES & GUIDE</span></b>
+    <div class="guideline-text" id="adminGuidelines">1. Watch ads daily to earn 0.50 TK per ad
+2. Use VPN from KAJER VPN button for more ads
+3. Refer friends to get 10% bonus
+4. Confirm balance after 500 ads
+5. Contact admin for support</div>
+  </div>
+
+  <div class="footer">NEH • PREMIUM V2.4 • PROFILE</div>
 </div>
 
-<!-- Bottom Nav -->
 <div class="bottom-nav">
   <button id="homeNav" class="bn-active" onclick="showHome()"><span>⌂</span> Home</button>
   <button id="profileNav" onclick="showProfile()"><span>👤</span> Profile</button>
 </div>
 
-<!-- Ad Toast - Video style -->
+<!-- Centered Popup Modal -->
+<div id="centerModalOverlay" onclick="closeCenterModal()"></div>
+<div id="centerModal">
+  <b id="modalTitle">Access Required</b>
+  <small id="modalText">This feature requires access. Please contact admin.</small>
+  <button onclick="closeCenterModal()">OK</button>
+</div>
+
 <div id="adToast" class="ad-toast hidden">
   <div id="adToastLoading" class="ad-toast-inner loading">
     <div class="toast-icon"><div class="spinner"></div></div>
-    <div class="toast-text"><small>MANUAL</small><b>Loading Ad...</b></div>
+    <div class="toast-text"><small>MANUAL</small><b>Loading Ad... 2s</b></div>
     <div class="toast-right"></div>
   </div>
   <div id="adToastSuccess" class="ad-toast-inner success" style="display:none">
@@ -157,9 +304,284 @@
     <div class="toast-right success"><span>✓</span></div>
   </div>
 </div>
-
 <div id="adCompletedBanner" class="completed-banner hidden">Ad Completed! +0.50 TK</div>
 
-<script src="app.js"></script>
+<script>
+// ===== DYNAMIC TELEGRAM USER DATA =====
+let realUser = null;
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  try {
+    tg.ready(); tg.expand();
+    const u = tg.initDataUnsafe?.user;
+    if (u) {
+      realUser = u;
+      const name = (u.first_name || "") + (u.last_name ? " " + u.last_name : "");
+      const initial = ((u.first_name?.[0] || "A") + (u.last_name?.[0] || "")).toUpperCase() || "AM";
+      const uid = u.id;
+      const photo = u.photo_url;
+      // Home
+      document.getElementById("userName").innerText = name.trim() || "User";
+      document.getElementById("userId").innerText = uid;
+      document.getElementById("avatarInitial").innerText = initial;
+      if(photo){
+        document.getElementById("avatarWrap").innerHTML = `<img src="${photo}" onerror="this.parentElement.innerHTML='<span>${initial}</span>'">`;
+      }
+      // Profile
+      document.getElementById("pUserName").innerText = name.trim() || "User";
+      document.getElementById("pUserId").innerText = uid;
+      document.getElementById("pAvatarInitial").innerText = initial;
+      if(photo){
+        document.getElementById("pAvatarWrap").innerHTML = `<img src="${photo}" onerror="this.parentElement.innerHTML='<span>${initial}</span>'">`;
+      }
+      // Ref link
+      const ref = document.getElementById("refLink");
+      if(ref) ref.value = `https://t.me/AutoTakaMachineBot?start=${uid}`;
+    }
+  } catch(e){console.log(e)}
+}
+
+// ===== DEFAULT 0 BALANCES =====
+let mainBal = parseFloat(localStorage.getItem("mainBal") || "0.00");
+let pendingBal = parseFloat(localStorage.getItem("pendingBal") || "0.00");
+let todayAds = parseInt(localStorage.getItem("todayAds") || "0");
+let totalAds = parseInt(localStorage.getItem("totalAds") || "0");
+let autoRunning = false;
+let selectedMethod = null;
+
+// ===== MIN WITHDRAW LIMITS - ADMIN CONTROLLABLE =====
+let minWithdrawLimits = JSON.parse(localStorage.getItem("minWithdrawLimits") || '{"bkash":0,"nagad":0,"rocket":0}');
+function updateMinWithdrawUI(){
+  document.getElementById("bkashLimit").innerText = `Min ${minWithdrawLimits.bkash} TK`;
+  document.getElementById("nagadLimit").innerText = `Min ${minWithdrawLimits.nagad} TK`;
+  document.getElementById("rocketLimit").innerText = `Min ${minWithdrawLimits.rocket} TK`;
+}
+updateMinWithdrawUI();
+
+function selectMethod(m){
+  selectedMethod = m;
+  document.querySelectorAll(".method-btn").forEach(b=>b.classList.remove("selected"));
+  document.querySelector(`.method-btn[data-method="${m}"]`)?.classList.add("selected");
+  document.getElementById("minWithdrawDisplay").innerText = minWithdrawLimits[m] + " TK";
+}
+window.selectMethod = selectMethod;
+
+function upd() {
+  const g = id => document.getElementById(id);
+  if(g("mainBal")) g("mainBal").innerText = mainBal.toFixed(2) + " TK";
+  if(g("pendingBal")) g("pendingBal").innerText = pendingBal.toFixed(2) + " TK";
+  if(g("pMainBal")) g("pMainBal").innerText = mainBal.toFixed(2) + " TK";
+  if(g("pPendingBal")) g("pPendingBal").innerText = pendingBal.toFixed(2) + " TK";
+  if(g("todayCount")) g("todayCount").innerText = todayAds;
+  if(g("todayCountTop")) g("todayCountTop").innerText = todayAds;
+  if(g("pTotalAds")) g("pTotalAds").innerText = totalAds + " Ads";
+  if(g("todayPercent")) g("todayPercent").innerText = (todayAds/500*100).toFixed(1) + "%";
+  if(g("pTotalPercent")) g("pTotalPercent").innerText = (todayAds/500*100).toFixed(1) + "% of daily";
+  if(g("todayProgress")) g("todayProgress").style.width = Math.min(todayAds/500*100,100) + "%";
+  if(g("confirmText")) g("confirmText").innerText = totalAds + "/500 ads • +3.2%";
+  if(g("wBal")) g("wBal").innerText = mainBal.toFixed(2) + " TK";
+  if(g("pTotalEarned")) g("pTotalEarned").innerText = mainBal.toFixed(0) + " TK";
+  localStorage.setItem("mainBal", mainBal);
+  localStorage.setItem("pendingBal", pendingBal);
+  localStorage.setItem("todayAds", todayAds);
+  localStorage.setItem("totalAds", totalAds);
+}
+upd();
+
+function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
+function showToastLoading(text="Loading Ad... 2s") {
+  const toast = document.getElementById("adToast");
+  const load = document.getElementById("adToastLoading");
+  const succ = document.getElementById("adToastSuccess");
+  if(load) load.querySelector("b").innerText = text;
+  if(!toast) return;
+  if(load) load.style.display = "flex";
+  if(succ) succ.style.display = "none";
+  toast.classList.remove("hidden");
+}
+function showToastSuccess() {
+  const load = document.getElementById("adToastLoading");
+  const succ = document.getElementById("adToastSuccess");
+  const banner = document.getElementById("adCompletedBanner");
+  if(load) load.style.display = "none";
+  if(succ) succ.style.display = "flex";
+  if(banner) banner.classList.remove("hidden");
+  const top = document.getElementById("topStatus");
+  if(top) top.innerText = "Ad Completed! +0.50 TK";
+  setTimeout(() => {
+    document.getElementById("adToast")?.classList.add("hidden");
+    banner?.classList.add("hidden");
+  }, 2000);
+}
+function hideToast(){ document.getElementById("adToast")?.classList.add("hidden"); }
+function setButtonActive(active) {
+  const autoBtn = document.getElementById("autoBtn");
+  const watchBtn = document.getElementById("watchAdBtn");
+  if(active === "auto"){
+    if(autoBtn){ autoBtn.classList.add("active-auto"); autoBtn.innerHTML = "<span>●</span> Auto Running..."; }
+    if(watchBtn){ watchBtn.style.opacity = "0.5"; watchBtn.style.pointerEvents = "none"; }
+  } else if(active === "watch"){
+    if(watchBtn){ watchBtn.style.background = "#3b82f6"; watchBtn.innerHTML = "<span>Loading 2s...</span><span>⏳</span>"; }
+  } else {
+    if(autoBtn){ autoBtn.classList.remove("active-auto"); autoBtn.innerHTML = "<span>⇄</span> Auto Loop"; }
+    if(watchBtn){ watchBtn.style.background = ""; watchBtn.style.opacity = "1"; watchBtn.style.pointerEvents = "auto"; watchBtn.innerHTML = "<span>Watch Ad (+0.50 TK)</span><span>▶</span>"; }
+  }
+}
+
+async function watchAdFlow() {
+  if(autoRunning) return showCenterModal("Auto Running","Auto Loop চলছে, আগে Stop করো");
+  const top = document.getElementById("topStatus");
+  const autoStatus = document.getElementById("autoStatus");
+  setButtonActive("watch");
+  if(top) top.innerText = "Ads Loading... 2s";
+  if(autoStatus) autoStatus.innerText = "LOADING 2s";
+  showToastLoading("MANUAL Loading Ad... 2s");
+  await delay(2000);
+  setButtonActive(null);
+  if(top) top.innerText = "Ad Playing...";
+  if(autoStatus) autoStatus.innerText = "AD PLAYING";
+  const userId = tg?.initDataUnsafe?.user?.id || 0;
+  try {
+    if (typeof showAdspark === 'function') await showAdspark({ ymid: userId });
+    else if (typeof showAdsparkPopup === 'function') await showAdsparkPopup({ ymid: userId });
+  } catch(e){}
+  if(top) top.innerText = "Balance Loading... 2s";
+  if(autoStatus) autoStatus.innerText = "BALANCE LOADING 2s";
+  showToastLoading("Balance Loading... 2s");
+  await delay(2000);
+  pendingBal += 0.50; todayAds++; totalAds++; upd();
+  showToastSuccess();
+  if(autoStatus) autoStatus.innerText = "IDLE";
+  if(top) top.innerText = "BOT READY";
+}
+async function autoLoopFlow() {
+  while(autoRunning) {
+    const top = document.getElementById("topStatus");
+    const autoStatus = document.getElementById("autoStatus");
+    if(top) top.innerText = "Ads Loading... 2s";
+    if(autoStatus) autoStatus.innerText = "LOADING 2s";
+    showToastLoading("Loading Ad... 2s");
+    await delay(2000);
+    if(!autoRunning) break;
+    if(top) top.innerText = "Ad Playing...";
+    if(autoStatus) autoStatus.innerText = "AD PLAYING";
+    const userId = tg?.initDataUnsafe?.user?.id || 0;
+    try {
+      if (typeof showAdspark === 'function') await showAdspark({ ymid: userId });
+      else if (typeof showAdsparkPopup === 'function') await showAdsparkPopup({ ymid: userId });
+    } catch(e){}
+    if(!autoRunning) break;
+    if(top) top.innerText = "Balance Loading... 2s";
+    if(autoStatus) autoStatus.innerText = "BALANCE LOADING 2s";
+    showToastLoading("Balance Loading... 2s");
+    await delay(2000);
+    if(!autoRunning) break;
+    pendingBal += 0.50; todayAds++; totalAds++; upd();
+    showToastSuccess();
+    if(top) top.innerText = "BOT READY";
+    if(autoStatus) autoStatus.innerText = "IDLE - NEXT 2s";
+    await delay(2000);
+  }
+}
+document.getElementById("watchAdBtn").onclick = watchAdFlow;
+document.getElementById("autoBtn").onclick = async () => {
+  if (autoRunning) return;
+  autoRunning = true;
+  document.getElementById("autoOffCard").innerHTML = "<small>AUTO ON</small><div class='off-dot' style='background:#22c55e;border-color:#22c55e'></div>";
+  setButtonActive("auto");
+  autoLoopFlow();
+};
+document.getElementById("stopBtn").onclick = () => {
+  autoRunning = false;
+  document.getElementById("autoOffCard").innerHTML = "<small>AUTO OFF</small><div class='off-dot'></div>";
+  document.getElementById("autoStatus").innerText = "IDLE";
+  hideToast();
+  document.getElementById("topStatus").innerText = "BOT READY - STOPPED";
+  setButtonActive(null);
+};
+document.getElementById("confirmBtn").onclick = () => {
+  if (pendingBal <= 0) return showCenterModal("No Balance","❌ No pending balance!");
+  if (totalAds < 1) return showCenterModal("Watch Ad","Watch at least 1 ad!");
+  mainBal += pendingBal; pendingBal = 0; upd();
+  showCenterModal("Confirmed","✅ Added to Main Balance");
+};
+
+// Centered Popup
+function showCenterModal(title,text){
+  document.getElementById("modalTitle").innerText = title;
+  document.getElementById("modalText").innerText = text;
+  document.getElementById("centerModal").classList.add("show");
+  document.getElementById("centerModalOverlay").classList.add("show");
+}
+function closeCenterModal(){
+  document.getElementById("centerModal").classList.remove("show");
+  document.getElementById("centerModalOverlay").classList.remove("show");
+}
+window.showCenterModal = showCenterModal;
+window.closeCenterModal = closeCenterModal;
+
+// Working Links
+document.getElementById("channelBtn").onclick = () => window.open("https://t.me/SmartWorkCommunity","_blank");
+document.getElementById("adminBtn").onclick = () => window.open("https://t.me/noyonfb1020","_blank");
+document.getElementById("vpnBtn").onclick = () => window.open("https://play.google.com/store/apps/details?id=free.vpnaustralia.unlimited.tunnel.proxy.secure.hotspot","_blank");
+document.getElementById("adminPanelBtn").onclick = () => showCenterModal("Admin Panel","Access Required - Contact Admin @noyonfb1020");
+document.getElementById("copyRef").onclick = () => {
+  navigator.clipboard.writeText(document.getElementById("refLink").value);
+  showCenterModal("Copied","Referral link copied!");
+};
+
+// Home/Profile Tab Switching
+function showHome() {
+  document.getElementById("homePage").style.display = "block";
+  document.getElementById("profilePage").style.display = "none";
+  document.getElementById("homeNav")?.classList.add("bn-active");
+  document.getElementById("profileNav")?.classList.remove("bn-active");
+  window.scrollTo(0,0);
+}
+function showProfile() {
+  document.getElementById("homePage").style.display = "none";
+  document.getElementById("profilePage").style.display = "block";
+  document.getElementById("homeNav")?.classList.remove("bn-active");
+  document.getElementById("profileNav")?.classList.add("bn-active");
+  window.scrollTo(0,0);
+}
+window.showHome = showHome;
+window.showProfile = showProfile;
+
+// Withdraw logic
+function requestWithdraw(){
+  const num = document.getElementById("withdrawNumber").value.trim();
+  const amt = parseFloat(document.getElementById("withdrawAmount").value);
+  if(!selectedMethod) return showCenterModal("Select Method","Please select bKash / Nagad / Rocket");
+  if(!num) return showCenterModal("Enter Number","Please enter your number");
+  if(!amt || amt <=0) return showCenterModal("Enter Amount","Please enter amount");
+  if(amt < minWithdrawLimits[selectedMethod]) return showCenterModal("Min Withdraw",`Minimum withdraw for ${selectedMethod} is ${minWithdrawLimits[selectedMethod]} TK`);
+  if(amt > mainBal) return showCenterModal("No Balance",`You have only ${mainBal.toFixed(2)} TK`);
+  // Save history
+  const history = JSON.parse(localStorage.getItem("withdrawHistory")||"[]");
+  history.unshift({date:new Date().toLocaleDateString(),method:selectedMethod,number:num,amount:amt,status:"Pending"});
+  localStorage.setItem("withdrawHistory",JSON.stringify(history));
+  mainBal -= amt; upd(); renderHistory();
+  showCenterModal("Requested",`Withdraw ${amt} TK via ${selectedMethod} requested!`);
+}
+function renderHistory(){
+  const h = JSON.parse(localStorage.getItem("withdrawHistory")||"[]");
+  const list = document.getElementById("historyList");
+  const count = document.getElementById("historyCount");
+  if(count) count.innerText = h.length + " records";
+  if(h.length===0){ list.innerHTML = `<div class="no-history">No history yet<br><small>Contact Admin for Support</small></div>`; return; }
+  list.innerHTML = h.map(item=>`<div style="display:flex;justify-content:space-between;padding:10px;background:#f9fafb;border-radius:10px;margin-bottom:6px;border:1px solid #f1f1f5"><span style="font-size:11px"><b>${item.amount} TK</b> via ${item.method}<br><small style="color:#9ca3af">${item.date} • ${item.number}</small></span><span style="font-size:11px;font-weight:700;color:${item.status==='Paid'?'#16a34a':'#f59e0b'}">${item.status}</span></div>`).join("");
+}
+function showHistory(){ showProfile(); document.querySelector(".history-box")?.scrollIntoView({behavior:"smooth"}); }
+renderHistory();
+window.requestWithdraw = requestWithdraw;
+window.showHistory = showHistory;
+
+// Admin guideline dynamic
+const savedGuideline = localStorage.getItem("adminGuidelines");
+if(savedGuideline) document.getElementById("adminGuidelines").innerText = savedGuideline;
+
+console.log("✅ Auto Taka Machine FINAL PREMIUM - All Tasks Combined");
+</script>
 </body>
 </html>
