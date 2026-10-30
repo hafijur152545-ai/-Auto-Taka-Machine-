@@ -12,31 +12,21 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://auto-taka-machine.onrender.com")
 
 from telegram import Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(update, context):
     kb = [[InlineKeyboardButton("🤖 Auto Taka Machine 🔥 Open", web_app=WebAppInfo(url=WEBAPP_URL))]]
     await update.message.reply_text(
         f"Hello {update.effective_user.first_name}!\n\n🔥 Auto Taka Machine Ready!\nOpen the app:",
         reply_markup=InlineKeyboardMarkup(kb)
     )
 
-application = None
-main_loop = None
-
-if BOT_TOKEN:
+def get_application():
+    if not BOT_TOKEN:
+        return None
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
-    main_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(main_loop)
-    try:
-        main_loop.run_until_complete(application.initialize())
-        print("✅ Bot initialized")
-        webhook_url = f"{WEBAPP_URL}/webhook"
-        main_loop.run_until_complete(application.bot.set_webhook(url=webhook_url))
-        print(f"✅ Webhook set to {webhook_url}")
-    except Exception as e:
-        print(f"Init Error: {e}")
+    return application
 
 @app.route('/')
 def home():
@@ -48,12 +38,21 @@ def files(path):
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    if not application or not BOT_TOKEN or not main_loop:
-        return "Bot not initialized", 500
+    if not BOT_TOKEN:
+        return "BOT_TOKEN missing", 500
     try:
         data = request.get_json(force=True)
-        update = Update.de_json(data, application.bot)
-        main_loop.run_until_complete(application.process_update(update))
+        application = get_application()
+        if not application:
+            return "No app", 500
+        
+        async def process():
+            await application.initialize()
+            update = Update.de_json(data, application.bot)
+            await application.process_update(update)
+            await application.shutdown()
+        
+        asyncio.run(process())
         return "ok", 200
     except Exception as e:
         print(f"Webhook Error: {e}")
@@ -62,28 +61,33 @@ def webhook():
 
 @app.route('/setwebhook')
 def set_webhook():
-    if not application or not BOT_TOKEN or not main_loop:
+    if not BOT_TOKEN:
         return "BOT_TOKEN missing", 500
     try:
-        webhook_url = f"{WEBAPP_URL}/webhook"
-        result = main_loop.run_until_complete(application.bot.set_webhook(url=webhook_url))
-        info = main_loop.run_until_complete(application.bot.get_me())
-        return f"✅ Webhook set!<br>Bot: @{info.username}<br>URL: {webhook_url}<br>Result: {result}"
+        async def set_hook():
+            application = get_application()
+            await application.initialize()
+            webhook_url = f"{WEBAPP_URL}/webhook"
+            result = await application.bot.set_webhook(url=webhook_url)
+            info = await application.bot.get_me()
+            await application.shutdown()
+            return result, info
+        
+        result, info = asyncio.run(set_hook())
+        return f"✅ Webhook set!<br>Bot: @{info.username}<br>URL: {WEBAPP_URL}/webhook<br>Result: {result}"
     except Exception as e:
         import traceback; traceback.print_exc()
         return f"❌ Failed: {e}", 500
 
 @app.route('/check')
 def check():
-    import os as _os
     token_len = len(BOT_TOKEN) if BOT_TOKEN else 0
-    files_list = _os.listdir(WEBAPP_DIR) if _os.path.exists(WEBAPP_DIR) else 'NOT FOUND'
+    files_list = os.listdir(WEBAPP_DIR) if os.path.exists(WEBAPP_DIR) else 'NOT FOUND'
     return f"""
     <h2>🔍 Bot Check</h2>
     BOT_TOKEN exists: {bool(BOT_TOKEN)}<br>
     Length: {token_len}<br>
     WEBAPP_URL: {WEBAPP_URL}<br>
-    Initialized: {application is not None}<br>
     WEBAPP_DIR: {WEBAPP_DIR}<br>
     Files: {files_list}<br>
     <br><a href='/setwebhook'>Set Webhook</a> | <a href='/'>App</a>
