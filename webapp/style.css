@@ -1003,3 +1003,30 @@ body:has(#profilePage[style*="block"]) #topStatus {
 #profilePage .pb-card:not(.dark){background:radial-gradient(circle at 100% 0%,rgba(99,102,241,.16),transparent 55%),linear-gradient(145deg,#fff,#eef1ff) !important;border:1px solid #dfe5ff !important;box-shadow:0 6px 18px rgba(99,102,241,.14) !important}
 #profilePage .pb-card.dark{background:radial-gradient(circle at 100% 0%,rgba(250,204,21,.22),transparent 55%),linear-gradient(145deg,#1b1d24,#08090c) !important;border:1px solid rgba(250,204,21,.28) !important;box-shadow:0 6px 18px rgba(0,0,0,.35),0 0 14px rgba(250,204,21,.14) !important}
 #profilePage .ps-card{background:linear-gradient(145deg,#fff,#f7f8ff) !important;border:1px solid #e6e9fb !important;box-shadow:0 5px 14px rgba(99,102,241,.1) !important}
+
+/* ===== SPLASH + DEVELOPER BADGE + AVATAR RING ===== */
+#splash{position:fixed;inset:0;z-index:99999;background:radial-gradient(circle at 50% 40%,#1b2438 0%,#0d111b 70%);display:flex;align-items:center;justify-content:center;transition:opacity .4s}
+#splash.hide{opacity:0;pointer-events:none}
+.sp-box{display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 20px;text-align:center}
+.sp-logo{width:130px;height:130px;border-radius:30px;object-fit:cover;box-shadow:0 0 50px rgba(99,102,241,.45),0 8px 30px rgba(0,0,0,.5)}
+.sp-title{font-size:21px;font-weight:800;white-space:nowrap;color:#fff}
+.sp-title .g{background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.sp-bar{width:220px;height:5px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}
+.sp-bar i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,#6366f1,#a78bfa);animation:spLoad 2s linear forwards}
+@keyframes spLoad{to{width:100%}}
+.avatar-ring{position:relative;flex-shrink:0;width:46px;height:46px;border-radius:50%;padding:2px;background:linear-gradient(135deg,#22d3ee,#6366f1,#a855f7)}
+.avatar-ring .avatar-sm{width:100%;height:100%;box-shadow:none !important;border:2px solid #fff}
+.avatar-ring .tick{position:absolute;right:-3px;bottom:-3px;width:17px;height:17px;border-radius:50%;background:#06b6d4;color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid #fff;line-height:1}
+#homePage #alexCard .ph-left{gap:8px}
+.avatar-ring{width:56px !important;height:56px !important;flex:0 0 56px !important;box-sizing:border-box}
+.avatar-ring #avatarWrap{width:100% !important;height:100% !important;box-shadow:none !important}
+#homePage #alexCard .avatar-ring .avatar-sm{box-shadow:none !important}
+.avatar-ring{min-height:0 !important;height:56px !important;padding:2px !important;border-radius:50% !important;background:linear-gradient(135deg,#22d3ee,#6366f1,#a855f7) !important;border:0 !important;box-shadow:none !important;margin:0 !important}
+#homePage #alexCard .ph-info b#userName{max-width:105px !important}
+
+.dev-top{position:absolute;top:8px;left:12px;z-index:5;display:flex;flex-direction:column;align-items:center;gap:2px;width:48px}
+.dev-top .dt-ring{display:block;width:40px;height:40px;border-radius:50%;padding:2px;box-sizing:border-box;background:linear-gradient(135deg,#22d3ee,#6366f1,#f59e0b)}
+.dev-top img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;border:2px solid #fff;box-sizing:border-box}
+.dev-top small{font-size:7px;font-weight:800;color:#312e81;letter-spacing:.2px;line-height:1;white-space:nowrap}
+.dev-top{gap:1px !important}.dev-top small{margin-top:-6px}
+.dev-top small{margin-top:2px !important}
