@@ -1412,3 +1412,6 @@ div:has(> .sup-label) > div{background:linear-gradient(90deg,transparent,#e9c46a
 #homePage #vpnBtn{background:linear-gradient(135deg,#14532d 0%,#16a34a 55%,#22c55e 100%) !important;border:1px solid rgba(134,239,172,.6) !important;box-shadow:0 8px 20px rgba(22,163,74,.4),0 0 18px rgba(74,222,128,.35),inset 0 1px 0 rgba(255,255,255,.3) !important}
 
 #homePage .prog-fill{background:linear-gradient(90deg,#f87171,#dc2626) !important;box-shadow:0 0 8px rgba(239,68,68,.7) !important}
+
+/* Bell moved up (to the marked spot) */
+.bell-icon{position:relative;top:-20px;left:-18px}
