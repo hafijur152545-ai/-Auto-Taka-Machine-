@@ -462,6 +462,7 @@ let watchToday = 0, autoToday = 0;
 let serverHistory = [];
 function applyState(st){
   if(!st) return;
+  if(!window._stLoaded){ window._stLoaded = true; _prevMain = Number(st.main); }  // no glow/sound for the first load
   mainBal = st.main; pendingBal = st.pending; todayAds = st.today_ads; totalAds = st.total_ads; watchToday = st.watch_today; autoToday = st.auto_today;
   if(typeof st.lifetime_earned === "number") lifetimeEarned = st.lifetime_earned;
   if(typeof st.lifetime_ads === "number") lifetimeAds = st.lifetime_ads;
@@ -488,6 +489,7 @@ const fmtPrice = n => (Math.round(n*100)/100).toFixed(2);
 function watchBtnHTML(){ return `<span>Watch Ad (+${fmtPrice(rewardWatch)} TK)</span><span class="wb-tags"><i>1 TAP ADS</i><i>HIGH PRICE</i></span><span class="play-icon">▶</span>`; }
 function autoBtnHTML(){ return `<span class="ab-main"><span class="ab-icon">⇄</span><span class="ab-label">Auto Loop</span></span><small class="ab-price">LOW PRICE ${fmtPrice(rewardAuto)} TK</small>`; }
 let _prevPending = pendingBal;
+let _prevMain = null;          // for the main-balance glow + sound
 
 // ===== MIN WITHDRAW LIMITS - ADMIN CONTROLLABLE =====
 let minWithdrawLimits = JSON.parse(localStorage.getItem("minWithdrawLimits") || '{"bkash":0,"nagad":0,"rocket":0,"binance":0,"recharge":0}');
@@ -544,6 +546,7 @@ function selectMethod(m){
       d.innerText = (minWithdrawLimits[m] || 0) + " TK";
     }
   }
+  const amtInput = document.getElementById("withdrawAmount"); if(amtInput) amtInput.placeholder = (m === "binance") ? "Amount USDT" : "Amount TK";
   // Change the number input placeholder based on selected method
   const numInput = document.getElementById("withdrawNumber");
   if(numInput){
@@ -580,11 +583,7 @@ function upd() {
   if(g("todayProgress")) {
     const pct = Math.min(todayAds/500*100, 100);
     g("todayProgress").style.width = pct + "%";
-    // Color shifts from green → orange → red as the daily limit fills up
-    const r = Math.round(34 + (pct/100) * (239-34));     // 34 → 239
-    const gr = Math.round(197 - (pct/100) * (197-68));    // 197 → 68
-    const bl = Math.round(94 - (pct/100) * (94-68));      // 94 → 68
-    g("todayProgress").style.background = `linear-gradient(90deg, rgb(${r},${gr},${bl}), rgb(${Math.min(255,r+30)},${Math.max(40,gr-30)},${bl}))`;
+    g("todayProgress").style.background = "linear-gradient(90deg,#f87171,#dc2626)";  // always red, grows as ads are watched
   }
   if(g("confirmText")) g("confirmText").innerText = totalAds + "/500 ads • +" + refBonusPct + "% ref bonus";
   if(g("wBal")) g("wBal").innerText = mainBal.toFixed(2) + " TK";
@@ -971,17 +970,19 @@ async function requestWithdraw(){
   if(!selectedMethod) return showCenterModal("Select Method","Please select bKash / Nagad / Rocket");
   if(!num) return showCenterModal("Enter Number","Please enter your number");
   if(!amt || amt <=0) return showCenterModal("Enter Amount","Please enter amount");
-  if(amt < minWithdrawLimits[selectedMethod]) return showCenterModal("Min Withdraw",`Minimum withdraw for ${selectedMethod} is ${minWithdrawLimits[selectedMethod]} TK`);
-  if(amt > mainBal) return showCenterModal("No Balance",`You have only ${mainBal.toFixed(2)} TK`);
+  const isUsdt = selectedMethod === "binance";
+  const cost = isUsdt ? Math.round(amt * (Number(usdtRate) || 0) * 100) / 100 : amt;   // TK taken from balance
+  if(amt < minWithdrawLimits[selectedMethod]) return showCenterModal("Min Withdraw",`Minimum withdraw for ${selectedMethod} is ${minWithdrawLimits[selectedMethod]} ${isUsdt ? "USDT" : "TK"}`);
+  if(cost > mainBal) return showCenterModal("No Balance", isUsdt ? `${amt} USDT = ${cost.toFixed(2)} TK. You have only ${mainBal.toFixed(2)} TK` : `You have only ${mainBal.toFixed(2)} TK`);
   let r; try{ r = await API("/api/withdraw",{method:selectedMethod,number:num,amount:amt}); }catch(e){ r = {error:'net'}; }
   if(r.error){
     if(r.error === 'banned') return showBan();
-    if(r.error === 'min') return showCenterModal("Min Withdraw",`Minimum withdraw is ${r.min} TK`);
+    if(r.error === 'min') return showCenterModal("Min Withdraw",`Minimum withdraw is ${r.min} ${isUsdt ? "USDT" : "TK"}`);
     if(r.error === 'balance') return showCenterModal("No Balance",`You have only ${Number(r.main).toFixed(2)} TK`);
     return showCenterModal("Error","আবার চেষ্টা করো");
   }
   applyState(r.state); serverHistory = r.withdraws || []; renderHistory();
-  showCenterModal("Requested",`Withdraw ${amt} TK via ${selectedMethod} requested!`);
+  showCenterModal("Requested", isUsdt ? `Withdraw ${amt} USDT (${cost} TK) via binance requested!` : `Withdraw ${amt} TK via ${selectedMethod} requested!`);
 }
 function renderHistory(){
   const h = serverHistory;
@@ -990,7 +991,7 @@ function renderHistory(){
   if(count) count.innerText = h.length + " records";
   if(h.length===0){ list.innerHTML = `<div class="no-history">No history yet<br><small>Contact Admin for Support</small></div>`; return; }
   const col = {Approved:'#16a34a', Rejected:'#ef4444', Pending:'#f59e0b'};
-  list.innerHTML = h.map(item=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;background:#f9fafb;border-radius:10px;margin-bottom:6px;border:1px solid #f1f1f5"><span style="font-size:11px"><b>${item.amount} TK</b> via ${item.method}<br><small style="color:#9ca3af">${fmtDT(item.date)}<br>${item.number}</small></span><span style="font-size:11px;font-weight:700;color:${col[item.status]||'#f59e0b'}">${item.status}</span></div>`).join("");
+  list.innerHTML = h.map(item=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;background:#f9fafb;border-radius:10px;margin-bottom:6px;border:1px solid #f1f1f5"><span style="font-size:11px"><b>${item.usdt ? item.usdt + " USDT (" + item.amount + " TK)" : item.amount + " TK"}</b> via ${item.method}<br><small style="color:#9ca3af">${fmtDT(item.date)}<br>${item.number}</small></span><span style="font-size:11px;font-weight:700;color:${col[item.status]||'#f59e0b'}">${item.status}</span></div>`).join("");
 }
 function showHistory(){ showProfile(); document.querySelector(".history-box")?.scrollIntoView({behavior:"smooth"}); }
 renderHistory();
@@ -1039,11 +1040,27 @@ function pendingPulse(){
   el.classList.remove('pulse-gold'); void el.offsetWidth; el.classList.add('pulse-gold');
   setTimeout(() => el.classList.remove('pulse-gold'), 1900);
 }
+function mainPulse(){
+  const el = document.getElementById('mainBal')?.closest('.bal-card'); if(!el) return;
+  el.classList.remove('pulse-green'); void el.offsetWidth; el.classList.add('pulse-green');
+  setTimeout(() => el.classList.remove('pulse-green'), 1900);
+}
+// "tonk" - when a Watch Ad reward lands in main balance
+function tonkSound(){
+  try{
+    const a = _ctx(); if(!a) return; const t = a.currentTime;
+    _note(a, 330, t, .16, .45, 'square');
+    _note(a, 660, t + .03, .3, .3, 'sine');
+    _note(a, 990, t + .03, .2, .1, 'sine');
+  }catch(e){}
+}
 function updPremium(){
   try{
     const cb = document.getElementById('confirmBtn');
     if(cb) cb.style.setProperty('--fill', (15 + 85 * Math.min(totalAds / 500, 1)).toFixed(1) + '%');
     if(pendingBal > _prevPending){ pendingPulse(); kutungSound(); }
+    if(_prevMain !== null && mainBal > _prevMain && pendingBal >= _prevPending){ mainPulse(); tonkSound(); }  // reward landed in MAIN balance
+    _prevMain = mainBal;
     _prevPending = pendingBal;
   }catch(e){}
 }
@@ -1333,7 +1350,7 @@ function apWRender(){
   apSet(`<div class="ap-seg">${['Pending','Approved','Rejected'].map(s => `<button class="${s===apWF?'on '+s:''}" onclick="apWF='${s}';apWRender()">${s} (${cnt(s)})</button>`).join('')}</div>`
     + (L.map(w => `<div class="${cardClass(w.status)}"><div class="ap-wl">
         <b>${esc(w.name)||'User'} - ID:${esc(w.uid)}</b>
-        <div class="ap-wrow"><span>${esc(w.amount)} TK - ${esc(MLAB[w.method]||w.method)} - ${esc(w.number)}</span><button class="ap-copy" data-n="${esc(w.number)}" onclick="apCopy(this)">Copy</button></div>
+        <div class="ap-wrow"><span>${w.usdt ? esc(w.usdt) + " USDT (" + esc(w.amount) + " TK)" : esc(w.amount) + " TK"} - ${esc(MLAB[w.method]||w.method)} - ${esc(w.number)}</span><button class="ap-copy" data-n="${esc(w.number)}" onclick="apCopy(this)">Copy</button></div>
         <div class="ap-bal">Bal: ${w.bal != null ? esc(w.bal) : '-'} TK</div>
         <small>${fmtDT(w.date)}</small></div>
       <div class="ap-act">
