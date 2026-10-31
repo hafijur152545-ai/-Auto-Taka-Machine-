@@ -90,7 +90,7 @@
         <button id="adminBtn" class="action-btn light"><span>👤</span> Admin</button>
       </div>
       <button id="vpnBtn" class="vpn-btn">KAJER VPN</button>
-      <button id="adminPanelBtn" class="vpn-btn outline" style="display:none;margin-top:14px !important">ADMIN PANEL</button>
+      <button id="adminPanelBtn" class="vpn-btn outline" style="display:none;margin-top:14px !important;visibility:hidden">ADMIN PANEL</button>
       <div class="footer">HEN • PREMIUM V2.4</div>
     </div>
   </div>
@@ -666,11 +666,11 @@ function checkAdmin() {
     const btn = document.getElementById('adminPanelBtn');
     if (btn) {
       if (isAdminUser) {
-        btn.style.display = 'block';
-        btn.style.visibility = 'visible';
-        btn.style.opacity = '1';
+        btn.style.setProperty('display','block','important');
+        btn.style.setProperty('visibility','visible','important');
+        btn.style.setProperty('opacity','1','important');
       } else {
-        btn.style.display = 'none';
+        btn.style.setProperty('display','none','important');
       }
     }
   } catch(e){console.log('admin check err',e)}
