@@ -11,53 +11,128 @@
 <body>
 <div id="splash"><div class="sp-box"><img class="sp-logo" src="logo.jpg" alt=""><div class="sp-title"><span>🤖</span> <span class="g">Auto Taka Machine</span> <span>🔥</span></div><div class="sp-bar"><i></i></div></div></div>
 <div id="banOv" class="ban-ov" style="display:none"><div class="ban-box"><div class="ban-ico">🚫</div><div class="ban-t">Account Banned</div><div class="ban-s">আপনার অ্যাকাউন্ট Ban করা হয়েছে। সমস্যা হলে Admin এর সাথে যোগাযোগ করুন।</div><a class="ban-b" href="https://t.me/noyonfb1020" target="_blank">Contact Admin</a></div></div>
-<div id="noticeOv" class="nt-ov" style="display:none"><div class="nt-box"><button class="nt-x" onclick="closeNotice()">✕</button><div class="nt-title">🔔 Notice</div><div class="nt-inner"><div class="nt-msg" id="noticeMsg"></div></div><button class="nt-close" onclick="closeNotice()">Close</button></div></div>
+
+<!-- ===== NEW Notice system ===== -->
+<!-- (1) Thin red banner — appears at top of home page when there is a new notice. Auto-hides after 5s. Click opens the popup. -->
+<div id="noticeBanner" class="notice-banner" style="display:none" onclick="openNoticePopup(true)">
+  <span class="nb-bell">🔔</span>
+  <span class="nb-text" id="noticeBannerText">Notun Notice Sobai Dekun 🔔</span>
+  <span class="nb-arrow">›</span>
+</div>
+
+<!-- (2) Welcome popup — opens on bot open if user has an unseen notice. Stays until user closes (no auto-hide). Has optional "Click Here" button. -->
+<div id="welcomeOv" class="welcome-ov" style="display:none">
+  <div class="welcome-box">
+    <div class="welcome-head">🔔 Notice</div>
+    <div class="welcome-body" id="welcomeText"></div>
+    <div class="welcome-actions">
+      <a id="welcomeBtn" class="welcome-btn-primary" href="#" target="_blank" style="display:none">Click Here</a>
+      <button class="welcome-btn-close" onclick="closeNoticePopup()">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
-var NOTICE_TEXT="", _noticeShown=false, _splashGone=false, _noticeAutoHideTimer=null, _audioCtx=null;
-function noticeAudio(){
-  try{
-    if(!_audioCtx) _audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    if(_audioCtx.state === "suspended") _audioCtx.resume();
-    const t = _audioCtx.currentTime;
-    [880, 1320, 1760].forEach((freq, i) => {
-      const o = _audioCtx.createOscillator(), g = _audioCtx.createGain();
-      o.type = "sine"; o.frequency.value = freq;
-      const st = t + i*0.16;
-      g.gain.setValueAtTime(0, st);
-      g.gain.linearRampToValueAtTime(0.22, st + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.001, st + 0.45);
-      o.connect(g).connect(_audioCtx.destination);
-      o.start(st); o.stop(st + 0.5);
-    });
-  }catch(e){}
+// ===== NEW notice system: welcome popup + thin banner + red bell indicator =====
+var NOTICE = {version:0, has_new:false, welcome_text:"", welcome_btn_text:"", welcome_btn_url:"", banner:""};
+var _welcomeShown = false;        // popup only auto-opens once per bot session
+var _bannerTimer = null;
+var _splashGone = false;
+
+function applyNoticeInfo(n){
+  if(!n) return;
+  NOTICE = Object.assign({version:0, has_new:false, welcome_text:"", welcome_btn_text:"", welcome_btn_url:"", banner:""}, n);
+  // Bell turns red when there is a new (unseen) notice
+  const bell = document.getElementById("bellIcon");
+  const dot = document.getElementById("bellDot");
+  if(bell){ if(NOTICE.has_new){ bell.classList.add("has-new"); } else { bell.classList.remove("has-new"); } }
+  if(dot){ dot.style.display = (NOTICE.has_new ? "block" : "none"); }
+  // Banner: only show if there is new notice AND banner text is set (otherwise just show popup)
+  if(NOTICE.has_new && _splashGone){
+    showNoticeBanner();
+    // Auto-open the welcome popup once if there is welcome text (only once per bot open)
+    if(!_welcomeShown && NOTICE.welcome_text){
+      _welcomeShown = true;
+      openNoticePopup(false);  // false = don't mark seen yet (only mark when user closes)
+    }
+  }
 }
-function openNotice(){
-  if(!NOTICE_TEXT || !_splashGone) return;
-  document.getElementById("noticeMsg").innerText = NOTICE_TEXT;
-  document.getElementById("noticeOv").style.display = "flex";
-  _noticeShown = true;
-  noticeAudio();
-  if(_noticeAutoHideTimer) clearTimeout(_noticeAutoHideTimer);
-  _noticeAutoHideTimer = setTimeout(function(){ closeNotice(); }, 5000);
+
+function showNoticeBanner(){
+  if(!NOTICE.has_new) return;
+  const banner = document.getElementById("noticeBanner");
+  const txt = document.getElementById("noticeBannerText");
+  if(!banner) return;
+  if(txt){
+    // If admin set a banner text use it, else use a default "Notun Notice Sobai Dekun 🔔"
+    txt.innerText = NOTICE.banner || "Notun Notice Sobai Dekun 🔔";
+  }
+  banner.style.display = "flex";
+  if(_bannerTimer) clearTimeout(_bannerTimer);
+  _bannerTimer = setTimeout(function(){ hideNoticeBanner(); }, 5000);
 }
-function closeNotice(){
-  document.getElementById("noticeOv").style.display = "none";
-  _noticeShown = false;
-  if(_noticeAutoHideTimer){ clearTimeout(_noticeAutoHideTimer); _noticeAutoHideTimer = null; }
+function hideNoticeBanner(){
+  const banner = document.getElementById("noticeBanner");
+  if(banner) banner.style.display = "none";
+  if(_bannerTimer){ clearTimeout(_bannerTimer); _bannerTimer = null; }
 }
-function setNoticeText(t){
-  if(typeof t!=="string") return;
-  NOTICE_TEXT = t;
-  if(!t){ closeNotice(); }
-  else if(_splashGone && !_noticeShown){ openNotice(); }
-  else if(_noticeShown){ document.getElementById("noticeMsg").innerText = t; }
+
+function openNoticePopup(markSeen){
+  if(!NOTICE.welcome_text){
+    // No welcome text: still let the user see the banner text in a small popup
+    if(!NOTICE.banner && !NOTICE.has_new) return;
+  }
+  const txt = NOTICE.welcome_text || NOTICE.banner || "No notice right now.";
+  document.getElementById("welcomeText").innerText = txt;
+  const btn = document.getElementById("welcomeBtn");
+  if(btn){
+    if(NOTICE.welcome_btn_url){
+      btn.href = NOTICE.welcome_btn_url;
+      btn.innerText = NOTICE.welcome_btn_text || "Click Here";
+      btn.style.display = "inline-block";
+    } else {
+      btn.style.display = "none";
+    }
+  }
+  document.getElementById("welcomeOv").style.display = "flex";
+  hideNoticeBanner();
+  if(markSeen !== false){ markNoticeSeen(); }
 }
+
+function closeNoticePopup(){
+  document.getElementById("welcomeOv").style.display = "none";
+  // Mark as seen when user closes the popup (so bell no longer red)
+  markNoticeSeen();
+}
+
+function markNoticeSeen(){
+  if(!NOTICE.has_new) return;
+  NOTICE.has_new = false;
+  const bell = document.getElementById("bellIcon");
+  const dot = document.getElementById("bellDot");
+  if(bell){ bell.classList.remove("has-new"); }
+  if(dot){ dot.style.display = "none"; }
+  // Tell the server this user has seen the current notice_version
+  try{ fetch("/api/notice/seen", {method:"POST", headers:{"Content-Type":"application/json","X-Init-Data":window.Telegram?.WebApp?.initData||""}, body:"{}"}).catch(()=>{}); }catch(e){}
+}
+
 function bellClick(){
-  // Unlock audio on user gesture so it can play next time too
-  try{ if(!_audioCtx){ _audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } if(_audioCtx.state==="suspended") _audioCtx.resume(); }catch(e){}
-  if(NOTICE_TEXT){ if(_noticeShown){ closeNotice(); } else { openNotice(); } }
+  if(NOTICE.welcome_text || NOTICE.banner){
+    openNoticePopup(true);
+  } else {
+    showCenterModal("Notice","এই মুহূর্তে কোনো notice নেই।");
+  }
 }
-setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(function(){s.remove()},400)}_splashGone=true;openNotice();},2000)
+
+// Splash screen: hides after 2s, then becomes "ready" — but DOES NOT auto-open the notice popup.
+// (The popup auto-opens only if there is an unseen notice, handled by applyNoticeInfo above.)
+setTimeout(function(){
+  var s = document.getElementById("splash");
+  if(s){ s.classList.add("hide"); setTimeout(function(){ s.remove(); }, 400); }
+  _splashGone = true;
+  // If we already have notice info by the time splash ends, trigger banner/popup logic now
+  if(NOTICE && NOTICE.version){ applyNoticeInfo(NOTICE); }
+}, 2000);
 </script>
 
 <div class="phone" id="homePage">
@@ -185,7 +260,7 @@ setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.
   </div>
 
   <div class="referral-box">
-    <b>🎁 Referral Program <span class="bonus-badge" style="margin-left:auto">✨ 10% Bonus</span></b>
+    <b>🎁 Referral Program <span class="bonus-badge" id="bonusBadge" style="margin-left:auto">✨ 10% Bonus</span></b>
     <small id="refInviteTxt" style="color:#6b7280;line-height:1.5">Invite friends and get 10% of their earnings. Bonus credited instantly.</small>
     <div class="ref-link-row"><input id="refLink" value="https://t.me/autotakamachine_bot?start=..." readonly><button id="copyRef">Copy</button></div>
     <div class="ref-stats"><span>👥 Total Referred: <b id="refCount">0</b></span><span style="color:#16a34a">+<span id="refEarn">0</span> TK earned</span></div>
@@ -439,6 +514,20 @@ function selectMethod(m){
       d.innerText = (minWithdrawLimits[m] || 0) + " TK";
     }
   }
+  // Change the number input placeholder based on selected method
+  const numInput = document.getElementById("withdrawNumber");
+  if(numInput){
+    if(m === "binance"){
+      numInput.placeholder = "Binance UID (User ID)";
+      numInput.setAttribute("inputmode","numeric");
+    } else if(m === "recharge"){
+      numInput.placeholder = "01XXXXXXXXX (Mobile Number)";
+      numInput.setAttribute("inputmode","tel");
+    } else {
+      numInput.placeholder = "01XXXXXXXXX (" + (m === "bkash" ? "bKash" : m === "nagad" ? "Nagad" : "Rocket") + " Number)";
+      numInput.setAttribute("inputmode","tel");
+    }
+  }
 }
 window.selectMethod = selectMethod;
 
@@ -563,9 +652,16 @@ async function watchAdFlow() {
   if(watchToday >= limitWatch){ showCenterModal("Limit Reached","আজকের Watch Ads লিমিট শেষ (" + limitWatch + ")"); return; }
   const autoStatus = document.getElementById("autoStatus");
   const watchBtn = document.getElementById("watchAdBtn");
+  const autoBtn = document.getElementById("autoBtn");
+
+  // Disable Auto button while Watch is running (mutual exclusion)
+  if(autoBtn) autoBtn.classList.add("btn-dimmed");
 
   // Start server-side ad session
-  if(!(await srvAdStart("watch"))) return;
+  if(!(await srvAdStart("watch"))){
+    if(autoBtn) autoBtn.classList.remove("btn-dimmed");
+    return;
+  }
 
   // Phase 1: READY (red) -> Loading (grow, glow) for 2s
   if(watchBtn){ watchBtn.classList.add("ad-preparing"); watchBtn.innerHTML = '<span class="ad-prep-text">PREPARING AD…</span><span class="ad-spinner"></span>'; }
@@ -587,8 +683,9 @@ async function watchAdFlow() {
   const ok = await srvAdClaim();
   setTopStatus(ok ? "completed" : "ready");
   if(autoStatus) autoStatus.innerText = "IDLE";
-  // Restore button to ready state
+  // Restore buttons
   if(watchBtn){ watchBtn.classList.remove("ad-confirming","ad-playing","ad-preparing"); watchBtn.innerHTML = watchBtnHTML(); }
+  if(autoBtn) autoBtn.classList.remove("btn-dimmed");
 }
 
 async function autoLoopFlow() {
@@ -596,6 +693,10 @@ async function autoLoopFlow() {
     if(autoToday >= limitAuto){ document.getElementById("stopBtn").onclick(); showCenterModal("Limit Reached","আজকের Auto Ads লিমিট শেষ (" + limitAuto + ")"); break; }
     const autoStatus = document.getElementById("autoStatus");
     const autoBtn = document.getElementById("autoBtn");
+    const watchBtn = document.getElementById("watchAdBtn");
+    // Disable Watch button while Auto is running (mutual exclusion)
+    if(watchBtn) watchBtn.classList.add("btn-dimmed");
+
     if(!(await srvAdStart("auto"))){ document.getElementById("stopBtn").onclick(); break; }
     if(!autoRunning) break;
 
@@ -627,6 +728,9 @@ async function autoLoopFlow() {
 
     await new Promise(r => setTimeout(r, 2000));
   }
+  // When auto loop ends, restore Watch button
+  const watchBtn = document.getElementById("watchAdBtn");
+  if(watchBtn) watchBtn.classList.remove("btn-dimmed");
 }
 
 const _watchInner = watchAdFlow;
@@ -906,7 +1010,6 @@ function applySettings(s){
     if(el) el.innerText = botGuidelines || "Bot guidelines not set yet.";
   }
   updLimits();
-  if(window.setNoticeText) setNoticeText(s.notice);
   Object.assign(minWithdrawLimits, s.min);
   updateMinWithdrawUI();
   // Re-render referral display using the live value so it never shows a stale hardcoded %
@@ -923,6 +1026,9 @@ function setRefs(refs, pct){
     refBonusPct = pct;  // keep live value
     $("refBonusTxt").innerText = pct + "% bonus active";
     $("refInviteTxt").innerText = `Invite friends and get ${pct}% of their earnings. Bonus credited instantly.`;
+    // Also update the gold "Bonus" badge so it always matches the admin-set value
+    const badge = $("bonusBadge");
+    if(badge){ badge.innerText = `✨ ${pct}% Bonus`; }
   }
 }
 async function refreshMe(first){
@@ -935,6 +1041,7 @@ async function refreshMe(first){
   if(r.banned) return showBan();
   if(first){ clearLegacy(!!r.migrated); }
   applySettings(r.settings);
+  if(r.notice) applyNoticeInfo(r.notice);
   if(!autoRunning && !window._wb) applyState(r.state);
   serverHistory = r.withdraws || []; renderHistory();
   setRefs(r.refs, r.settings.ref_bonus);
@@ -1014,14 +1121,31 @@ async function apDoResetAds(){
 async function apNotice(){
   apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
-  apSet(apF('n_t','Home Notice Popup Text (shown on bot open + 🔔 click, empty = no popup)',s.notice,'text')
-    + '<div class="ap-note">এই text টা সব user এর home page এ popup আকারে ৫ সেকেন্ড দেখা যাবে এবং 🔔 bell icon এ চাপ দিলে আবার দেখা যাবে। সাথে notification sound বাজবে।</div>'
-    + '<div class="ap-lab" style="margin-top:18px">Bot Guidelines (Profile page এর নিচে দেখাবে)</div>'
+  apSet(
+    '<div class="ap-lab" style="margin-top:6px">① Welcome Notice (popup এ দেখাবে যখন user bot খুলবে)</div>'
+    + '<textarea class="ap-area" id="n_w" rows="6" placeholder="এখানে লিখুন...">'+esc(s.welcome_notice || "")+'</textarea>'
+    + '<div class="ap-note">User এর bot খোলার সাথে সাথে popup আসবে। একবার close করলে আর আসবে না যতক্ষণ না admin নতুন notice save করে।</div>'
+    + '<div class="ap-lab">① "Click Here" button text (খালি রাখলে button দেখাবে না)</div>'
+    + '<input class="ap-in" id="n_wbt" type="text" value="'+esc(s.welcome_btn_text || "")+'" placeholder="Click Here">'
+    + '<div class="ap-lab">① Button URL (link)</div>'
+    + '<input class="ap-in" id="n_wbu" type="text" value="'+esc(s.welcome_btn_url || "")+'" placeholder="https://t.me/...">'
+    + '<div class="ap-lab" style="margin-top:18px">② Banner Notice (home page এর উপরে ছোট red banner)</div>'
+    + '<input class="ap-in" id="n_b" type="text" value="'+esc(s.notice_banner || "")+'" placeholder="Notun Notice Sobai Dekun 🔔">'
+    + '<div class="ap-note">User এর কাছে নতুন notice এলে home page এর উপরে ছোট banner দেখাবে। ৫ সেকেন্ড পর auto hide। Banner এ চাপ দিলে popup খুলবে।</div>'
+    + '<div class="ap-lab" style="margin-top:18px">③ Bot Guidelines (Profile পেজের নিচে দেখাবে)</div>'
     + '<textarea class="ap-area" id="n_g" rows="6" placeholder="Bot guidelines...">'+esc(s.bot_guidelines || "")+'</textarea>'
-    + '<div class="ap-note">এই text Profile page এর নিচে "Bot Guidelines" box এ দেখাবে। নতুন লাইন করতে Enter চাপুন।</div>'
+    + '<div class="ap-note">⚠️ যেকোনো notice save করলে notice version বেড়ে যাবে — সব user এর কাছে নতুন notice হিসেবে যাবে (red bell + banner)।</div>'
     + apSaveBtn('apSaveNotice'));
 }
-function apSaveNotice(){ apPost({notice:$('n_t').value, bot_guidelines:$('n_g').value}); }
+function apSaveNotice(){
+  apPost({
+    welcome_notice:$('n_w').value,
+    welcome_btn_text:$('n_wbt').value,
+    welcome_btn_url:$('n_wbu').value,
+    notice_banner:$('n_b').value,
+    bot_guidelines:$('n_g').value
+  });
+}
 async function apRefer(){
   apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
