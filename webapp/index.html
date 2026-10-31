@@ -11,12 +11,52 @@
 <body>
 <div id="splash"><div class="sp-box"><img class="sp-logo" src="logo.jpg" alt=""><div class="sp-title"><span>🤖</span> <span class="g">Auto Taka Machine</span> <span>🔥</span></div><div class="sp-bar"><i></i></div></div></div>
 <div id="banOv" class="ban-ov" style="display:none"><div class="ban-box"><div class="ban-ico">🚫</div><div class="ban-t">Account Banned</div><div class="ban-s">আপনার অ্যাকাউন্ট Ban করা হয়েছে। সমস্যা হলে Admin এর সাথে যোগাযোগ করুন।</div><a class="ban-b" href="https://t.me/noyonfb1020" target="_blank">Contact Admin</a></div></div>
-<div id="noticeOv" class="nt-ov" style="display:none"><div class="nt-box"><button class="nt-x" onclick="closeNotice()">✕</button><div class="nt-title">Notice</div><div class="nt-inner"><div class="nt-msg" id="noticeMsg"></div></div><button class="nt-close" onclick="closeNotice()">Close</button></div></div>
+<div id="noticeOv" class="nt-ov" style="display:none"><div class="nt-box"><button class="nt-x" onclick="closeNotice()">✕</button><div class="nt-title">🔔 Notice</div><div class="nt-inner"><div class="nt-msg" id="noticeMsg"></div></div><button class="nt-close" onclick="closeNotice()">Close</button></div></div>
 <script>
-var NOTICE_TEXT="📢 VPN diye kaj korbe", _noticeShown=false, _splashGone=false;
-function openNotice(){ if(NOTICE_TEXT && _splashGone){ document.getElementById("noticeMsg").innerText=NOTICE_TEXT; document.getElementById("noticeOv").style.display="flex"; _noticeShown=true; } }
-function closeNotice(){ document.getElementById("noticeOv").style.display="none"; }
-function setNoticeText(t){ if(typeof t!=="string") return; NOTICE_TEXT=t; if(!t){ closeNotice(); } else if(_splashGone && !_noticeShown){ openNotice(); } else if(_noticeShown){ document.getElementById("noticeMsg").innerText=t; } }
+var NOTICE_TEXT="", _noticeShown=false, _splashGone=false, _noticeAutoHideTimer=null, _audioCtx=null;
+function noticeAudio(){
+  try{
+    if(!_audioCtx) _audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(_audioCtx.state === "suspended") _audioCtx.resume();
+    const t = _audioCtx.currentTime;
+    [880, 1320, 1760].forEach((freq, i) => {
+      const o = _audioCtx.createOscillator(), g = _audioCtx.createGain();
+      o.type = "sine"; o.frequency.value = freq;
+      const st = t + i*0.16;
+      g.gain.setValueAtTime(0, st);
+      g.gain.linearRampToValueAtTime(0.22, st + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, st + 0.45);
+      o.connect(g).connect(_audioCtx.destination);
+      o.start(st); o.stop(st + 0.5);
+    });
+  }catch(e){}
+}
+function openNotice(){
+  if(!NOTICE_TEXT || !_splashGone) return;
+  document.getElementById("noticeMsg").innerText = NOTICE_TEXT;
+  document.getElementById("noticeOv").style.display = "flex";
+  _noticeShown = true;
+  noticeAudio();
+  if(_noticeAutoHideTimer) clearTimeout(_noticeAutoHideTimer);
+  _noticeAutoHideTimer = setTimeout(function(){ closeNotice(); }, 5000);
+}
+function closeNotice(){
+  document.getElementById("noticeOv").style.display = "none";
+  _noticeShown = false;
+  if(_noticeAutoHideTimer){ clearTimeout(_noticeAutoHideTimer); _noticeAutoHideTimer = null; }
+}
+function setNoticeText(t){
+  if(typeof t!=="string") return;
+  NOTICE_TEXT = t;
+  if(!t){ closeNotice(); }
+  else if(_splashGone && !_noticeShown){ openNotice(); }
+  else if(_noticeShown){ document.getElementById("noticeMsg").innerText = t; }
+}
+function bellClick(){
+  // Unlock audio on user gesture so it can play next time too
+  try{ if(!_audioCtx){ _audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } if(_audioCtx.state==="suspended") _audioCtx.resume(); }catch(e){}
+  if(NOTICE_TEXT){ if(_noticeShown){ closeNotice(); } else { openNotice(); } }
+}
 setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(function(){s.remove()},400)}_splashGone=true;openNotice();},2000)
 </script>
 
@@ -24,7 +64,7 @@ setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.
   <div class="dev-top"><small class="dt-top">DEVELOPER</small><span class="dt-ring"><img src="dev.jpg" alt=""></span><small>E NOYON</small></div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <div id="topStatus" class="top-status">BOT READY</div>
-      <div id="bellIcon" style="width:28px;height:28px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(251,191,36,0.3);border:1px solid #fde68a;cursor:pointer">🔔</div>
+      <div id="bellIcon" onclick="bellClick()" class="bell-icon" title="Notice">🔔<span id="bellDot" class="bell-dot" style="display:none"></span></div>
     </div>
   <div id="mainContent">
     <div class="profile-header" id="alexCard">
@@ -77,7 +117,7 @@ setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.
 
     <button id="watchAdBtn" class="watch-btn">
       <span>Watch Ad (+0.50 TK)</span>
-      <span class="wb-tags"><i>1 TAP ADS</i><i>HIGH PRICE</i></span>
+      <span class="wb-tags"><i>TAP & WATCH</i><i>REWARD AD</i></span>
       <span class="play-icon">▶</span>
     </button>
 
@@ -91,7 +131,7 @@ setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.
         <div class="check-icon">✓</div>
         <div>
           <b>Confirm Pending Balance</b>
-          <small id="confirmText">0/500 ads • +3.2%</small>
+          <small id="confirmText">0/500 ads • +10% ref bonus</small>
         </div>
       </div>
       <span class="arrow">→</span>
@@ -162,6 +202,8 @@ setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.
       <button class="method-btn" data-method="bkash" onclick="selectMethod('bkash')"><b style="color:#e91e63">bKash</b><small id="bkashLimit">Min 0 TK</small></button>
       <button class="method-btn" data-method="nagad" onclick="selectMethod('nagad')"><b style="color:#f57c00">Nagad</b><small id="nagadLimit">Min 0 TK</small></button>
       <button class="method-btn" data-method="rocket" onclick="selectMethod('rocket')"><b style="color:#8e24aa">Rocket</b><small id="rocketLimit">Min 0 TK</small></button>
+      <button class="method-btn" data-method="binance" onclick="selectMethod('binance')"><b style="color:#f1c40f">USDT</b><small id="binanceLimit">Min 0 USDT</small></button>
+      <button class="method-btn" data-method="recharge" onclick="selectMethod('recharge')"><b style="color:#16a34a">Recharge</b><small id="rechargeLimit">Min 0 TK</small></button>
     </div>
     <input class="input" id="withdrawNumber" placeholder="01XXXXXXXXX (Number)">
     <input class="input" id="withdrawAmount" placeholder="Amount TK" type="number">
@@ -237,7 +279,8 @@ setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.
       <button data-t="limit" onclick="apTab('limit')">Add Limit</button>
       <button data-t="notice" onclick="apTab('notice')">Notice Popup</button>
       <button data-t="refer" onclick="apTab('refer')">Refer Bonus</button>
-      <button data-t="apptop" onclick="apTab('apptop')">App Top</button>
+      <button data-t="payment" onclick="apTab('payment')">Payment System</button>
+      <button data-t="dataclear" onclick="apTab('dataclear')">Data Clear</button>
     </div>
     <div class="ap-body" id="apBody"></div>
     <div class="ap-foot"><button onclick="apClose()">Close Panel</button></div>
@@ -337,16 +380,48 @@ function updLimits(){
   if(g("watchLimitTxt")) g("watchLimitTxt").innerText = watchToday + "/" + limitWatch;
 }
 const fmtPrice = n => (Math.round(n*100)/100).toFixed(2);
-function watchBtnHTML(){ return `<span>Watch Ad (+${fmtPrice(rewardWatch)} TK)</span><span class="wb-tags"><i>1 TAP ADS</i><i>HIGH PRICE</i></span><span class="play-icon">▶</span>`; }
+function watchBtnHTML(){ return `<span>Watch Ad (+${fmtPrice(rewardWatch)} TK)</span><span class="wb-tags"><i>TAP & WATCH</i><i>REWARD AD</i></span><span class="play-icon">▶</span>`; }
 function autoBtnHTML(){ return `<span class="ab-main"><span>⇄</span> Auto Loop</span><small class="ab-price">LOW PRICE ${fmtPrice(rewardAuto)} TK</small>`; }
 let _prevPending = pendingBal;
 
 // ===== MIN WITHDRAW LIMITS - ADMIN CONTROLLABLE =====
-let minWithdrawLimits = JSON.parse(localStorage.getItem("minWithdrawLimits") || '{"bkash":0,"nagad":0,"rocket":0}');
+let minWithdrawLimits = JSON.parse(localStorage.getItem("minWithdrawLimits") || '{"bkash":0,"nagad":0,"rocket":0,"binance":0,"recharge":0}');
+let usdtRate = 123;             // 1 USDT = X TK (set by admin, used to show USDT min in TK)
+let paymentMethods = {bkash:true,nagad:true,rocket:true,binance:true,recharge:true};
+let refBonusPct = 10;            // live refer bonus percentage (kept in sync with settings)
+let botGuidelines = "";          // profile page guidelines text (admin editable)
 function updateMinWithdrawUI(){
-  document.getElementById("bkashLimit").innerText = `Min ${minWithdrawLimits.bkash} TK`;
-  document.getElementById("nagadLimit").innerText = `Min ${minWithdrawLimits.nagad} TK`;
-  document.getElementById("rocketLimit").innerText = `Min ${minWithdrawLimits.rocket} TK`;
+  // bKash / Nagad / Rocket / Recharge limits are in TK; Binance limit is in USDT (convert to TK for hint)
+  if(document.getElementById("bkashLimit")) document.getElementById("bkashLimit").innerText = `Min ${minWithdrawLimits.bkash} TK`;
+  if(document.getElementById("nagadLimit")) document.getElementById("nagadLimit").innerText = `Min ${minWithdrawLimits.nagad} TK`;
+  if(document.getElementById("rocketLimit")) document.getElementById("rocketLimit").innerText = `Min ${minWithdrawLimits.rocket} TK`;
+  if(document.getElementById("binanceLimit")){
+    const u = Number(minWithdrawLimits.binance) || 0;
+    const t = usdtToTk(u);
+    document.getElementById("binanceLimit").innerText = `Min ${u} USDT (≈${t.toFixed(2)} TK)`;
+  }
+  if(document.getElementById("rechargeLimit")) document.getElementById("rechargeLimit").innerText = `Min ${minWithdrawLimits.recharge} TK`;
+  // Update method visibility based on admin Payment System settings
+  updatePaymentMethodVisibility();
+  // If a method is selected, refresh its display
+  if(selectedMethod) selectMethod(selectedMethod);
+}
+function usdtToTk(usdt){
+  const r = Number(usdtRate) || 0;
+  return (Number(usdt) || 0) * r;
+}
+function updatePaymentMethodVisibility(){
+  document.querySelectorAll(".method-btn").forEach(btn => {
+    const m = btn.dataset.method;
+    const on = paymentMethods[m] !== false;
+    btn.style.display = on ? "" : "none";
+  });
+  // If the currently-selected method was hidden, deselect it
+  if(selectedMethod && paymentMethods[selectedMethod] === false){
+    selectedMethod = null;
+    const d = document.getElementById("minWithdrawDisplay");
+    if(d){ d.innerText = "0 TK"; }
+  }
 }
 updateMinWithdrawUI();
 
@@ -354,7 +429,16 @@ function selectMethod(m){
   selectedMethod = m;
   document.querySelectorAll(".method-btn").forEach(b=>b.classList.remove("selected"));
   document.querySelector(`.method-btn[data-method="${m}"]`)?.classList.add("selected");
-  document.getElementById("minWithdrawDisplay").innerText = minWithdrawLimits[m] + " TK";
+  const d = document.getElementById("minWithdrawDisplay");
+  if(d){
+    if(m === "binance"){
+      const u = Number(minWithdrawLimits.binance) || 0;
+      const t = usdtToTk(u);
+      d.innerText = `${u} USDT (≈${t.toFixed(2)} TK)`;
+    } else {
+      d.innerText = (minWithdrawLimits[m] || 0) + " TK";
+    }
+  }
 }
 window.selectMethod = selectMethod;
 
@@ -370,7 +454,7 @@ function upd() {
   if(g("todayPercent")) g("todayPercent").innerText = (todayAds/500*100).toFixed(1) + "%";
   if(g("pTotalPercent")) g("pTotalPercent").innerText = (todayAds/500*100).toFixed(1) + "% of daily";
   if(g("todayProgress")) g("todayProgress").style.width = Math.min(todayAds/500*100,100) + "%";
-  if(g("confirmText")) g("confirmText").innerText = totalAds + "/500 ads • +3.2%";
+  if(g("confirmText")) g("confirmText").innerText = totalAds + "/500 ads • +" + refBonusPct + "% ref bonus";
   if(g("wBal")) g("wBal").innerText = mainBal.toFixed(2) + " TK";
   if(g("pTotalEarned")) g("pTotalEarned").innerText = mainBal.toFixed(0) + " TK";
   updLimits();
@@ -478,40 +562,68 @@ async function watchAdFlow() {
   }
   if(watchToday >= limitWatch){ showCenterModal("Limit Reached","আজকের Watch Ads লিমিট শেষ (" + limitWatch + ")"); return; }
   const autoStatus = document.getElementById("autoStatus");
-  if(!(await srvAdStart("watch"))) return;
-  if(autoStatus) autoStatus.innerText = "LOADING 2s";
+  const watchBtn = document.getElementById("watchAdBtn");
 
+  // Start server-side ad session
+  if(!(await srvAdStart("watch"))) return;
+
+  // Phase 1: READY (red) -> Loading (grow, glow) for 2s
+  if(watchBtn){ watchBtn.classList.add("ad-preparing"); watchBtn.innerHTML = '<span class="ad-prep-text">PREPARING AD…</span><span class="ad-spinner"></span>'; }
+  if(autoStatus) autoStatus.innerText = "LOADING 2s";
   setTopStatus("manual_loading");
   await new Promise(r => setTimeout(r, 2000));
 
+  // Phase 2: Ad plays (16s)
+  if(watchBtn){ watchBtn.classList.remove("ad-preparing"); watchBtn.classList.add("ad-playing"); watchBtn.innerHTML = '<span class="ad-prep-text">AD PLAYING…</span><span class="ad-spinner"></span>'; }
   setTopStatus("confirming");
   await runAdWith16s("AD");
 
-  const ok = await srvAdClaim();   // server adds the balance
+  // Phase 3: After ad, 2s "Confirming Reward..." loading
+  if(watchBtn){ watchBtn.classList.remove("ad-playing"); watchBtn.classList.add("ad-confirming"); watchBtn.innerHTML = '<span class="ad-prep-text">CONFIRMING REWARD…</span><span class="ad-spinner gold"></span>'; }
+  if(autoStatus) autoStatus.innerText = "CONFIRM 2s";
+  await new Promise(r => setTimeout(r, 2000));
+
+  // Phase 4: Claim reward from server
+  const ok = await srvAdClaim();
   setTopStatus(ok ? "completed" : "ready");
   if(autoStatus) autoStatus.innerText = "IDLE";
+  // Restore button to ready state
+  if(watchBtn){ watchBtn.classList.remove("ad-confirming","ad-playing","ad-preparing"); watchBtn.innerHTML = watchBtnHTML(); }
 }
 
 async function autoLoopFlow() {
   while(autoRunning) {
     if(autoToday >= limitAuto){ document.getElementById("stopBtn").onclick(); showCenterModal("Limit Reached","আজকের Auto Ads লিমিট শেষ (" + limitAuto + ")"); break; }
     const autoStatus = document.getElementById("autoStatus");
+    const autoBtn = document.getElementById("autoBtn");
     if(!(await srvAdStart("auto"))){ document.getElementById("stopBtn").onclick(); break; }
     if(!autoRunning) break;
-    if(autoStatus) autoStatus.innerText = "LOADING 2s";
 
+    // Phase 1: 2s preparing
+    if(autoBtn){ autoBtn.classList.add("ad-preparing"); }
+    if(autoStatus) autoStatus.innerText = "LOADING 2s";
     setTopStatus("auto_loading");
     await new Promise(r => setTimeout(r, 2000));
     if(!autoRunning) break;
 
+    // Phase 2: Ad plays
+    if(autoBtn){ autoBtn.classList.remove("ad-preparing"); autoBtn.classList.add("ad-playing"); }
     setTopStatus("confirming");
     await runAdWith16s("AUTO AD");
     if(!autoRunning) break;
 
+    // Phase 3: 2s confirm loading
+    if(autoBtn){ autoBtn.classList.remove("ad-playing"); autoBtn.classList.add("ad-confirming"); }
+    if(autoStatus) autoStatus.innerText = "CONFIRM 2s";
+    await new Promise(r => setTimeout(r, 2000));
+    if(!autoRunning) break;
+
+    // Phase 4: claim
     if(!(await srvAdClaim())){ document.getElementById("stopBtn").onclick(); break; }
     autoSession++; renderAutoCard(true);
     setTopStatus("completed");
     if(autoStatus) autoStatus.innerText = "IDLE - NEXT 2s";
+    if(autoBtn){ autoBtn.classList.remove("ad-confirming","ad-playing","ad-preparing"); }
 
     await new Promise(r => setTimeout(r, 2000));
   }
@@ -785,10 +897,20 @@ function applySettings(s){
   rewardWatch = s.reward_watch; rewardAuto = s.reward_auto;
   if(s.limit_watch != null) limitWatch = s.limit_watch;
   if(s.limit_auto != null) limitAuto = s.limit_auto;
+  if(typeof s.ref_bonus === "number") refBonusPct = s.ref_bonus;       // keep live ref bonus in sync
+  if(typeof s.usdt_rate === "number") usdtRate = s.usdt_rate;
+  if(s.payment_methods && typeof s.payment_methods === "object") paymentMethods = Object.assign({bkash:true,nagad:true,rocket:true,binance:true,recharge:true}, s.payment_methods);
+  if(typeof s.bot_guidelines === "string"){
+    botGuidelines = s.bot_guidelines;
+    const el = document.getElementById("adminGuidelines");
+    if(el) el.innerText = botGuidelines || "Bot guidelines not set yet.";
+  }
   updLimits();
   if(window.setNoticeText) setNoticeText(s.notice);
   Object.assign(minWithdrawLimits, s.min);
   updateMinWithdrawUI();
+  // Re-render referral display using the live value so it never shows a stale hardcoded %
+  setRefs(window._lastRefs || null, refBonusPct);
   if(selectedMethod) selectMethod(selectedMethod);
   const w = $("watchAdBtn");
   if(!autoRunning && !w.innerText.includes("Loading")) w.innerHTML = watchBtnHTML();
@@ -796,8 +918,12 @@ function applySettings(s){
 }
 function showBan(){ $("banOv").style.display = "flex"; autoRunning = false; }
 function setRefs(refs, pct){
-  if(refs){ $("refCount").innerText = refs.count; $("refEarn").innerText = Number(refs.earned).toFixed(2); $("pRefs").innerText = refs.count + " Referrals"; }
-  if(pct != null){ $("refBonusTxt").innerText = pct + "% bonus active"; $("refInviteTxt").innerText = `Invite friends and get ${pct}% of their earnings. Bonus credited instantly.`; }
+  if(refs){ window._lastRefs = refs; $("refCount").innerText = refs.count; $("refEarn").innerText = Number(refs.earned).toFixed(2); $("pRefs").innerText = refs.count + " Referrals"; }
+  if(pct != null){
+    refBonusPct = pct;  // keep live value
+    $("refBonusTxt").innerText = pct + "% bonus active";
+    $("refInviteTxt").innerText = `Invite friends and get ${pct}% of their earnings. Bonus credited instantly.`;
+  }
 }
 async function refreshMe(first){
   if(!window.Telegram?.WebApp?.initData) return;
@@ -823,10 +949,18 @@ if(isAdmin){
   $("adminPanelBtn").onclick = () => pwOpen();
 }
 const ADMIN_PASS = "noyon@18";
-function pwOpen(){ $("pwInput").value=""; $("pwErr").innerText=""; $("apPass").style.display="flex"; setTimeout(()=>$("pwInput").focus(),100); }
+const AP_SESSION_KEY = "apUnlocked_v1";  // sessionStorage = cleared when Telegram WebApp tab is closed
+function pwOpen(){
+  // If already unlocked in this bot session, skip the password prompt entirely.
+  try { if (sessionStorage.getItem(AP_SESSION_KEY) === "yes") { apOpen(); return; } } catch(e){}
+  $("pwInput").value=""; $("pwErr").innerText=""; $("apPass").style.display="flex"; setTimeout(()=>$("pwInput").focus(),100);
+}
 function pwClose(){ $("apPass").style.display="none"; $("pwInput").value=""; }
 function pwCheck(){
-  if($("pwInput").value === ADMIN_PASS){ pwClose(); apOpen(); }
+  if($("pwInput").value === ADMIN_PASS){
+    try { sessionStorage.setItem(AP_SESSION_KEY, "yes"); } catch(e){}
+    pwClose(); apOpen();
+  }
   else{ $("pwErr").innerText="❌ Wrong password"; $("pwBox").classList.remove("shake"); void $("pwBox").offsetWidth; $("pwBox").classList.add("shake"); }
 }
 $("pwInput").addEventListener("keydown", e => { if(e.key==="Enter") pwCheck(); });
@@ -835,7 +969,7 @@ function apOpen(){ $("adminPanel").style.display = "flex"; apTab('settings'); }
 function apClose(){ $("adminPanel").style.display = "none"; }
 function apTab(t){
   document.querySelectorAll('#apTabs button[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
-  ({settings:apSettings, withdraw:apWithdraws, users:apUsers, limit:apLimit, notice:apNotice, refer:apRefer, apptop:apTop})[t]();
+  ({settings:apSettings, withdraw:apWithdraws, users:apUsers, limit:apLimit, notice:apNotice, refer:apRefer, payment:apPayment, dataclear:apDataClear})[t]();
 }
 const apSet = html => { $("apBody").innerHTML = html; };
 
@@ -866,24 +1000,86 @@ function apSaveSettings(){
 async function apLimit(){
   apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
-  apSet(apF('l_w','Watch Ads Daily Limit',s.limit_watch) + apF('l_a','Auto Ads Daily Limit',s.limit_auto) + apSaveBtn('apSaveLimit'));
+  apSet(apF('l_w','Watch Ads Daily Limit',s.limit_watch) + apF('l_a','Auto Ads Daily Limit',s.limit_auto) + apSaveBtn('apSaveLimit')
+    + '<div class="ap-note" style="margin-top:14px">Limit save করার পর চাইলে নিচের button চাপলে সব user এর ad counter (today/total/watch/auto) 0 হয়ে যাবে।</div>'
+    + '<button class="ap-big danger" style="margin-top:10px" onclick="apDoResetAds()">♻️ Reset All Users Ads (সব user এর ad count 0 করো)</button>');
 }
 function apSaveLimit(){ apPost({limit_watch:parseInt($('l_w').value)||0, limit_auto:parseInt($('l_a').value)||0}); }
+async function apDoResetAds(){
+  if(!confirm('আসলেই সব user এর ad count 0 করে দিবে?')) return;
+  let r; try{ r = await API('/api/admin/reset_ads', {}); }catch(e){ r = {error:'net'}; }
+  if(r && r.ok){ showCenterModal('Reset Done', `${r.users_reset} জন user এর ad count 0 করা হয়েছে ✅`); refreshMe(false); }
+  else showCenterModal('Error', 'Reset করতে সমস্যা হয়েছে');
+}
 async function apNotice(){
   apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
-  apSet(apF('n_t','Notice Popup Text (empty = no popup)',s.notice,'text')
-    + apF('n_c','Wrong Country Notice',s.country_notice,'text')
-    + '<div class="ap-note">Use {country} for the allowed country and {current} for the user\'s country.</div>' + apSaveBtn('apSaveNotice'));
+  apSet(apF('n_t','Home Notice Popup Text (shown on bot open + 🔔 click, empty = no popup)',s.notice,'text')
+    + '<div class="ap-note">এই text টা সব user এর home page এ popup আকারে ৫ সেকেন্ড দেখা যাবে এবং 🔔 bell icon এ চাপ দিলে আবার দেখা যাবে। সাথে notification sound বাজবে।</div>'
+    + '<div class="ap-lab" style="margin-top:18px">Bot Guidelines (Profile page এর নিচে দেখাবে)</div>'
+    + '<textarea class="ap-area" id="n_g" rows="6" placeholder="Bot guidelines...">'+esc(s.bot_guidelines || "")+'</textarea>'
+    + '<div class="ap-note">এই text Profile page এর নিচে "Bot Guidelines" box এ দেখাবে। নতুন লাইন করতে Enter চাপুন।</div>'
+    + apSaveBtn('apSaveNotice'));
 }
-function apSaveNotice(){ apPost({notice:$('n_t').value, country_notice:$('n_c').value}); }
+function apSaveNotice(){ apPost({notice:$('n_t').value, bot_guidelines:$('n_g').value}); }
 async function apRefer(){
   apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
   apSet(apF('r_b','Refer Bonus (%)',s.ref_bonus) + '<div class="ap-note">The person who invites gets this % of every ad reward their friend earns, added to Main Balance instantly. 0 = off.</div>' + apSaveBtn('apSaveRefer'));
 }
 function apSaveRefer(){ apPost({ref_bonus:parseFloat($('r_b').value)||0}); }
-function apTop(){ apSet('<div class="ap-empty">Coming soon</div>'); }
+
+// ===== Payment System tab: toggle each withdraw method on/off =====
+const PM_LABELS = {bkash:'bKash', nagad:'Nagad', rocket:'Rocket', binance:'Binance (USDT)', recharge:'Mobile Recharge'};
+const PM_COLORS = {bkash:'#e91e63', nagad:'#f57c00', rocket:'#8e24aa', binance:'#f1c40f', recharge:'#16a34a'};
+let pmSettings = null, pmUsdtRate = 123;
+async function apPayment(){
+  apSet('<div class="ap-empty">Loading...</div>');
+  const s = await API('/api/settings');
+  pmSettings = s.payment_methods || {bkash:true,nagad:true,rocket:true,binance:true,recharge:true};
+  pmUsdtRate = s.usdt_rate || 123;
+  apRenderPayment();
+}
+function apRenderPayment(){
+  if(!pmSettings) pmSettings = {bkash:true,nagad:true,rocket:true,binance:true,recharge:true};
+  const methods = ['bkash','nagad','rocket','binance','recharge'];
+  apSet('<div class="ap-note">যে পেমেন্ট মেথড চালু রাখতে চান সেটি ON করুন। বাকিগুলো user এর withdraw page থেকে hide হয়ে যাবে।</div>'
+    + methods.map(m => {
+      const on = !!pmSettings[m];
+      return `<div class="pm-row"><span class="pm-name" style="color:${PM_COLORS[m]}">${PM_LABELS[m]}</span>
+        <button class="pm-toggle ${on?'on':'off'}" onclick="apPMToggle('${m}')">${on?'ON':'OFF'}</button></div>`;
+    }).join('')
+    + '<div class="ap-lab" style="margin-top:18px">USDT → TK Rate (1 USDT = ? TK)</div>'
+    + `<input class="ap-in" id="pm_rate" type="number" step="0.01" value="${esc(pmUsdtRate)}">`
+    + '<div class="ap-note">User কে minimum USDT withdraw টিকে টাকায় দেখানোর জন্য এই rate ব্যবহার হবে (যেমন 0.50 USDT × 123 = 61.5 TK)।</div>'
+    + apSaveBtn('apSavePayment'));
+}
+function apPMToggle(m){
+  if(!pmSettings) pmSettings = {bkash:true,nagad:true,rocket:true,binance:true,recharge:true};
+  pmSettings[m] = !pmSettings[m];
+  apRenderPayment();
+}
+async function apSavePayment(){
+  const rate = parseFloat($('pm_rate').value) || 0;
+  pmUsdtRate = rate;
+  // Save both payment_methods and usdt_rate
+  apPost({payment_methods: pmSettings, usdt_rate: rate});
+}
+
+// ===== Data Clear tab: clear all withdraw history =====
+async function apDataClear(){
+  const d = await API('/api/admin/data');
+  const wcount = (d.withdraws || []).length;
+  apSet('<div class="ap-note">⚠️ এই button টা চাপলে <b>সব withdraw request/history</b> admin panel থেকে মুছে যাবে। User এর balance বা অন্য কোনো data এ কোনো পরিবর্তন হবে না।</div>'
+    + `<div class="dc-stat">বর্তমান withdraw records: <b>${wcount}</b></div>`
+    + '<button class="ap-big danger" onclick="apDoClear()">🗑️ Data Clear (সব withdraw history মুছে ফেলো)</button>');
+}
+async function apDoClear(){
+  if(!confirm('আসলেই সব withdraw history মুছে ফেলবে? এটা undo করা যাবে না!')) return;
+  let r; try{ r = await API('/api/admin/clear_withdraws', {}); }catch(e){ r = {error:'net'}; }
+  if(r && r.ok){ showCenterModal('Cleared', `${r.cleared} টি withdraw record মুছে ফেলা হয়েছে ✅`); apDataClear(); }
+  else showCenterModal('Error', 'Clear করতে সমস্যা হয়েছে');
+}
 
 async function apWithdraws(){
   apSet('<div class="ap-empty">Loading...</div>');
