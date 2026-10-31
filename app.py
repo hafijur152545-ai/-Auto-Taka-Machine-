@@ -294,7 +294,7 @@ def uname(u): return (u.get("first_name", "") + " " + u.get("last_name", "")).st
 # ---------- per-user account (server side, so every Telegram ID has its own real balance) ----------
 def today_key():
     import datetime
-    return (datetime.datetime.utcnow() + datetime.timedelta(hours=6)).strftime("%Y-%m-%d")  # Bangladesh day
+    return datetime.datetime.utcnow().strftime("%Y-%m-%d")  # day resets at 6:00 AM Bangladesh time (00:00 UTC)
 
 def new_bal():
     return {"main": 0.0, "pending": 0.0, "today_ads": 0, "total_ads": 0, "watch_today": 0, "auto_today": 0, "day": today_key(),
@@ -814,11 +814,17 @@ def api_withdraw():
         if rec.get("banned"): return jsonify(error="banned")
         if method not in s["min"] or not number or amount <= 0: return jsonify(error="bad data")
         roll(rec); bl = rec["bal"]
+        usdt = None; cost = amount          # cost = how many TK are taken from the balance
+        if method == "binance":             # amount is typed in USDT -> convert to TK with the admin rate
+            rate = float(s.get("usdt_rate", 0) or 0)
+            if rate <= 0: return jsonify(error="bad data")
+            usdt = amount; cost = round(amount * rate, 2)
         if amount < s["min"][method]: return jsonify(error="min", min=s["min"][method], method=method)
-        if amount > bl["main"] + 1e-9: return jsonify(error="balance", main=round(bl["main"], 2))
-        bl["main"] = round(bl["main"] - amount, 4)
+        if cost > bl["main"] + 1e-9: return jsonify(error="balance", main=round(bl["main"], 2), need=cost)
+        bl["main"] = round(bl["main"] - cost, 4)
         w = {"id": int(time.time() * 1000), "uid": u["id"], "name": uname(u), "username": u.get("username", ""), "method": method, "number": number,
-             "amount": amount, "bal": round(bl["main"], 2), "status": "Pending", "date": int(time.time())}
+             "amount": cost, "bal": round(bl["main"], 2), "status": "Pending", "date": int(time.time())}
+        if usdt is not None: w["usdt"] = usdt
         d["withdraws"].insert(0, w); save(d)
         return jsonify(ok=True, state=state(rec), withdraws=user_withdraws(d, u["id"]))
 
@@ -857,7 +863,7 @@ def api_admin_wstatus():
             status_txt = "✅ Withdrawal Approved!" if w["status"] == "Approved" else "❌ Withdrawal Rejected!"
             color_emoji = "✅" if w["status"] == "Approved" else "❌"
             msg = (f"{color_emoji} *Withdrawal {w['status']}!*\n\n"
-                   f"💰 Amount: *{w['amount']} TK*\n"
+                   f"💰 Amount: *{(str(w['usdt']) + ' USDT (' + str(w['amount']) + ' TK)') if w.get('usdt') else (str(w['amount']) + ' TK')}*\n"
                    f"🏦 Method: *{w['method'].upper()}*\n"
                    f"📱 Number: `{w['number']}`\n")
             if w["status"] == "Approved":
