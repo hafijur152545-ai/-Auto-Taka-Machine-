@@ -374,6 +374,7 @@ setTimeout(function(){
       <button data-t="limit" onclick="apTab('limit')">Add Limit</button>
       <button data-t="notice" onclick="apTab('notice')">Notice Popup</button>
       <button data-t="refer" onclick="apTab('refer')">Refer Bonus</button>
+      <button data-t="confirm" onclick="apTab('confirm')">Confirm Pending Balance</button>
       <button data-t="payment" onclick="apTab('payment')">Payment System</button>
       <button data-t="dataclear" onclick="apTab('dataclear')">Data Clear</button>
     </div>
@@ -495,6 +496,7 @@ let _prevMain = null;          // for the main-balance glow + sound
 let minWithdrawLimits = JSON.parse(localStorage.getItem("minWithdrawLimits") || '{"bkash":0,"nagad":0,"rocket":0,"binance":0,"recharge":0}');
 let usdtRate = 123;             // 1 USDT = X TK (set by admin, used to show USDT min in TK)
 let paymentMethods = {bkash:true,nagad:true,rocket:true,binance:true,recharge:true};
+let confirmAds = 500, noticeEvery = 5;   // admin: ads needed for Confirm Pending Balance / notice popup interval
 let refBonusPct = 10;            // live refer bonus percentage (kept in sync with settings)
 let botGuidelines = "";          // profile page guidelines text (admin editable)
 function updateMinWithdrawUI(){
@@ -578,14 +580,14 @@ function upd() {
   // Profile page: show lifetime earned + lifetime ads (these never decrease, never reset)
   if(g("pTotalEarned")) g("pTotalEarned").innerText = lifetimeEarned.toFixed(0) + " TK";
   if(g("pLifetimeAds")) g("pLifetimeAds").innerText = lifetimeAds + " Ads";
-  if(g("todayPercent")) g("todayPercent").innerText = (todayAds/500*100).toFixed(1) + "%";
-  if(g("pTotalPercent")) g("pTotalPercent").innerText = (todayAds/500*100).toFixed(1) + "% of daily";
+  if(g("todayPercent")) g("todayPercent").innerText = (todayAds/Math.max(1, limitAuto+limitWatch)*100).toFixed(1) + "%";
+  if(g("pTotalPercent")) g("pTotalPercent").innerText = (todayAds/Math.max(1, limitAuto+limitWatch)*100).toFixed(1) + "% of daily";
   if(g("todayProgress")) {
-    const pct = Math.min(todayAds/500*100, 100);
+    const pct = Math.min(todayAds/Math.max(1, limitAuto+limitWatch)*100, 100);
     g("todayProgress").style.width = pct + "%";
     g("todayProgress").style.background = "linear-gradient(90deg,#f87171,#dc2626)";  // always red, grows as ads are watched
   }
-  if(g("confirmText")) g("confirmText").innerText = totalAds + "/500 ads • +" + refBonusPct + "% ref bonus";
+  if(g("confirmText")) g("confirmText").innerText = totalAds + "/" + confirmAds + " ads • +" + refBonusPct + "% ref bonus";
   if(g("wBal")) g("wBal").innerText = mainBal.toFixed(2) + " TK";
   // Auto OFF box: small "per ad X TK" text under the count
   if(g("autoPerAd")) g("autoPerAd").innerText = "+" + fmtPrice(rewardAuto) + " TK / AD";
@@ -1057,7 +1059,7 @@ function tonkSound(){
 function updPremium(){
   try{
     const cb = document.getElementById('confirmBtn');
-    if(cb) cb.style.setProperty('--fill', (15 + 85 * Math.min(totalAds / 500, 1)).toFixed(1) + '%');
+    if(cb) cb.style.setProperty('--fill', (15 + 85 * Math.min(totalAds / Math.max(1, confirmAds), 1)).toFixed(1) + '%');
     if(pendingBal > _prevPending){ pendingPulse(); kutungSound(); }
     if(_prevMain !== null && mainBal > _prevMain && pendingBal >= _prevPending){ mainPulse(); tonkSound(); }  // reward landed in MAIN balance
     _prevMain = mainBal;
@@ -1128,6 +1130,9 @@ function applySettings(s){
   if(s.limit_auto != null) limitAuto = s.limit_auto;
   if(typeof s.ref_bonus === "number") refBonusPct = s.ref_bonus;       // keep live ref bonus in sync
   if(typeof s.usdt_rate === "number") usdtRate = s.usdt_rate;
+  if(Number(s.confirm_ads) > 0) confirmAds = Number(s.confirm_ads);
+  if(Number(s.notice_every) > 0) noticeEvery = Number(s.notice_every);
+  try{ upd(); }catch(e){}   // refresh today bar / confirm bar with the new limits
   if(s.payment_methods && typeof s.payment_methods === "object") paymentMethods = Object.assign({bkash:true,nagad:true,rocket:true,binance:true,recharge:true}, s.payment_methods);
   if(typeof s.bot_guidelines === "string"){
     botGuidelines = s.bot_guidelines;
@@ -1201,7 +1206,7 @@ function apOpen(){ $("adminPanel").style.display = "flex"; apTab('settings'); }
 function apClose(){ $("adminPanel").style.display = "none"; }
 function apTab(t){
   document.querySelectorAll('#apTabs button[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
-  ({settings:apSettings, withdraw:apWithdraws, users:apUsers, limit:apLimit, notice:apNotice, refer:apRefer, payment:apPayment, dataclear:apDataClear})[t]();
+  ({settings:apSettings, withdraw:apWithdraws, users:apUsers, limit:apLimit, notice:apNotice, refer:apRefer, confirm:apConfirm, payment:apPayment, dataclear:apDataClear})[t]();
 }
 const apSet = html => { $("apBody").innerHTML = html; };
 
@@ -1214,6 +1219,19 @@ async function apPost(payload){
     applySettings(r); showCenterModal('Saved','Updated successfully');
   }catch(e){ showCenterModal('Error','Save failed'); }
 }
+async function apConfirm(){
+  apSet('<div class="ap-empty">Loading...</div>');
+  const s = await API('/api/settings');
+  apSet(apF('s_ca','Confirm Pending Balance - koita ad dekhle bar full hobe (e.g. 200 / 300 / 1000)', s.confirm_ads || 500)
+    + apF('s_ne','Notice ad - koita ad por por notice ad asbe (e.g. 5)', s.notice_every || 5)
+    + '<div class="ap-note">Confirm Pending Balance bar ei number porjonto ad dekhle puro holud hobe. Notice ad ei number por por ashbe.</div>'
+    + apSaveBtn('apConfirmSave'));
+}
+function apConfirmSave(){
+  const ca = Math.max(1, Math.floor(Number($('s_ca').value) || 0)), ne = Math.max(1, Math.floor(Number($('s_ne').value) || 0));
+  apPost({confirm_ads: ca, notice_every: ne});
+}
+window.apConfirmSave = apConfirmSave;
 async function apSettings(){
   apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
