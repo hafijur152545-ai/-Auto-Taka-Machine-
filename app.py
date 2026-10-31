@@ -168,6 +168,7 @@ DEFAULTS = {"settings": {"reward_watch": 0.5, "reward_auto": 0.10, "limit_watch"
                          # notice_version: incremented every time admin saves a notice. Users store the version they last saw.
                          "notice_version": 1,
                          "usdt_rate": 123.0,
+                         "confirm_ads": 500, "notice_every": 5,
                          "payment_methods": {"bkash": True, "nagad": True, "rocket": True, "binance": True, "recharge": True}},
             "users": {}, "withdraws": [], "refs": {}}
 
@@ -635,6 +636,8 @@ def api_settings():
                     for mk in ("bkash","nagad","rocket","binance","recharge"):
                         if mk in s["payment_methods"]:
                             cur["payment_methods"][mk] = bool(s["payment_methods"][mk])
+                if "confirm_ads" in s: cur["confirm_ads"] = max(1, int(float(s["confirm_ads"])))
+                if "notice_every" in s: cur["notice_every"] = max(1, int(float(s["notice_every"])))
                 if "ref_bonus" in s: cur["ref_bonus"] = min(100.0, max(0.0, float(s["ref_bonus"])))
                 for k in ("limit_watch", "limit_auto"):
                     if k in s: cur[k] = max(0, int(float(s[k])))
@@ -740,7 +743,7 @@ def api_ad_start():
         if t == "watch":
             cur_watch = int(b.get("lifetime_watch_ads", 0))
             # (cur_watch + 1) is the ad number we are ABOUT to serve. If divisible by 5 → special.
-            if (cur_watch + 1) % 5 == 0:
+            if (cur_watch + 1) % max(1, int(s.get("notice_every", 5) or 5)) == 0:
                 is_special = True
         rec["ad"] = {"type": t, "t": time.time(), "special": is_special}
         if phone_tz: rec["phone_tz"] = phone_tz[:60]
