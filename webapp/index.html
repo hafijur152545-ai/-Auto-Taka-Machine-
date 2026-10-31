@@ -431,7 +431,7 @@ document.getElementById("stopBtn").onclick = () => {
   document.getElementById("autoOffCard").innerHTML = "<small>AUTO OFF</small><div class='off-dot'></div>";
   document.getElementById("autoStatus").innerText = "IDLE";
   // old toast disabled
-  document.getElementById("topStatus").innerText = "BOT READY - STOPPED";
+  setTopStatus("ready");
   setButtonActive(null);
 };
 document.getElementById("confirmBtn").onclick = () => {
@@ -517,21 +517,37 @@ const savedGuideline = localStorage.getItem("adminGuidelines");
 if(savedGuideline) document.getElementById("adminGuidelines").innerText = savedGuideline;
 
 // ===== PREMIUM EFFECTS: tok sound, pending pulse, confirm fill, nav glow =====
-function tokBeep(){
+function _ctx(){
+  const C = window.AudioContext || window.webkitAudioContext; if(!C) return null;
+  if(!window._ac) window._ac = new C();
+  if(_ac.state === 'suspended') _ac.resume();
+  return _ac;
+}
+['pointerdown','touchstart','click'].forEach(ev => document.addEventListener(ev, () => { try{ _ctx(); }catch(e){} }, {passive:true}));
+function _note(a, f, t, d, v, type){
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
+  g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + .02);
+}
+// "kot" - short click for Home / Profile buttons
+function kotSound(){
   try{
-    const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
-    window._ac = window._ac || new C();
-    const o = _ac.createOscillator(), g = _ac.createGain();
-    o.type = 'sine'; o.frequency.value = 880;
-    g.gain.setValueAtTime(.25, _ac.currentTime); g.gain.exponentialRampToValueAtTime(.001, _ac.currentTime + .12);
-    o.connect(g); g.connect(_ac.destination); o.start(); o.stop(_ac.currentTime + .13);
+    const a = _ctx(); if(!a) return; const t = a.currentTime;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = 'triangle'; o.frequency.setValueAtTime(950, t); o.frequency.exponentialRampToValueAtTime(320, t + .045);
+    g.gain.setValueAtTime(.4, t); g.gain.exponentialRampToValueAtTime(.001, t + .08);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + .09);
   }catch(e){}
 }
-function tokSound(){
+// "ku-tung" - when balance increases
+function kutungSound(){
   try{
-    const p = new Audio('https://cdn.freesound.org/previews/270/270404_5123851-lq.mp3').play();
-    if(p && p.catch) p.catch(tokBeep);
-  }catch(e){ tokBeep(); }
+    const a = _ctx(); if(!a) return; const t = a.currentTime;
+    _note(a, 420, t, .1, .35, 'triangle');
+    _note(a, 880, t + .09, .32, .3, 'sine');
+    _note(a, 1760, t + .09, .18, .08, 'sine');
+  }catch(e){}
 }
 function pendingPulse(){
   const el = document.getElementById('pendingBal')?.closest('.bal-card'); if(!el) return;
@@ -542,13 +558,13 @@ function updPremium(){
   try{
     const cb = document.getElementById('confirmBtn');
     if(cb) cb.style.setProperty('--fill', (15 + 85 * Math.min(totalAds / 500, 1)).toFixed(1) + '%');
-    if(pendingBal > _prevPending){ pendingPulse(); tokSound(); }
+    if(pendingBal > _prevPending){ pendingPulse(); kutungSound(); }
     _prevPending = pendingBal;
   }catch(e){}
 }
 function navFx(btn){
   if(!btn) return;
-  tokSound();
+  kotSound();
   btn.classList.remove('nav-glow'); void btn.offsetWidth; btn.classList.add('nav-glow');
   setTimeout(() => btn.classList.remove('nav-glow'), 550);
 }
@@ -559,34 +575,36 @@ console.log("✅ Auto Taka Machine FINAL PREMIUM - All Tasks Combined");
 
 // ===== VIDEO ANIMATION - Bot Ready -> Loading -> Completed -> Ready =====
 
+let _topTok = 0;
 function setTopStatus(state, text) {
   const top = document.getElementById('topStatus');
   if(!top) return;
-  
+  const tok = ++_topTok; // old timers can no longer flip the bar while a new state is showing
   top.classList.remove('ready','loading','completed','shrink','confirming');
-  
+  const two = (ic, a, b) => '<div class="status-icon">' + ic + '</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">' + a + '</small><b style="font-size:13px">' + b + '</b></div>';
+  const spin = '<span class="tspin"></span>';
   if(state === 'ready') {
     top.className = 'top-status ready';
     top.innerHTML = '<span class="status-dot"></span><span>Bot Ready</span>';
   } else if(state === 'manual_loading') {
     top.className = 'top-status loading';
-    top.innerHTML = '<div class="status-icon">👁️</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">MANUAL</small><b style="font-size:13px">Loading Ad...</b></div>';
+    top.innerHTML = two(spin, 'MANUAL', 'Loading Ad...');
   } else if(state === 'auto_loading') {
     top.className = 'top-status loading';
-    top.innerHTML = '<div class="status-icon">🔄</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">AUTO</small><b style="font-size:13px">Loading Ad...</b></div>';
+    top.innerHTML = two(spin, 'AUTO', 'Loading Ad...');
   } else if(state === 'confirming') {
     top.className = 'top-status loading confirming';
-    top.innerHTML = '<div class="status-icon" style="background:#f59e0b !important">⏳</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">ADS CONFIRM</small><b style="font-size:13px">Confirming...</b></div>';
+    top.innerHTML = two(spin, 'BALANCE', 'Loading Balance...');
   } else if(state === 'completed') {
     top.className = 'top-status completed';
-    top.innerHTML = '<div class="status-icon">✓</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">COMPLETED</small><b style="font-size:13px">Ad Served</b></div>';
+    top.innerHTML = two('✓', 'COMPLETED', 'Ad Served');
     setTimeout(() => {
+      if(tok !== _topTok) return;
       top.classList.add('shrink');
-      setTimeout(() => setTopStatus('ready'), 350);
+      setTimeout(() => { if(tok === _topTok) setTopStatus('ready'); }, 350);
     }, 1500);
   }
 }
-
 
 // Initialize as ready
 setTimeout(() => setTopStatus('ready'), 100);
