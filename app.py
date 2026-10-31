@@ -147,11 +147,20 @@ ADMIN_ID = 6560485203
 DATA_FILE = os.getenv("DATA_FILE", "/tmp/atm_data.json")  # NOT inside BASE_DIR, so static route can't serve it
 AD_MIN_SECONDS = float(os.getenv("AD_MIN_SECONDS", "15"))  # server-side check: ad reward only after this many seconds
 _lock = threading.Lock()
+DEFAULT_GUIDELINES = ("1. Watch ads daily to earn 0.50 TK per ad\n"
+                      "2. Use VPN from KAJER VPN button for more ads\n"
+                      "3. Refer friends to get 10% bonus\n"
+                      "4. Confirm Pending Balance after 500 ads\n"
+                      "5. Contact admin for support")
 DEFAULTS = {"settings": {"reward_watch": 0.5, "reward_auto": 0.10, "limit_watch": 100, "limit_auto": 100,
                          "notice": "📢 VPN diye kaj korbe",
                          "country_notice": "⚠️ {country} VPN/Proxy on korun, tarpor ad dekhun. Apnar current country: {current}",
                          "ref_bonus": 10,
-                         "min": {"bkash": 0, "nagad": 0, "rocket": 0, "binance": 0, "recharge": 0}, "vpn_country": ""},
+                         "min": {"bkash": 0, "nagad": 0, "rocket": 0, "binance": 0, "recharge": 0}, "vpn_country": "",
+                         "bot_guidelines": DEFAULT_GUIDELINES,
+                         "home_notice": "",
+                         "usdt_rate": 123.0,
+                         "payment_methods": {"bkash": True, "nagad": True, "rocket": True, "binance": True, "recharge": True}},
             "users": {}, "withdraws": [], "refs": {}}
 
 # ---------- storage: Firebase Firestore (permanent) with JSON-file fallback ----------
@@ -250,6 +259,10 @@ def settings_of(d):
         if k == "min":
             cur.setdefault("min", {})
             for mk, mv in v.items(): cur["min"].setdefault(mk, mv)
+        elif k == "payment_methods":
+            cur.setdefault("payment_methods", {})
+            for mk, mv in v.items():
+                cur["payment_methods"].setdefault(mk, mv)
         else: cur.setdefault(k, v)
     return cur
 
@@ -578,6 +591,13 @@ def api_settings():
                 if "vpn_country" in s: cur["vpn_country"] = str(s["vpn_country"])[:200]
                 if "notice" in s: cur["notice"] = str(s["notice"])[:300]
                 if "country_notice" in s: cur["country_notice"] = str(s["country_notice"])[:300]
+                if "bot_guidelines" in s: cur["bot_guidelines"] = str(s["bot_guidelines"])[:2000]
+                if "home_notice" in s: cur["home_notice"] = str(s["home_notice"])[:500]
+                if "usdt_rate" in s: cur["usdt_rate"] = max(0.0, float(s["usdt_rate"]))
+                if "payment_methods" in s and isinstance(s["payment_methods"], dict):
+                    for mk in ("bkash","nagad","rocket","binance","recharge"):
+                        if mk in s["payment_methods"]:
+                            cur["payment_methods"][mk] = bool(s["payment_methods"][mk])
                 if "ref_bonus" in s: cur["ref_bonus"] = min(100.0, max(0.0, float(s["ref_bonus"])))
                 for k in ("limit_watch", "limit_auto"):
                     if k in s: cur[k] = max(0, int(float(s[k])))
@@ -773,6 +793,34 @@ def api_admin_balance():
         if "bal" not in rec: rec["bal"] = new_bal()
         rec["bal"]["main"] = round(main, 4); rec["bal"]["pending"] = round(pend, 4); save(d)
     return jsonify(ok=True)
+
+@app.route('/api/admin/clear_withdraws', methods=['POST'])
+def api_admin_clear_withdraws():
+    """Clears ALL withdraw history (does not touch user balances, refs, or settings)."""
+    if not is_admin(tg_user()): return jsonify(error="forbidden"), 403
+    with _lock:
+        d = load()
+        n = len(d.get("withdraws", []))
+        d["withdraws"] = []
+        save(d)
+    return jsonify(ok=True, cleared=n)
+
+@app.route('/api/admin/reset_ads', methods=['POST'])
+def api_admin_reset_ads():
+    """Resets every user's ad counters (today_ads, total_ads, watch_today, auto_today) to 0."""
+    if not is_admin(tg_user()): return jsonify(error="forbidden"), 403
+    with _lock:
+        d = load(); cnt = 0
+        for rec in d["users"].values():
+            if "bal" in rec:
+                b = rec["bal"]
+                b["today_ads"] = 0; b["total_ads"] = 0
+                b["watch_today"] = 0; b["auto_today"] = 0
+                b["day"] = today_key()
+                cnt += 1
+            rec.pop("ad", None)
+        save(d)
+    return jsonify(ok=True, users_reset=cnt)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
