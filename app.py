@@ -152,7 +152,7 @@ DEFAULTS = {"settings": {"reward_watch": 0.5, "reward_auto": 0.10, "limit_watch"
                          "country_notice": "⚠️ {country} VPN/Proxy on korun, tarpor ad dekhun. Apnar current country: {current}",
                          "ref_bonus": 10,
                          "min": {"bkash": 0, "nagad": 0, "rocket": 0, "binance": 0, "recharge": 0}, "vpn_country": ""},
-            "users": {}, "withdraws": [], "refs": {}}
+            "users": {}, "withdraws": [], "refs": {}, "legacy_done": False}
 
 # ---------- storage: Firebase Firestore (permanent) with JSON-file fallback ----------
 # Set FIREBASE_CREDENTIALS in Render (service-account JSON). Everything is kept in memory (one gunicorn worker)
@@ -189,15 +189,34 @@ def _boot_load():
         try:
             m = _db.collection("atm_meta").document("main").get()
             md = m.to_dict() if m.exists else {}
-            d["settings"] = md.get("settings", {}); d["refs"] = md.get("refs", {})
+            d["settings"] = md.get("settings", {}); d["refs"] = md.get("refs", {}); d["legacy_done"] = bool(md.get("legacy_done"))
             d["users"] = {x.id: x.to_dict() for x in _db.collection("atm_users").stream()}
             d["withdraws"] = sorted([x.to_dict() for x in _db.collection("atm_withdraws").stream()], key=lambda w: -int(w.get("id", 0)))
-            empty = not md and not d["users"] and not d["withdraws"]
-            if empty:  # first run on Firebase: bring over the old JSON file if there is one
-                try:
-                    with open(DATA_FILE, encoding='utf-8') as f: old = json.load(f)
-                    if old.get("users") or old.get("withdraws"): d = old
-                except Exception: pass
+            if not d["legacy_done"]:
+                # one-time: bring over the OLD data kept in Firestore document  atm/main_data  (the old docs are never deleted)
+                ld = _db.collection("atm").document("main_data").get()
+                if ld.exists:
+                    old = ld.to_dict() or {}
+                    for uid, rec in (old.get("users") or {}).items():
+                        if isinstance(rec, dict): d["users"].setdefault(str(uid), rec)
+                    have = {int(w.get("id", 0)) for w in d["withdraws"]}
+                    for w in (old.get("withdraws") or []):
+                        if not isinstance(w, dict) or int(w.get("id", 0)) in have: continue
+                        for k, v in (("id", 0), ("uid", 0), ("name", ""), ("method", ""), ("number", ""), ("amount", 0), ("status", "Pending"), ("date", 0)): w.setdefault(k, v)
+                        d["withdraws"].append(w)
+                    d["withdraws"].sort(key=lambda w: -int(w.get("id", 0)))
+                    os_ = old.get("settings") or {}
+                    if os_:
+                        cur = d["settings"]; newer = {k: v for k, v in cur.items() if k != "min" and v != DEFAULTS["settings"].get(k)}
+                        newer_min = {k: v for k, v in (cur.get("min") or {}).items() if v != DEFAULTS["settings"]["min"].get(k)}
+                        d["settings"] = dict(os_); d["settings"].update(newer)
+                        d["settings"].setdefault("min", {}); d["settings"]["min"].update(newer_min)
+                else:
+                    try:
+                        with open(DATA_FILE, encoding='utf-8') as f: old = json.load(f)
+                        for uid, rec in (old.get("users") or {}).items(): d["users"].setdefault(str(uid), rec)
+                    except Exception: pass
+                d["legacy_done"] = True
             return d
         except Exception:
             import traceback; traceback.print_exc()
@@ -234,7 +253,7 @@ def save(d):
             batch.set(_db.collection(coll).document(doc), data); pend.append((store, key, h)); n += 1
             if n >= 400:
                 batch.commit(); [s.__setitem__(k, v) for s, k, v in pend]; pend.clear(); batch = _db.batch(); n = 0
-        meta = {"settings": d["settings"], "refs": d["refs"]}; mh = _js(meta)
+        meta = {"settings": d["settings"], "refs": d["refs"], "legacy_done": bool(d.get("legacy_done"))}; mh = _js(meta)
         if _hashes["meta"] != mh:
             batch.set(_db.collection("atm_meta").document("main"), meta); pend.append((_hashes, "meta", mh)); n += 1
         for uid, rec in d["users"].items(): put("atm_users", str(uid), rec, _hashes["users"], uid)
@@ -314,8 +333,8 @@ def ref_stats(d, uid):
     return {"count": cnt, "earned": round(d["users"].get(uid, {}).get("ref_earned", 0), 2)}
 
 def user_withdraws(d, uid):
-    return [{"id": w["id"], "method": w["method"], "number": w["number"], "amount": w["amount"], "status": w["status"], "date": w["date"]}
-            for w in d["withdraws"] if str(w["uid"]) == str(uid)][:50]
+    return [{"id": w.get("id", 0), "method": w.get("method", ""), "number": w.get("number", ""), "amount": w.get("amount", 0), "status": w.get("status", "Pending"), "date": w.get("date", 0)}
+            for w in d["withdraws"] if str(w.get("uid")) == str(uid)][:50]
 
 # ---------- country check ----------
 CNAME = {"US": "United States", "AU": "Australia", "BD": "Bangladesh", "IN": "India", "GB": "United Kingdom", "CA": "Canada", "DE": "Germany",
