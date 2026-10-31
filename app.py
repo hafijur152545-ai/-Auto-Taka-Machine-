@@ -133,7 +133,7 @@ def check():
 ADMIN_ID = 6560485203
 DATA_FILE = os.getenv("DATA_FILE", "/tmp/atm_data.json")  # NOT inside BASE_DIR, so static route can't serve it
 _lock = threading.Lock()
-DEFAULTS = {"settings": {"reward_watch": 0.5, "reward_auto": 0.5, "min": {"bkash": 0, "nagad": 0, "rocket": 0, "binance": 0, "recharge": 0}, "vpn_country": ""}, "users": {}, "withdraws": []}
+DEFAULTS = {"settings": {"reward_watch": 0.5, "reward_auto": 0.10, "limit_watch": 100, "limit_auto": 100, "notice": "📢 VPN diye kaj korbe", "min": {"bkash": 0, "nagad": 0, "rocket": 0, "binance": 0, "recharge": 0}, "vpn_country": ""}, "users": {}, "withdraws": []}
 
 def load():
     try:
@@ -166,6 +166,7 @@ def uname(u): return (u.get("first_name", "") + " " + u.get("last_name", "")).st
 def api_settings():
     with _lock:
         d = load(); cur = d["settings"]
+        for _k, _v in DEFAULTS["settings"].items(): cur.setdefault(_k, _v)
         if request.method == 'POST':
             if not is_admin(tg_user()): return jsonify(error="forbidden"), 403
             try:
@@ -175,6 +176,9 @@ def api_settings():
                 for k in cur["min"]:
                     if k in s.get("min", {}): cur["min"][k] = max(0.0, float(s["min"][k]))
                 if "vpn_country" in s: cur["vpn_country"] = str(s["vpn_country"])[:40]
+                if "notice" in s: cur["notice"] = str(s["notice"])[:300]
+                for k in ("limit_watch", "limit_auto"):
+                    if k in s: cur[k] = max(0, int(float(s[k])))
             except Exception: return jsonify(error="bad data"), 400
             save(d)
         return jsonify(cur)
