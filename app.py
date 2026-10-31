@@ -316,7 +316,8 @@ def state(rec):
     return {"main": round(b["main"], 2), "pending": round(b["pending"], 2), "today_ads": b["today_ads"], "total_ads": b["total_ads"],
             "watch_today": b["watch_today"], "auto_today": b["auto_today"],
             "lifetime_earned": round(b.get("lifetime_earned", 0), 2), "lifetime_ads": int(b.get("lifetime_ads", 0)),
-            "lifetime_watch_ads": int(b.get("lifetime_watch_ads", 0))}
+            "lifetime_watch_ads": int(b.get("lifetime_watch_ads", 0)),
+            "joined": int(rec.get("joined", 0))}
 
 def ensure_user(d, u):
     uid = str(u["id"]); rec = d["users"].get(uid)
@@ -860,7 +861,7 @@ def api_admin_wstatus():
                    f"🏦 Method: *{w['method'].upper()}*\n"
                    f"📱 Number: `{w['number']}`\n")
             if w["status"] == "Approved":
-                msg += "\n🎉 আপনার withdraw request approve করা হয়েছে। টাকা পাঠানো হবে।"
+                msg += "\n🎉 আপনার withdraw request approve করা হয়েছে।"
             else:
                 msg += "\n⚠️ আপনার withdraw request reject করা হয়েছে। প্রয়োজনে admin এর সাথে যোগাযোগ করুন।"
             payload = urllib.parse.urlencode({
