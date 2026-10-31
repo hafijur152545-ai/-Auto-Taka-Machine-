@@ -1146,3 +1146,105 @@ div:has(> .sup-label) > div{background:linear-gradient(90deg,transparent,#e9c46a
 .ban-t{font-size:24px;font-weight:800;margin:10px 0 8px;color:#ff6b6b}
 .ban-s{font-size:14px;line-height:1.6;color:#9fb0cc}
 .ban-b{display:inline-block;margin-top:18px;padding:12px 26px;border-radius:14px;font-weight:800;color:#fff;text-decoration:none;background:linear-gradient(90deg,#7c5cff,#22b8f0)}
+
+/* ============ PREMIUM WATCH AD BUTTON + LOADING ANIMATION ============ */
+#homePage #watchAdBtn.watch-btn{
+  background:linear-gradient(135deg,#6d28d9 0%,#db2777 50%,#f59e0b 100%) !important;
+  border:1.5px solid rgba(255,255,255,.35) !important;
+  color:#fff !important;
+  box-shadow:0 12px 28px rgba(219,39,119,.4),0 4px 14px rgba(124,58,237,.35),inset 0 1px 0 rgba(255,255,255,.25) !important;
+  position:relative;
+  overflow:hidden;
+  animation:watchGlow 2.4s ease-in-out infinite;
+}
+@keyframes watchGlow{
+  0%,100%{box-shadow:0 12px 28px rgba(219,39,119,.4),0 4px 14px rgba(124,58,237,.3),inset 0 1px 0 rgba(255,255,255,.25)}
+  50%{box-shadow:0 14px 36px rgba(219,39,119,.55),0 6px 22px rgba(245,158,11,.5),inset 0 1px 0 rgba(255,255,255,.35),0 0 24px rgba(255,200,80,.25)}
+}
+#homePage #watchAdBtn.watch-btn::before{
+  content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+  animation:watchShine 3s ease-in-out infinite;
+}
+@keyframes watchShine{0%{left:-60%}60%{left:120%}100%{left:120%}}
+#watchAdBtn .wb-tags i:first-child{color:#fde68a !important;font-weight:800 !important;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+#watchAdBtn .wb-tags i:last-child{color:#cffafe !important;font-weight:700 !important}
+#watchAdBtn .play-icon{color:#fff !important;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+
+/* Loading state: button grows + spinner + glow */
+#watchAdBtn.ad-preparing, #autoBtn.ad-preparing{
+  transform:scale(1.04);
+  background:linear-gradient(135deg,#dc2626,#ea580c,#f59e0b) !important;
+  box-shadow:0 14px 32px rgba(220,38,38,.5),0 0 28px rgba(245,158,11,.5) !important;
+  animation:prepPulse 0.85s ease-in-out infinite;
+}
+@keyframes prepPulse{0%,100%{transform:scale(1.04)}50%{transform:scale(1.07)}}
+#watchAdBtn.ad-playing, #autoBtn.ad-playing{
+  background:linear-gradient(135deg,#2563eb,#7c3aed,#db2777) !important;
+  box-shadow:0 14px 32px rgba(37,99,235,.5),0 0 28px rgba(124,58,237,.5) !important;
+}
+#watchAdBtn.ad-confirming, #autoBtn.ad-confirming{
+  background:linear-gradient(135deg,#059669,#0d9488,#0891b2) !important;
+  box-shadow:0 14px 32px rgba(5,150,105,.5),0 0 28px rgba(8,145,178,.5) !important;
+}
+.ad-prep-text{font-size:14px;font-weight:800;color:#fff;letter-spacing:1.2px;text-shadow:0 1px 3px rgba(0,0,0,.45);flex:1;text-align:center}
+.ad-spinner{
+  width:22px;height:22px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;
+  animation:adSpin 0.8s linear infinite;display:inline-block;margin-left:auto;margin-right:8px;
+}
+.ad-spinner.gold{border-top-color:#fde68a;border-color:rgba(253,224,71,.35);border-top-color:#fde68a}
+@keyframes adSpin{to{transform:rotate(360deg)}}
+
+/* ============ BELL ICON (home top right) ============ */
+.bell-icon{
+  position:relative;width:32px;height:32px;
+  background:linear-gradient(135deg,#fef3c7,#fde68a);
+  border-radius:11px;display:flex;align-items:center;justify-content:center;
+  font-size:17px;cursor:pointer;
+  box-shadow:0 3px 10px rgba(251,191,36,.35),inset 0 1px 0 rgba(255,255,255,.5);
+  border:1px solid #fde68a;transition:all 0.2s;
+}
+.bell-icon:active{transform:scale(0.92)}
+.bell-icon:hover{box-shadow:0 4px 14px rgba(251,191,36,.5)}
+.bell-dot{
+  position:absolute;top:-2px;right:-2px;width:9px;height:9px;background:#ef4444;
+  border-radius:50%;border:1.5px solid #fff;animation:bellRing 1.6s ease-in-out infinite;
+}
+@keyframes bellRing{0%,100%{transform:scale(1)}50%{transform:scale(1.25);box-shadow:0 0 8px rgba(239,68,68,.6)}}
+
+/* ============ HOME NOTICE POPUP (screenshot-2 style with sound) ============ */
+.nt-ov{position:fixed;inset:0;z-index:99990;background:rgba(2,6,23,.6);align-items:center;justify-content:center;padding:20px}
+.nt-box{position:relative;width:100%;max-width:340px;background:linear-gradient(180deg,#1e2d4d,#16213a);border:1px solid #2b3d66;border-radius:24px;padding:22px 16px 16px;box-shadow:0 20px 50px rgba(0,0,0,.5);animation:ntPop 0.4s cubic-bezier(0.16,1,0.3,1)}
+@keyframes ntPop{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.nt-title{font-size:16px;font-weight:800;color:#fde68a;margin-bottom:10px;text-align:center}
+.nt-x{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.1);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px}
+.nt-inner{margin-bottom:12px}
+.nt-msg{background:#111c33;border:1px solid #22345c;border-radius:12px;padding:14px;color:#e2e8f0;font-size:14px;line-height:1.55;white-space:pre-wrap}
+.nt-close{width:100%;background:linear-gradient(135deg,#f59e0b,#ea580c);color:#fff;border:none;border-radius:12px;padding:11px;font-weight:800;cursor:pointer;font-size:13px}
+
+/* ============ METHOD ROW (5 methods grid) ============ */
+.method-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+@media (max-width:340px){.method-row{grid-template-columns:repeat(2,1fr)}}
+.method-btn{flex:1;background:#f9fafb;border:1.5px solid #f1f1f5;border-radius:12px;padding:12px 8px;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center}
+
+/* ============ ADMIN PANEL: NEW ELEMENTS ============ */
+.ap-area{width:100%;background:#091325;border:1px solid #1c2b47;border-radius:18px;padding:15px 18px;font-size:14px;color:#fff;outline:none;font-family:inherit;resize:vertical;min-height:120px;line-height:1.55}
+.ap-area:focus{border-color:#12bcd8;box-shadow:0 0 0 3px rgba(18,188,216,.15)}
+.ap-big.danger{background:linear-gradient(90deg,#ef4444,#dc2626) !important;box-shadow:0 8px 24px rgba(239,68,68,.3) !important}
+
+/* Payment System toggle row */
+.pm-row{display:flex;justify-content:space-between;align-items:center;padding:13px 14px;background:#091325;border:1px solid #1c2b47;border-radius:14px;margin-bottom:8px}
+.pm-name{font-size:15px;font-weight:800}
+.pm-toggle{padding:8px 18px;border:none;border-radius:999px;font-size:13px;font-weight:800;cursor:pointer;transition:all 0.2s}
+.pm-toggle.on{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 3px 10px rgba(16,185,129,.4)}
+.pm-toggle.off{background:linear-gradient(135deg,#6b7280,#4b5563);color:#fff;box-shadow:0 3px 10px rgba(75,85,99,.3)}
+.pm-toggle:active{transform:scale(0.95)}
+
+/* Data Clear stat box */
+.dc-stat{background:#091325;border:1px solid #1c2b47;border-radius:14px;padding:13px 14px;font-size:14px;color:#e2e8f0;margin:12px 0}
+.dc-stat b{color:#fbbf24;font-size:16px}
+
+/* Auto button loading state glow */
+#autoBtn.action-btn.ad-preparing, #autoBtn.action-btn.ad-playing, #autoBtn.action-btn.ad-confirming{
+  color:#fff !important;border-color:transparent !important;
+}
