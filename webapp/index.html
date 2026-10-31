@@ -6,7 +6,126 @@
 <title>Auto Taka Machine</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://adspark-tma.top/api/public/sdk.js?k=34"></script>
-<link rel="stylesheet" href="style.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{margin:0;background:#eef0ff;display:flex;flex-direction:column;align-items:center;font-family:Inter,'Segoe UI',system-ui,sans-serif;-webkit-tap-highlight-color:transparent;min-height:100vh}
+.phone{width:100%;max-width:420px;background:linear-gradient(180deg,#f6f7ff 0%,#eef0ff 100%);min-height:100vh;padding:14px 14px 110px 14px;position:relative}
+.top-status{margin:8px auto 0;background:#fff;border-radius:999px;padding:7px 16px;font-size:11px;font-weight:800;letter-spacing:0.6px;box-shadow:0 4px 16px rgba(0,0,0,0.06);width:fit-content;display:flex;align-items:center;gap:7px;color:#111827;border:1px solid #f0f0f0;position:relative;z-index:5}
+.top-status::before{content:"";width:8px;height:8px;background:#22c55e;border-radius:50%;display:inline-block;box-shadow:0 0 0 3px #22c55e20}
+/* TASK 1: main solid moves down 8px as one block, except BOT READY */
+#mainContent{margin-top:14px;transition:all 0.2s} /* 6-8px extra down from original */
+.profile-header{background:#fff;border-radius:20px;padding:14px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 20px rgba(0,0,0,0.05);margin-bottom:12px;border:1px solid #f1f1f5}
+/* TASK 2: Alex Morgan card wider 12-16px each side */
+#alexCard{width:calc(100% + 28px);margin-left:-14px;margin-right:-14px; /* wider */ }
+.ph-left{display:flex;align-items:center;gap:10px}
+.avatar-sm{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#e0e7ff,#c7d2fe);color:#6d5cf6;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;border:2px solid #fff;box-shadow:0 2px 8px rgba(79,70,229,0.15);overflow:hidden}
+.avatar-sm img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.ph-info b{font-size:13.5px;display:block;color:#111827} .ph-sub{font-size:11px;color:#6b7280;margin-top:2px;display:flex;gap:6px;align-items:center}
+.verified{font-size:10px;color:#6b7280;background:#f9fafb;padding:2px 6px;border-radius:6px;border:1px solid #f0f0f0}
+.automation-badge{background:#f9fafb;border-radius:12px;padding:7px 12px;text-align:center;border:1px solid #eef0f0;min-width:78px}
+.automation-badge small{font-size:8px;display:block;color:#9ca3af;letter-spacing:0.8px;font-weight:700} .automation-badge span{font-size:11px;font-weight:800;color:#111827;margin-top:2px;display:block}
+.balance-row{display:flex;gap:10px;margin-bottom:12px}
+.bal-card{flex:1;background:#fff;border-radius:18px;padding:14px;box-shadow:0 4px 20px rgba(0,0,0,0.05);border:1px solid #f1f1f5}
+.bal-card.dark{background:#0f1115;color:white;border:1px solid #1f2937}
+.bal-top{display:flex;justify-content:space-between;font-size:9px;opacity:0.7;margin-bottom:8px;letter-spacing:0.5px;font-weight:700}
+.bal-card b{font-size:20px;display:block;letter-spacing:-0.5px} .bal-sub{font-size:10px;opacity:0.6;margin-top:5px;display:block}
+.info-row{display:flex;gap:10px;margin-bottom:14px}
+.info-card{flex:1;background:#fff;border-radius:16px;padding:12px;box-shadow:0 4px 16px rgba(0,0,0,0.04);border:1px solid #f1f1f5}
+.info-card small{font-size:11px;font-weight:600;color:#374151} .info-card .dim{color:#9ca3af;font-size:10px}
+.progress{height:5px;background:#f3f4f6;border-radius:10px;margin:8px 0;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);width:0%;transition:width 0.4s}
+.auto-off{display:flex;flex-direction:column;justify-content:center;align-items:center;background:#fff;border:1.5px dashed #e5e7eb !important}
+.off-dot{width:22px;height:22px;border-radius:50%;border:2.5px solid #e5e7eb;margin-top:6px;background:white}
+
+/* TASK 2 from first prompt: Auto Loop & Stop slightly thicker 4-6px */
+.watch-btn{width:100%;background:#0f1115;color:white;border:none;border-radius:18px;padding:18px 18px;font-size:14.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,0.18);border:1px solid #1f2937;transition:all 0.2s}
+.watch-btn:active{transform:scale(0.97)}
+.action-row{display:flex;gap:10px;margin-bottom:12px}
+.action-btn{flex:1;background:#fff;border:1px solid #e9e9ef;border-radius:14px;padding:16px 12px;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;color:#111827;box-shadow:0 2px 10px rgba(0,0,0,0.03);transition:all 0.2s} /* thicker: 16px padding vs 13px */
+.action-btn.danger{color:#ef4444}
+.action-btn:active{transform:scale(0.96)}
+.action-btn.active-auto{background:#22c55e !important;color:white !important;border-color:#22c55e !important}
+
+.confirm-card{width:100%;background:#fff;border:1px solid #e9e9ef;border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;text-align:left;box-shadow:0 2px 12px rgba(0,0,0,0.03)}
+.cc-left{display:flex;align-items:center;gap:12px}
+.check-icon{width:32px;height:32px;border-radius:50%;background:#0f1115;color:white;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+.confirm-card b{font-size:13.5px;display:block;color:#111827} .confirm-card small{font-size:11px;color:#6b7280;margin-top:2px;display:block}
+.arrow{color:#9ca3af;font-size:18px}
+
+/* Bottom 4 buttons slightly down 6-8px */
+#bottomButtons{margin-top:14px} /* extra down */
+
+.vpn-btn{width:100%;background:#0f1115;color:white;border:none;border-radius:16px;padding:15px;font-weight:800;font-size:13px;margin-bottom:10px;cursor:pointer;letter-spacing:0.8px;box-shadow:0 6px 16px rgba(0,0,0,0.15);border:1px solid #1f2937}
+.vpn-btn.outline{background:#fff;color:#111827;border:1.5px solid #e9e9ef;box-shadow:0 2px 10px rgba(0,0,0,0.03)}
+.footer{text-align:center;font-size:10px;color:#9ca3af;margin:22px 0 10px;letter-spacing:1.2px;font-weight:600}
+.bottom-nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);width:calc(100% - 28px);max-width:400px;background:#0f1115;border-radius:28px;display:flex;padding:7px;gap:6px;z-index:30;box-shadow:0 12px 32px rgba(0,0,0,0.25);border:1px solid #1f2937}
+.bottom-nav button{flex:1;background:transparent;color:#6b7280;border:none;border-radius:20px;padding:11px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:all 0.25s}
+.bottom-nav button.bn-active{background:#fff;color:#0f1115;box-shadow:0 4px 12px rgba(255,255,255,0.15)}
+
+/* TASK 3: Loading bar position - move up slightly, directly above Alex card, hide IDLE */
+.ad-toast{position:fixed;top:48px;left:50%;transform:translateX(-50%);width:92%;max-width:380px;z-index:50;transition:all 0.35s cubic-bezier(0.16,1,0.3,1)} /* moved up from 60+ to 48 to match yellow mark */
+.ad-toast.hidden{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(-20px) scale(0.96)}
+.ad-toast-inner{background:#0f1115;color:white;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 12px 32px rgba(0,0,0,0.25);border:1px solid #1f2937}
+.ad-toast-inner.success{border:1px solid #22c55e40}
+.toast-icon{width:36px;height:36px;border-radius:50%;background:#1f2937;display:flex;align-items:center;justify-content:center}
+.toast-icon.success{background:#22c55e20;color:#22c55e}
+.spinner{width:20px;height:20px;border:2.5px solid #334155;border-top:2.5px solid #60a5fa;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast-text small{font-size:9px;color:#9ca3af;display:block;letter-spacing:0.8px;font-weight:700;margin-bottom:2px}
+.toast-text b{font-size:13.5px}
+.toast-right{margin-left:auto;width:26px;height:26px;border-radius:50%;background:#1f2937;display:flex;align-items:center;justify-content:center}
+.toast-right.success{background:#22c55e;color:white}
+.completed-banner{position:fixed;top:66px;left:50%;transform:translateX(-50%);background:#0f1115;color:#22c55e;padding:10px 18px;border-radius:999px;font-size:12px;font-weight:700;z-index:49;border:1px solid #22c55e40;box-shadow:0 8px 24px rgba(0,0,0,0.15);transition:all 0.35s}
+.completed-banner.hidden{opacity:0;transform:translateX(-50%) translateY(-12px)}
+
+/* TASK 1 Popup centered */
+#centerModal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:86%;max-width:360px;background:#fff;border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,0.25);border:1px solid #f1f1f5;z-index:100;display:none;text-align:center}
+#centerModal.show{display:block;animation:popIn 0.3s cubic-bezier(0.16,1,0.3,1)}
+#centerModalOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99;display:none;backdrop-filter:blur(4px)}
+#centerModalOverlay.show{display:block}
+@keyframes popIn{from{opacity:0;transform:translate(-50%,-46%) scale(0.96)} to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+#centerModal b{font-size:15px;display:block;margin-bottom:8px}
+#centerModal small{font-size:12px;color:#6b7280;display:block;margin-bottom:14px;line-height:1.5}
+#centerModal button{background:#0f1115;color:white;border:none;border-radius:12px;padding:10px 20px;font-weight:700;cursor:pointer}
+
+/* Profile Page Styles */
+#profilePage{display:none}
+.profile-top-card{background:#fff;border-radius:20px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05);border:1px solid #f1f1f5;margin-bottom:12px;margin-top:14px}
+.profile-top-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.profile-user{display:flex;gap:12px;align-items:center}
+.profile-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#e0e7ff,#c7d2fe);color:#6d5cf6;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;border:2px solid #fff;overflow:hidden}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}
+.uid-badge{background:#f3f0ff;border:1px solid #e9e5ff;padding:3px 8px;border-radius:8px;font-size:11px;color:#6b7280;font-weight:600}
+.status-badge{background:#f0fdf4;border:1px solid #dcfce7;color:#16a34a;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px}
+.status-badge::before{content:"";width:6px;height:6px;background:#22c55e;border-radius:50%}
+.profile-balance-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.pb-card{background:#f8f7ff;border:1px solid #f1f0ff;border-radius:14px;padding:12px}
+.pb-card.dark{background:#0f1115;color:white;border-color:#1f2937}
+.pb-card small{font-size:9px;font-weight:700;letter-spacing:0.5px;opacity:0.7;display:block;margin-bottom:6px}
+.pb-card b{font-size:17px;display:block}
+.profile-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ps-card{background:#f9fafb;border:1px solid #f1f1f5;border-radius:14px;padding:12px}
+.ps-card small{font-size:9px;font-weight:700;letter-spacing:0.5px;color:#6b7280;display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.ps-card b{font-size:13px;color:#111827}
+.ps-card .dim{font-size:10px;color:#9ca3af;margin-top:4px;display:block}
+
+.referral-box,.withdraw-box,.history-box,.guideline-box{background:#fff;border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,0.04);border:1px solid #f1f1f5}
+.referral-box b,.withdraw-box b,.history-box b,.guideline-box b{font-size:13.5px;display:block;margin-bottom:8px;color:#111827;display:flex;align-items:center;gap:8px}
+.bonus-badge{background:#fef08a;border:1px solid #fde047;color:#854d0e;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800}
+.ref-link-row{display:flex;gap:8px;margin:12px 0}
+.ref-link-row input{flex:1;background:#f9fafb;border:1.5px solid #f1f1f5;border-radius:12px;padding:10px 12px;font-size:11px;font-weight:600}
+.ref-link-row button{background:#0f1115;color:white;border:none;border-radius:12px;padding:10px 16px;font-size:11px;font-weight:700;cursor:pointer}
+.ref-stats{display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-top:4px}
+.method-row{display:flex;gap:8px;margin:12px 0}
+.method-btn{flex:1;background:#f9fafb;border:1.5px solid #f1f1f5;border-radius:12px;padding:12px 8px;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center}
+.method-btn.selected{background:#0f1115;color:white;border-color:#0f1115;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+.method-btn b{display:block;font-size:12px} .method-btn small{display:block;font-size:10px;opacity:0.7;margin-top:2px}
+.input{width:100%;background:#f9fafb;border:1.5px solid #f1f1f5;border-radius:12px;padding:12px;margin:6px 0;font-size:12.5px;font-weight:500;outline:none}
+.action-btn.primary{background:#0f1115;color:white;border-color:#0f1115;width:100%;border-radius:12px;padding:12px;margin-top:6px}
+.no-history{text-align:center;padding:20px;color:#9ca3af;font-size:12px}
+.no-history small{font-size:11px}
+.guideline-text{font-size:11.5px;color:#4b5563;line-height:1.6;background:#f9fafb;border-radius:12px;padding:12px;border:1px dashed #e5e7eb;white-space:pre-line}
+</style>
 </head>
 <body>
 <div class="phone" id="homePage">
@@ -15,10 +134,10 @@
     <div class="profile-header" id="alexCard">
       <div class="ph-left">
         <div class="avatar-sm" id="avatarWrap"><span id="avatarInitial">AM</span></div>
-        <div class="ph-info" style="display:flex;flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap">
-          <b id="userName" style="display:inline">Alex Morgan</b>
-          <div class="ph-sub" style="display:inline-flex;margin:0">
-            <small style="display:inline">UID: <span id="userId">000000</span></small>
+        <div class="ph-info">
+          <b id="userName">Alex Morgan</b>
+          <div class="ph-sub">
+            <small>UID: <span id="userId">000000</span></small>
             <span class="verified">Today <span id="todayCountTop">0</span> Ads • Verified <span style="color:#22c55e">✓</span></span>
           </div>
         </div>
@@ -68,18 +187,12 @@
       <div class="cc-left">
         <div class="check-icon">✓</div>
         <div>
-          <b>Confirm Pending Balance</b>
+          <b>Confirm Balance</b>
           <small id="confirmText">0/500 ads • +3.2%</small>
         </div>
       </div>
       <span class="arrow">→</span>
     </button>
-
-    <div style="margin:22px 0 10px 0;display:flex;align-items:center;gap:10px">
-      <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,#e5e7eb,transparent)"></div>
-      <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;color:#6b7280;background:#f1f5f9;padding:5px 14px;border-radius:20px;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,0.04)">ALL SUPPORT BOX</span>
-      <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,#e5e7eb,transparent)"></div>
-    </div>
 
     <div id="bottomButtons">
       <div class="action-row">
@@ -88,14 +201,14 @@
       </div>
       <button id="vpnBtn" class="vpn-btn">KAJER VPN</button>
       <button id="adminPanelBtn" class="vpn-btn outline">ADMIN PANEL</button>
-      <div class="footer">HEN • PREMIUM V2.4</div>
+      <div class="footer">NEH • PREMIUM V2.4</div>
     </div>
   </div>
 </div>
 
 <!-- PROFILE PAGE - PREMIUM LIKE SCREENSHOT 2 -->
 <div id="profilePage" class="phone">
-  <div class="top-status" style="display:none !important">BOT READY</div>
+  <div class="top-status">BOT READY</div>
   <div class="profile-top-card">
     <div class="profile-top-header">
       <div class="profile-user">
@@ -125,7 +238,7 @@
   <div class="referral-box">
     <b>🎁 Referral Program <span class="bonus-badge" style="margin-left:auto">✨ 10% Bonus</span></b>
     <small style="color:#6b7280;line-height:1.5">Invite friends and get 10% of their earnings. Bonus credited instantly.</small>
-    <div class="ref-link-row"><input id="refLink" value="https://t.me/autotakamachine_bot?start=..." readonly><button id="copyRef">Copy</button></div>
+    <div class="ref-link-row"><input id="refLink" value="https://t.me/AutoTakaMachineBot?start=..." readonly><button id="copyRef">Copy</button></div>
     <div class="ref-stats"><span>👥 Total Referred: <b id="refCount">0</b></span><span style="color:#16a34a">+<span id="refEarn">0</span> TK earned</span></div>
   </div>
 
@@ -159,11 +272,11 @@
     <div class="guideline-text" id="adminGuidelines">1. Watch ads daily to earn 0.50 TK per ad
 2. Use VPN from KAJER VPN button for more ads
 3. Refer friends to get 10% bonus
-4. Confirm Pending Balance after 500 ads
+4. Confirm balance after 500 ads
 5. Contact admin for support</div>
   </div>
 
-  <div class="footer">HEN • PREMIUM V2.4 • PROFILE</div>
+  <div class="footer">NEH • PREMIUM V2.4 • PROFILE</div>
 </div>
 
 <div class="bottom-nav">
@@ -196,7 +309,6 @@
 <script>
 // ===== DYNAMIC TELEGRAM USER DATA =====
 let realUser = null;
-const BOT_USERNAME = "autotakamachine_bot";
 const tg = window.Telegram?.WebApp;
 if (tg) {
   try {
@@ -224,7 +336,7 @@ if (tg) {
       }
       // Ref link
       const ref = document.getElementById("refLink");
-      if(ref) ref.value = `https://t.me/autotakamachine_bot?start=${uid}`;
+      if(ref) ref.value = `https://t.me/AutoTakaMachineBot?start=${uid}`;
     }
   } catch(e){console.log(e)}
 }
@@ -316,74 +428,61 @@ function setButtonActive(active) {
   }
 }
 
-
-
-
-// ===== CLEAN AD FLOW - Only video animation, no double toast, no blue button =====
-
-
-
-
-
-// ===== FINAL AD FLOW - 2 sec Ads Confirm after ad close, then balance + thinner loading =====
 async function watchAdFlow() {
-  if(autoRunning) {
-    showCenterModal("Auto Running","Auto Loop চলছে, আগে Stop করো");
-    return;
-  }
+  if(autoRunning) return showCenterModal("Auto Running","Auto Loop চলছে, আগে Stop করো");
+  const top = document.getElementById("topStatus");
   const autoStatus = document.getElementById("autoStatus");
+  setButtonActive("watch");
+  if(top) top.innerText = "Ads Loading... 2s";
   if(autoStatus) autoStatus.innerText = "LOADING 2s";
-  
-  setTopStatus("manual_loading");
-  await new Promise(r => setTimeout(r, 2000));
-  
-  const tg = window.Telegram?.WebApp;
+  showToastLoading("MANUAL Loading Ad... 2s");
+  await delay(2000);
+  setButtonActive(null);
+  if(top) top.innerText = "Ad Playing...";
+  if(autoStatus) autoStatus.innerText = "AD PLAYING";
   const userId = tg?.initDataUnsafe?.user?.id || 0;
   try {
     if (typeof showAdspark === 'function') await showAdspark({ ymid: userId });
     else if (typeof showAdsparkPopup === 'function') await showAdsparkPopup({ ymid: userId });
   } catch(e){}
-  
-  // Ad closed - 2 sec Ads Confirm loading
-  setTopStatus("confirming");
-  await new Promise(r => setTimeout(r, 2000));
-  
-  // Now increase balance
+  if(top) top.innerText = "Balance Loading... 2s";
+  if(autoStatus) autoStatus.innerText = "BALANCE LOADING 2s";
+  showToastLoading("Balance Loading... 2s");
+  await delay(2000);
   pendingBal += 0.50; todayAds++; totalAds++; upd();
-  setTopStatus("completed");
+  showToastSuccess();
   if(autoStatus) autoStatus.innerText = "IDLE";
+  if(top) top.innerText = "BOT READY";
 }
-
 async function autoLoopFlow() {
   while(autoRunning) {
+    const top = document.getElementById("topStatus");
     const autoStatus = document.getElementById("autoStatus");
+    if(top) top.innerText = "Ads Loading... 2s";
     if(autoStatus) autoStatus.innerText = "LOADING 2s";
-    
-    setTopStatus("auto_loading");
-    await new Promise(r => setTimeout(r, 2000));
+    showToastLoading("Loading Ad... 2s");
+    await delay(2000);
     if(!autoRunning) break;
-    
-    const tg = window.Telegram?.WebApp;
+    if(top) top.innerText = "Ad Playing...";
+    if(autoStatus) autoStatus.innerText = "AD PLAYING";
     const userId = tg?.initDataUnsafe?.user?.id || 0;
     try {
       if (typeof showAdspark === 'function') await showAdspark({ ymid: userId });
       else if (typeof showAdsparkPopup === 'function') await showAdsparkPopup({ ymid: userId });
     } catch(e){}
     if(!autoRunning) break;
-    
-    // 2 sec confirm loading after ad close
-    setTopStatus("confirming");
-    await new Promise(r => setTimeout(r, 2000));
+    if(top) top.innerText = "Balance Loading... 2s";
+    if(autoStatus) autoStatus.innerText = "BALANCE LOADING 2s";
+    showToastLoading("Balance Loading... 2s");
+    await delay(2000);
     if(!autoRunning) break;
-    
     pendingBal += 0.50; todayAds++; totalAds++; upd();
-    setTopStatus("completed");
+    showToastSuccess();
+    if(top) top.innerText = "BOT READY";
     if(autoStatus) autoStatus.innerText = "IDLE - NEXT 2s";
-    
-    await new Promise(r => setTimeout(r, 2000));
+    await delay(2000);
   }
 }
-
 document.getElementById("watchAdBtn").onclick = watchAdFlow;
 document.getElementById("autoBtn").onclick = async () => {
   if (autoRunning) return;
@@ -396,7 +495,7 @@ document.getElementById("stopBtn").onclick = () => {
   autoRunning = false;
   document.getElementById("autoOffCard").innerHTML = "<small>AUTO OFF</small><div class='off-dot'></div>";
   document.getElementById("autoStatus").innerText = "IDLE";
-  // old toast disabled
+  hideToast();
   document.getElementById("topStatus").innerText = "BOT READY - STOPPED";
   setButtonActive(null);
 };
@@ -483,41 +582,6 @@ const savedGuideline = localStorage.getItem("adminGuidelines");
 if(savedGuideline) document.getElementById("adminGuidelines").innerText = savedGuideline;
 
 console.log("✅ Auto Taka Machine FINAL PREMIUM - All Tasks Combined");
-
-// ===== VIDEO ANIMATION - Bot Ready -> Loading -> Completed -> Ready =====
-
-function setTopStatus(state, text) {
-  const top = document.getElementById('topStatus');
-  if(!top) return;
-  
-  top.classList.remove('ready','loading','completed','shrink','confirming');
-  
-  if(state === 'ready') {
-    top.className = 'top-status ready';
-    top.innerHTML = '<span class="status-dot"></span><span>Bot Ready</span>';
-  } else if(state === 'manual_loading') {
-    top.className = 'top-status loading';
-    top.innerHTML = '<div class="status-icon">👁️</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">MANUAL</small><b style="font-size:13px">Loading Ad...</b></div>';
-  } else if(state === 'auto_loading') {
-    top.className = 'top-status loading';
-    top.innerHTML = '<div class="status-icon">🔄</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">AUTO</small><b style="font-size:13px">Loading Ad...</b></div>';
-  } else if(state === 'confirming') {
-    top.className = 'top-status loading confirming';
-    top.innerHTML = '<div class="status-icon" style="background:#f59e0b !important">⏳</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">ADS CONFIRM</small><b style="font-size:13px">Confirming...</b></div>';
-  } else if(state === 'completed') {
-    top.className = 'top-status completed';
-    top.innerHTML = '<div class="status-icon">✓</div><div style="display:flex;flex-direction:column;line-height:1.2"><small style="font-size:10px;opacity:0.6;letter-spacing:1px">COMPLETED</small><b style="font-size:13px">Ad Served</b></div>';
-    setTimeout(() => {
-      top.classList.add('shrink');
-      setTimeout(() => setTopStatus('ready'), 350);
-    }, 1500);
-  }
-}
-
-
-// Initialize as ready
-setTimeout(() => setTopStatus('ready'), 100);
-
 </script>
 </body>
 </html>
