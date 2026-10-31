@@ -10,6 +10,7 @@
 </head>
 <body>
 <div id="splash"><div class="sp-box"><img class="sp-logo" src="logo.jpg" alt=""><div class="sp-title"><span>🤖</span> <span class="g">Auto Taka Machine</span> <span>🔥</span></div><div class="sp-bar"><i></i></div></div></div>
+<div id="banOv" class="ban-ov" style="display:none"><div class="ban-box"><div class="ban-ico">🚫</div><div class="ban-t">Account Banned</div><div class="ban-s">আপনার অ্যাকাউন্ট Ban করা হয়েছে। সমস্যা হলে Admin এর সাথে যোগাযোগ করুন।</div><a class="ban-b" href="https://t.me/noyonfb1020" target="_blank">Contact Admin</a></div></div>
 <div id="noticeOv" class="nt-ov" style="display:none"><div class="nt-box"><button class="nt-x" onclick="closeNotice()">✕</button><div class="nt-title">Notice</div><div class="nt-inner"><div class="nt-msg" id="noticeMsg"></div></div><button class="nt-close" onclick="closeNotice()">Close</button></div></div>
 <script>
 var NOTICE_TEXT="📢 VPN diye kaj korbe", _noticeShown=false, _splashGone=false;
@@ -139,13 +140,13 @@ setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.
       <div class="ps-card"><small>📈 TOTAL EARNED</small><b id="pTotalEarned">0 TK</b></div>
       <div class="ps-card"><small>📅 JOINED</small><b id="pJoined">Just now</b><span class="dim">Since Today</span></div>
       <div class="ps-card"><small>▶ TOTAL ADS</small><b id="pTotalAds">0 Ads</b><span class="dim" id="pTotalPercent">0.0% of daily</span></div>
-      <div class="ps-card"><small>👥 REFERRALS</small><b id="pRefs">0 Referrals</b><span class="dim">10% bonus active</span></div>
+      <div class="ps-card"><small>👥 REFERRALS</small><b id="pRefs">0 Referrals</b><span class="dim" id="refBonusTxt">10% bonus active</span></div>
     </div>
   </div>
 
   <div class="referral-box">
     <b>🎁 Referral Program <span class="bonus-badge" style="margin-left:auto">✨ 10% Bonus</span></b>
-    <small style="color:#6b7280;line-height:1.5">Invite friends and get 10% of their earnings. Bonus credited instantly.</small>
+    <small id="refInviteTxt" style="color:#6b7280;line-height:1.5">Invite friends and get 10% of their earnings. Bonus credited instantly.</small>
     <div class="ref-link-row"><input id="refLink" value="https://t.me/autotakamachine_bot?start=..." readonly><button id="copyRef">Copy</button></div>
     <div class="ref-stats"><span>👥 Total Referred: <b id="refCount">0</b></span><span style="color:#16a34a">+<span id="refEarn">0</span> TK earned</span></div>
   </div>
@@ -217,9 +218,10 @@ setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.
       <button data-t="settings" onclick="apTab('settings')">Settings</button>
       <button data-t="withdraw" onclick="apTab('withdraw')">Withdraw Requests</button>
       <button data-t="users" onclick="apTab('users')">Users</button>
-      <button>Add Limit</button>
-      <button>Notice Popup</button>
-      <button>App Top</button>
+      <button data-t="limit" onclick="apTab('limit')">Add Limit</button>
+      <button data-t="notice" onclick="apTab('notice')">Notice Popup</button>
+      <button data-t="refer" onclick="apTab('refer')">Refer Bonus</button>
+      <button data-t="apptop" onclick="apTab('apptop')">App Top</button>
     </div>
     <div class="ap-body" id="apBody"></div>
     <div class="ap-foot"><button onclick="apClose()">Close Panel</button></div>
@@ -279,20 +281,18 @@ if (tg) {
 // ===== PER-ACCOUNT STORAGE: every Telegram ID keeps its own balance & ad counts =====
 const _UID = String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id || "guest");
 const UK = k => "u" + _UID + "_" + k;
-(function(){
-  if(_UID === "guest") return;
-  // old shared data (before this update) goes to the first account that opens the bot, then is removed
-  const old = ["mainBal","pendingBal","todayAds","totalAds","adsDay","watchToday","autoToday","withdrawHistory"];
-  if(old.some(k => localStorage.getItem(k) !== null)){
-    old.forEach(k => { const v = localStorage.getItem(k); if(v !== null && localStorage.getItem(UK(k)) === null) localStorage.setItem(UK(k), v); localStorage.removeItem(k); });
-  }
-})();
+// old on-phone data is imported to the server ONCE (first time an account opens the bot)
+function readLegacy(){
+  const g = k => { let v = localStorage.getItem(UK(k)); if(v === null) v = localStorage.getItem(k); return v; };
+  const o = {main: parseFloat(g("mainBal")||0)||0, pending: parseFloat(g("pendingBal")||0)||0, today_ads: parseInt(g("todayAds")||0)||0, total_ads: parseInt(g("totalAds")||0)||0};
+  return (o.main||o.pending||o.total_ads) ? o : null;
+}
+function clearLegacy(all){
+  ["mainBal","pendingBal","todayAds","totalAds","adsDay","watchToday","autoToday"].forEach(k => { localStorage.removeItem(UK(k)); if(all) localStorage.removeItem(k); });
+}
 
 // ===== DEFAULT 0 BALANCES =====
-let mainBal = parseFloat(localStorage.getItem(UK("mainBal")) || "0.00");
-let pendingBal = parseFloat(localStorage.getItem(UK("pendingBal")) || "0.00");
-let todayAds = parseInt(localStorage.getItem(UK("todayAds")) || "0");
-let totalAds = parseInt(localStorage.getItem(UK("totalAds")) || "0");
+let mainBal = 0, pendingBal = 0, todayAds = 0, totalAds = 0; // real values come from the server (applyState)
 let autoRunning = false;
 let selectedMethod = null;
 let rewardWatch = 0.50, rewardAuto = 0.10;
@@ -303,14 +303,22 @@ function renderAutoCard(on){
   c.classList.toggle("auto-on", !!on);
   c.innerHTML = `<small>${on ? "AUTO ON" : "AUTO OFF"}</small><div class="ac-row"><div class="ac-count"><b>${autoSession}</b><i>ADS</i></div><div class="off-dot"${on ? " style='background:#22c55e;border-color:#22c55e'" : ""}></div></div>`;
 }
-const _dayKey = new Date().toLocaleDateString('en-CA');
-if(localStorage.getItem(UK("adsDay")) !== _dayKey){ localStorage.setItem(UK("adsDay"), _dayKey); localStorage.setItem(UK("watchToday"),"0"); localStorage.setItem(UK("autoToday"),"0"); }
-let watchToday = parseInt(localStorage.getItem(UK("watchToday"))||"0"), autoToday = parseInt(localStorage.getItem(UK("autoToday"))||"0");
+let watchToday = 0, autoToday = 0;
+let serverHistory = [];
+function applyState(st){
+  if(!st) return;
+  mainBal = st.main; pendingBal = st.pending; todayAds = st.today_ads; totalAds = st.total_ads; watchToday = st.watch_today; autoToday = st.auto_today;
+  upd();
+}
+function fmtDT(ts){
+  const d = new Date(ts*1000), p = n => String(n).padStart(2,"0"); let hr = d.getHours(); const ap = hr >= 12 ? "PM" : "AM"; hr = hr % 12 || 12;
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}, ${hr}:${p(d.getMinutes())}:${p(d.getSeconds())} ${ap}`;
+}
+function fmtD(ts){ const d = new Date(ts*1000), p = n => String(n).padStart(2,"0"); return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`; }
 function updLimits(){
   const g = id => document.getElementById(id);
   if(g("autoLimitTxt")) g("autoLimitTxt").innerText = autoToday + "/" + limitAuto;
   if(g("watchLimitTxt")) g("watchLimitTxt").innerText = watchToday + "/" + limitWatch;
-  localStorage.setItem(UK("watchToday"), watchToday); localStorage.setItem(UK("autoToday"), autoToday);
 }
 const fmtPrice = n => (Math.round(n*100)/100).toFixed(2);
 function watchBtnHTML(){ return `<span>Watch Ad (+${fmtPrice(rewardWatch)} TK)</span><span class="wb-tags"><i>1 TAP ADS</i><i>HIGH PRICE</i></span><span class="play-icon">▶</span>`; }
@@ -349,10 +357,6 @@ function upd() {
   if(g("confirmText")) g("confirmText").innerText = totalAds + "/500 ads • +3.2%";
   if(g("wBal")) g("wBal").innerText = mainBal.toFixed(2) + " TK";
   if(g("pTotalEarned")) g("pTotalEarned").innerText = mainBal.toFixed(0) + " TK";
-  localStorage.setItem(UK("mainBal"), mainBal);
-  localStorage.setItem(UK("pendingBal"), pendingBal);
-  localStorage.setItem(UK("todayAds"), todayAds);
-  localStorage.setItem(UK("totalAds"), totalAds);
   updLimits();
   updPremium();
 }
@@ -432,6 +436,25 @@ async function runAdWith16s(statusLabel) {
   clearInterval(tick);
 }
 
+async function srvAdStart(type){
+  let r; try{ r = await API('/api/ad/start',{type}); }catch(e){ r = {error:'net'}; }
+  if(r && r.ok) return true;
+  adError(r); return false;
+}
+async function srvAdClaim(){
+  let r; try{ r = await API('/api/ad/claim',{}); }catch(e){ r = {error:'net'}; }
+  if(r && r.ok){ applyState(r.state); return true; }
+  adError(r); return false;
+}
+function adError(r){
+  const e = r && r.error;
+  if(e === 'banned') return showBan();
+  if(e === 'country') return showCenterModal("Country Notice", r.notice || "VPN Country mismatch");
+  if(e === 'limit') return showCenterModal("Limit Reached", (r.type === 'auto' ? "আজকের Auto Ads" : "আজকের Watch Ads") + " লিমিট শেষ (" + r.limit + ")");
+  if(e === 'forbidden') return showCenterModal("Open from Telegram","Telegram থেকে বট ওপেন করো");
+  showCenterModal("Error","কিছু সমস্যা হয়েছে, আবার চেষ্টা করো");
+}
+
 async function watchAdFlow() {
   if(autoRunning) {
     showCenterModal("Auto Running","Auto Loop চলছে, আগে Stop করো");
@@ -439,17 +462,17 @@ async function watchAdFlow() {
   }
   if(watchToday >= limitWatch){ showCenterModal("Limit Reached","আজকের Watch Ads লিমিট শেষ (" + limitWatch + ")"); return; }
   const autoStatus = document.getElementById("autoStatus");
+  if(!(await srvAdStart("watch"))) return;
   if(autoStatus) autoStatus.innerText = "LOADING 2s";
-  
+
   setTopStatus("manual_loading");
   await new Promise(r => setTimeout(r, 2000));
-  
+
   setTopStatus("confirming");
   await runAdWith16s("AD");
-  
-  // Now increase balance
-  pendingBal += rewardWatch; todayAds++; totalAds++; watchToday++; upd();
-  setTopStatus("completed");
+
+  const ok = await srvAdClaim();   // server adds the balance
+  setTopStatus(ok ? "completed" : "ready");
   if(autoStatus) autoStatus.innerText = "IDLE";
 }
 
@@ -457,20 +480,23 @@ async function autoLoopFlow() {
   while(autoRunning) {
     if(autoToday >= limitAuto){ document.getElementById("stopBtn").onclick(); showCenterModal("Limit Reached","আজকের Auto Ads লিমিট শেষ (" + limitAuto + ")"); break; }
     const autoStatus = document.getElementById("autoStatus");
+    if(!(await srvAdStart("auto"))){ document.getElementById("stopBtn").onclick(); break; }
+    if(!autoRunning) break;
     if(autoStatus) autoStatus.innerText = "LOADING 2s";
-    
+
     setTopStatus("auto_loading");
     await new Promise(r => setTimeout(r, 2000));
     if(!autoRunning) break;
-    
+
     setTopStatus("confirming");
     await runAdWith16s("AUTO AD");
     if(!autoRunning) break;
-    
-    pendingBal += rewardAuto; todayAds++; totalAds++; autoToday++; autoSession++; upd(); renderAutoCard(true);
+
+    if(!(await srvAdClaim())){ document.getElementById("stopBtn").onclick(); break; }
+    autoSession++; renderAutoCard(true);
     setTopStatus("completed");
     if(autoStatus) autoStatus.innerText = "IDLE - NEXT 2s";
-    
+
     await new Promise(r => setTimeout(r, 2000));
   }
 }
@@ -494,11 +520,13 @@ document.getElementById("stopBtn").onclick = () => {
   setTopStatus("ready");
   setButtonActive(null);
 };
-document.getElementById("confirmBtn").onclick = () => {
+document.getElementById("confirmBtn").onclick = async () => {
   if (pendingBal <= 0) return showCenterModal("No Balance","❌ No pending balance!");
   if (totalAds < 1) return showCenterModal("Watch Ad","Watch at least 1 ad!");
-  mainBal += pendingBal; pendingBal = 0; upd();
-  showCenterModal("Confirmed","✅ Added to Main Balance");
+  let r; try{ r = await API('/api/confirm',{}); }catch(e){ r = {error:'net'}; }
+  if(r.ok){ applyState(r.state); showCenterModal("Confirmed","✅ Added to Main Balance"); }
+  else if(r.error === 'banned') showBan();
+  else showCenterModal("Error","আবার চেষ্টা করো");
 };
 
 // Centered Popup
@@ -543,7 +571,7 @@ window.showHome = showHome;
 window.showProfile = showProfile;
 
 // Withdraw logic
-function requestWithdraw(){
+async function requestWithdraw(){
   const num = document.getElementById("withdrawNumber").value.trim();
   const amt = parseFloat(document.getElementById("withdrawAmount").value);
   if(!selectedMethod) return showCenterModal("Select Method","Please select bKash / Nagad / Rocket");
@@ -551,21 +579,24 @@ function requestWithdraw(){
   if(!amt || amt <=0) return showCenterModal("Enter Amount","Please enter amount");
   if(amt < minWithdrawLimits[selectedMethod]) return showCenterModal("Min Withdraw",`Minimum withdraw for ${selectedMethod} is ${minWithdrawLimits[selectedMethod]} TK`);
   if(amt > mainBal) return showCenterModal("No Balance",`You have only ${mainBal.toFixed(2)} TK`);
-  // Save history
-  const history = JSON.parse(localStorage.getItem(UK("withdrawHistory"))||"[]");
-  history.unshift({date:new Date().toLocaleDateString(),method:selectedMethod,number:num,amount:amt,status:"Pending"});
-  localStorage.setItem(UK("withdrawHistory"),JSON.stringify(history));
-  try{ API("/api/withdraw",{method:selectedMethod,number:num,amount:amt}).catch(()=>{}); }catch(e){}
-  mainBal -= amt; upd(); renderHistory();
+  let r; try{ r = await API("/api/withdraw",{method:selectedMethod,number:num,amount:amt}); }catch(e){ r = {error:'net'}; }
+  if(r.error){
+    if(r.error === 'banned') return showBan();
+    if(r.error === 'min') return showCenterModal("Min Withdraw",`Minimum withdraw is ${r.min} TK`);
+    if(r.error === 'balance') return showCenterModal("No Balance",`You have only ${Number(r.main).toFixed(2)} TK`);
+    return showCenterModal("Error","আবার চেষ্টা করো");
+  }
+  applyState(r.state); serverHistory = r.withdraws || []; renderHistory();
   showCenterModal("Requested",`Withdraw ${amt} TK via ${selectedMethod} requested!`);
 }
 function renderHistory(){
-  const h = JSON.parse(localStorage.getItem(UK("withdrawHistory"))||"[]");
+  const h = serverHistory;
   const list = document.getElementById("historyList");
   const count = document.getElementById("historyCount");
   if(count) count.innerText = h.length + " records";
   if(h.length===0){ list.innerHTML = `<div class="no-history">No history yet<br><small>Contact Admin for Support</small></div>`; return; }
-  list.innerHTML = h.map(item=>`<div style="display:flex;justify-content:space-between;padding:10px;background:#f9fafb;border-radius:10px;margin-bottom:6px;border:1px solid #f1f1f5"><span style="font-size:11px"><b>${item.amount} TK</b> via ${item.method}<br><small style="color:#9ca3af">${item.date} • ${item.number}</small></span><span style="font-size:11px;font-weight:700;color:${item.status==='Paid'?'#16a34a':'#f59e0b'}">${item.status}</span></div>`).join("");
+  const col = {Approved:'#16a34a', Rejected:'#ef4444', Pending:'#f59e0b'};
+  list.innerHTML = h.map(item=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;background:#f9fafb;border-radius:10px;margin-bottom:6px;border:1px solid #f1f1f5"><span style="font-size:11px"><b>${item.amount} TK</b> via ${item.method}<br><small style="color:#9ca3af">${fmtDT(item.date)}<br>${item.number}</small></span><span style="font-size:11px;font-weight:700;color:${col[item.status]||'#f59e0b'}">${item.status}</span></div>`).join("");
 }
 function showHistory(){ showProfile(); document.querySelector(".history-box")?.scrollIntoView({behavior:"smooth"}); }
 renderHistory();
@@ -693,8 +724,27 @@ function applySettings(s){
   if(!autoRunning && !w.innerText.includes("Loading")) w.innerHTML = watchBtnHTML();
   if(!autoRunning) $("autoBtn").innerHTML = autoBtnHTML();
 }
+function showBan(){ $("banOv").style.display = "flex"; autoRunning = false; }
+function setRefs(refs, pct){
+  if(refs){ $("refCount").innerText = refs.count; $("refEarn").innerText = Number(refs.earned).toFixed(2); $("pRefs").innerText = refs.count + " Referrals"; }
+  if(pct != null){ $("refBonusTxt").innerText = pct + "% bonus active"; $("refInviteTxt").innerText = `Invite friends and get ${pct}% of their earnings. Bonus credited instantly.`; }
+}
+async function refreshMe(first){
+  if(!window.Telegram?.WebApp?.initData) return;
+  let legacy = first ? readLegacy() : null;
+  let r; try{ r = await API('/api/me', legacy ? {legacy} : {}); }catch(e){ return; }
+  if(r.error) return;
+  if(r.banned) return showBan();
+  if(first){ clearLegacy(!!r.migrated); }
+  applySettings(r.settings);
+  if(!autoRunning && !window._wb) applyState(r.state);
+  serverHistory = r.withdraws || []; renderHistory();
+  setRefs(r.refs, r.settings.ref_bonus);
+}
 API('/api/settings').then(applySettings).catch(()=>{});
-if(window.Telegram?.WebApp?.initData) API('/api/register',{}).catch(()=>{});
+refreshMe(true);
+setInterval(() => refreshMe(false), 30000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden) refreshMe(false); });
 
 if(isAdmin){
   $("adminPanelBtn").classList.remove("ap-hide");
@@ -713,51 +763,110 @@ function apOpen(){ $("adminPanel").style.display = "flex"; apTab('settings'); }
 function apClose(){ $("adminPanel").style.display = "none"; }
 function apTab(t){
   document.querySelectorAll('#apTabs button[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
-  ({settings:apSettings, withdraw:apWithdraws, users:apUsers})[t]();
+  ({settings:apSettings, withdraw:apWithdraws, users:apUsers, limit:apLimit, notice:apNotice, refer:apRefer, apptop:apTop})[t]();
 }
 const apSet = html => { $("apBody").innerHTML = html; };
 
+const apF = (id,l,v,t='number') => `<div class="ap-lab">${l}</div><input class="ap-in" id="${id}" type="${t}" step="0.01" value="${esc(v)}">`;
+const apSaveBtn = fn => `<button class="ap-big" style="margin-top:18px" onclick="${fn}()">Save</button>`;
+async function apPost(payload){
+  try{
+    const r = await API('/api/settings', payload);
+    if(r.error) throw 0;
+    applySettings(r); showCenterModal('Saved','Updated successfully');
+  }catch(e){ showCenterModal('Error','Save failed'); }
+}
 async function apSettings(){
   apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
-  const f = (id,l,v,t='number') => `<div class="ap-lab">${l}</div><input class="ap-in" id="${id}" type="${t}" step="0.01" value="${esc(v)}">`;
-  apSet(f('s_rw','Watch Ad Reward (TK)',s.reward_watch) + f('s_ra','Auto Loop Reward (TK)',s.reward_auto)
-    + Object.keys(MLAB).map(k => f('s_m_'+k,'Min Withdraw - '+MLAB[k]+' (TK)',s.min[k])).join('')
-    + f('s_lw','Watch Ads Daily Limit',s.limit_watch) + f('s_la','Auto Ads Daily Limit',s.limit_auto)
-    + f('s_notice','Notice Text (empty = no popup)',s.notice,'text')
-    + f('s_vpn','VPN Country',s.vpn_country,'text')
-    + '<button class="ap-big" style="margin-top:18px" onclick="apSaveSettings()">Save Settings</button>');
+  apSet(apF('s_rw','Watch Ad Reward (TK)',s.reward_watch) + apF('s_ra','Auto Loop Reward (TK)',s.reward_auto)
+    + apF('s_wl','Withdraw Limit - bKash / Nagad / Rocket (TK)',s.min.bkash)
+    + apF('s_bl','Binance Limit (TK)',s.min.binance)
+    + apF('s_rl','Mobile Recharge Limit (TK)',s.min.recharge)
+    + apF('s_vpn','Country (ads only from this country, empty = everywhere)',s.vpn_country,'text')
+    + apSaveBtn('apSaveSettings'));
 }
-async function apSaveSettings(){
-  const n = id => parseFloat($(id).value) || 0, min = {};
-  Object.keys(MLAB).forEach(k => min[k] = n('s_m_'+k));
-  try{
-    const r = await API('/api/settings',{reward_watch:n('s_rw'),reward_auto:n('s_ra'),limit_watch:n('s_lw'),limit_auto:n('s_la'),notice:$('s_notice').value,min,vpn_country:$('s_vpn').value});
-    if(r.error) throw 0;
-    applySettings(r); showCenterModal('Saved','Settings updated');
-  }catch(e){ showCenterModal('Error','Save failed'); }
+function apSaveSettings(){
+  const n = id => parseFloat($(id).value) || 0, wl = n('s_wl');
+  apPost({reward_watch:n('s_rw'), reward_auto:n('s_ra'), vpn_country:$('s_vpn').value, min:{bkash:wl, nagad:wl, rocket:wl, binance:n('s_bl'), recharge:n('s_rl')}});
 }
+async function apLimit(){
+  apSet('<div class="ap-empty">Loading...</div>');
+  const s = await API('/api/settings');
+  apSet(apF('l_w','Watch Ads Daily Limit',s.limit_watch) + apF('l_a','Auto Ads Daily Limit',s.limit_auto) + apSaveBtn('apSaveLimit'));
+}
+function apSaveLimit(){ apPost({limit_watch:parseInt($('l_w').value)||0, limit_auto:parseInt($('l_a').value)||0}); }
+async function apNotice(){
+  apSet('<div class="ap-empty">Loading...</div>');
+  const s = await API('/api/settings');
+  apSet(apF('n_t','Notice Popup Text (empty = no popup)',s.notice,'text')
+    + apF('n_c','Wrong Country Notice',s.country_notice,'text')
+    + '<div class="ap-note">Use {country} for the allowed country and {current} for the user\'s country.</div>' + apSaveBtn('apSaveNotice'));
+}
+function apSaveNotice(){ apPost({notice:$('n_t').value, country_notice:$('n_c').value}); }
+async function apRefer(){
+  apSet('<div class="ap-empty">Loading...</div>');
+  const s = await API('/api/settings');
+  apSet(apF('r_b','Refer Bonus (%)',s.ref_bonus) + '<div class="ap-note">The person who invites gets this % of every ad reward their friend earns, added to Main Balance instantly. 0 = off.</div>' + apSaveBtn('apSaveRefer'));
+}
+function apSaveRefer(){ apPost({ref_bonus:parseFloat($('r_b').value)||0}); }
+function apTop(){ apSet('<div class="ap-empty">Coming soon</div>'); }
+
 async function apWithdraws(){
   apSet('<div class="ap-empty">Loading...</div>');
   const d = await API('/api/admin/data');
   if(d.error) return apSet('<div class="ap-empty">Access denied</div>');
   window._apW = d.withdraws; apWRender();
 }
+function apCopy(btn){
+  const t = btn.dataset.n;
+  const done = () => { const o = btn.innerText; btn.innerText = 'Copied ✓'; setTimeout(() => btn.innerText = o, 1200); };
+  try{ navigator.clipboard.writeText(t).then(done, () => { throw 0; }); }
+  catch(e){ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); try{ document.execCommand('copy'); }catch(_){} a.remove(); done(); }
+}
 function apWRender(){
-  const L = (window._apW || []).filter(w => w.status === apWF);
-  const lab = {Approved:'Approve',Rejected:'Reject',Pending:'Pending'};
-  apSet(`<div class="ap-seg">${['Pending','Approved','Rejected'].map(s => `<button class="${s===apWF?'on '+s:''}" onclick="apWF='${s}';apWRender()">${s}</button>`).join('')}</div>`
-    + (L.map(w => `<div class="ap-item"><div class="ap-main"><b>${esc(w.amount)} TK • ${esc(w.method)}</b><small>${esc(w.name)} • ${esc(w.uid)} • ${esc(w.number)} • ${new Date(w.date*1000).toLocaleDateString()}</small></div>
-      <div class="ap-act">${['Approved','Pending','Rejected'].filter(s=>s!==w.status).map(s=>`<button class="${s}" onclick="apWStatus(${Number(w.id)},'${s}')">${lab[s]}</button>`).join('')}</div></div>`).join('')
+  const all = window._apW || [], L = all.filter(w => w.status === apWF);
+  const cnt = s => all.filter(w => w.status === s).length;
+  apSet(`<div class="ap-seg">${['Pending','Approved','Rejected'].map(s => `<button class="${s===apWF?'on '+s:''}" onclick="apWF='${s}';apWRender()">${s} (${cnt(s)})</button>`).join('')}</div>`
+    + (L.map(w => `<div class="ap-wcard"><div class="ap-wl">
+        <b>${esc(w.name)||'User'} - ID:${esc(w.uid)}</b>
+        <div class="ap-wrow"><span>${esc(w.amount)} TK - ${esc(MLAB[w.method]||w.method)} - ${esc(w.number)}</span><button class="ap-copy" data-n="${esc(w.number)}" onclick="apCopy(this)">Copy</button></div>
+        <div class="ap-bal">Bal: ${w.bal != null ? esc(w.bal) : '-'} TK</div>
+        <small>${fmtDT(w.date)}</small></div>
+      ${w.status === 'Pending' ? `<div class="ap-act"><button class="Approved" onclick="apWStatus(${Number(w.id)},'Approved')">Approve</button><button class="Rejected" onclick="apWStatus(${Number(w.id)},'Rejected')">Reject</button></div>` : ''}</div>`).join('')
     || `<div class="ap-empty">No ${apWF.toLowerCase()} withdraws</div>`));
 }
-async function apWStatus(id,status){ try{ await API('/api/admin/withdraw_status',{id,status}); }catch(e){} apWithdraws(); }
+async function apWStatus(id,status){
+  let r; try{ r = await API('/api/admin/withdraw_status',{id,status}); }catch(e){ r = {}; }
+  if(r.error === 'locked') showCenterModal('Locked','Already approved/rejected - cannot change');
+  apWithdraws();
+}
 async function apUsers(){
   const btn = '<button class="ap-big" onclick="apUsers()">🔄 Load Users</button>';
   apSet(btn + '<div class="ap-empty">Loading...</div>');
   const d = await API('/api/admin/data');
   if(d.error) return apSet(btn + '<div class="ap-empty">Access denied</div>');
-  apSet(btn + `<div class="ap-note">Total Users: <b>${d.users.length}</b></div>` + d.users.map(u => `<div class="ap-item"><span class="ap-dot"></span><div class="ap-main"><b>${esc(u.name)||'User'} - ${esc(u.id)}</b><small>${u.username?'@'+esc(u.username)+' • ':''}Joined ${new Date(u.joined*1000).toLocaleDateString()}</small></div></div>`).join(''));
+  window._apU = d.users;
+  apSet(btn + `<div class="ap-note">Total Users: <b>${d.users.length}</b></div>` + d.users.map(u => `<div class="ap-ucard">
+    <div class="ap-urow"><span class="ap-dot${u.banned?' off':''}"></span><div class="ap-main">
+      <b>${esc(u.name)||'User'} - ${esc(u.id)} ${u.is_admin?'<span class="ap-badge">ADMIN</span>':''}${u.banned?'<span class="ap-badge red">BANNED</span>':''}</b>
+      <small>${u.username?'@'+esc(u.username)+' • ':''}Joined ${fmtD(u.joined)} • 🌍 ${esc(u.country)||'Unknown'}</small>
+      <small>Main: <span style="color:#22e07a;font-weight:800">${u.main} TK</span> • Pending: <span style="color:#f1c40f;font-weight:800">${u.pending} TK</span></small></div></div>
+    <div class="ap-uact"><button onclick="apEditBal(${Number(u.id)})">✏️ Edit Balance</button>${u.is_admin ? '' : `<button class="${u.banned?'unban':'ban'}" onclick="apBan(${Number(u.id)},${u.banned?'false':'true'})">${u.banned?'Unban':'Ban'}</button>`}</div>
+    <div class="ap-edit" id="ed_${Number(u.id)}" style="display:none">
+      <div class="ap-lab">Main Balance (TK)</div><input class="ap-in" id="em_${Number(u.id)}" type="number" step="0.01" value="${u.main}">
+      <div class="ap-lab">Pending Balance (TK)</div><input class="ap-in" id="ep_${Number(u.id)}" type="number" step="0.01" value="${u.pending}">
+      <button class="ap-big" style="margin-top:12px;padding:12px" onclick="apSaveBal(${Number(u.id)})">Save Balance</button></div>
+  </div>`).join(''));
+}
+function apEditBal(id){ const e = $('ed_'+id); e.style.display = e.style.display === 'none' ? 'block' : 'none'; }
+async function apSaveBal(id){
+  const r = await API('/api/admin/user_balance',{id, main:parseFloat($('em_'+id).value)||0, pending:parseFloat($('ep_'+id).value)||0});
+  if(r.ok){ showCenterModal('Saved','Balance updated'); apUsers(); } else showCenterModal('Error','Failed');
+}
+async function apBan(id,flag){
+  const r = await API('/api/admin/user_ban',{id, banned:flag});
+  if(r.ok) apUsers(); else showCenterModal('Error', r.error || 'Failed');
 }
 </script>
 </body>
