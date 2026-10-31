@@ -90,7 +90,7 @@
         <button id="adminBtn" class="action-btn light"><span>👤</span> Admin</button>
       </div>
       <button id="vpnBtn" class="vpn-btn">KAJER VPN</button>
-      <button id="adminPanelBtn" class="vpn-btn outline ap-hide">ADMIN PANEL</button>
+      <button id="adminPanelBtn" class="vpn-btn outline ap-hide"><span class="apb-t">⚙️ ADMIN PANEL</span><small class="apb-s">ADMIN ACCESS ONLY</small></button>
       <div class="footer">HEN • PREMIUM V2.4</div>
     </div>
   </div>
@@ -182,17 +182,30 @@
   <button onclick="closeCenterModal()">OK</button>
 </div>
 
-<div id="adminPanel">
-  <div class="ap-head"><button id="apBackBtn" onclick="apBack()">←</button><b id="apTitle">ADMIN PANEL</b></div>
-  <div id="apHome">
-    <button class="vpn-btn outline" onclick="apSettings()">⚙️ Settings</button>
-    <button class="vpn-btn outline" onclick="apWithdraws()">💸 Withdraw Requests</button>
-    <button class="vpn-btn outline" onclick="apUsers()">👥 Users</button>
-    <button class="vpn-btn outline">Add Limit</button>
-    <button class="vpn-btn outline">Notice Popup</button>
-    <button class="vpn-btn outline">App Top</button>
+<div id="apPass">
+  <div class="pw-box" id="pwBox">
+    <div class="pw-brand">🤖 AUTO TAKA MACHINE 🔥</div>
+    <div class="pw-title">🔐 Admin Password</div>
+    <div class="pw-inwrap"><span>🔒</span><input id="pwInput" type="password" placeholder="Password din..." autocomplete="off"></div>
+    <div class="pw-err" id="pwErr"></div>
+    <div class="pw-row"><button class="pw-cancel" onclick="pwClose()">Cancel</button><button class="pw-ok" onclick="pwCheck()">OK</button></div>
   </div>
-  <div id="apBody" style="display:none"></div>
+</div>
+
+<div id="adminPanel">
+  <div class="ap-card">
+    <div class="ap-head"><span class="ap-ttl">⚙️ <b>Admin Panel</b></span><button class="ap-x" onclick="apClose()">✕</button></div>
+    <div class="ap-tabs" id="apTabs">
+      <button data-t="settings" onclick="apTab('settings')">Settings</button>
+      <button data-t="withdraw" onclick="apTab('withdraw')">Withdraw Requests</button>
+      <button data-t="users" onclick="apTab('users')">Users</button>
+      <button>Add Limit</button>
+      <button>Notice Popup</button>
+      <button>App Top</button>
+    </div>
+    <div class="ap-body" id="apBody"></div>
+    <div class="ap-foot"><button onclick="apClose()">Close Panel</button></div>
+  </div>
 </div>
 
 <div id="adToast" class="ad-toast hidden">
@@ -559,20 +572,33 @@ if(window.Telegram?.WebApp?.initData) API('/api/register',{}).catch(()=>{});
 
 if(isAdmin){
   $("adminPanelBtn").classList.remove("ap-hide");
-  $("adminPanelBtn").onclick = () => { apHome(); $("adminPanel").style.display = "block"; };
+  $("adminPanelBtn").onclick = () => pwOpen();
 }
-function apShow(html,title){ $("apHome").style.display="none"; $("apBody").style.display="block"; $("apBody").innerHTML=html; $("apTitle").innerText=title; }
-function apHome(){ $("apHome").style.display="block"; $("apBody").style.display="none"; $("apTitle").innerText="ADMIN PANEL"; }
-function apBack(){ if($("apBody").style.display==="block") apHome(); else $("adminPanel").style.display="none"; }
+const ADMIN_PASS = "noyon@18";
+function pwOpen(){ $("pwInput").value=""; $("pwErr").innerText=""; $("apPass").style.display="flex"; setTimeout(()=>$("pwInput").focus(),100); }
+function pwClose(){ $("apPass").style.display="none"; $("pwInput").value=""; }
+function pwCheck(){
+  if($("pwInput").value === ADMIN_PASS){ pwClose(); apOpen(); }
+  else{ $("pwErr").innerText="❌ Wrong password"; $("pwBox").classList.remove("shake"); void $("pwBox").offsetWidth; $("pwBox").classList.add("shake"); }
+}
+$("pwInput").addEventListener("keydown", e => { if(e.key==="Enter") pwCheck(); });
+let apWF = 'Pending';
+function apOpen(){ $("adminPanel").style.display = "flex"; apTab('settings'); }
+function apClose(){ $("adminPanel").style.display = "none"; }
+function apTab(t){
+  document.querySelectorAll('#apTabs button[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  ({settings:apSettings, withdraw:apWithdraws, users:apUsers})[t]();
+}
+const apSet = html => { $("apBody").innerHTML = html; };
 
 async function apSettings(){
-  apShow('<div class="ap-note">Loading...</div>','Settings');
+  apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
-  const f = (id,l,v,t='number') => `<label class="ap-f"><span>${l}</span><input class="input" id="${id}" type="${t}" step="0.01" value="${esc(v)}"></label>`;
-  apShow(`<b class="ap-sec">Button Reward (TK)</b>${f('s_rw','Watch Ad',s.reward_watch)}${f('s_ra','Auto Loop',s.reward_auto)}
-  <b class="ap-sec">Minimum Withdraw (TK)</b>${Object.keys(MLAB).map(k=>f('s_m_'+k,MLAB[k],s.min[k])).join('')}
-  <b class="ap-sec">VPN</b>${f('s_vpn','Country',s.vpn_country,'text')}
-  <button class="action-btn primary" style="width:100%;margin-top:10px" onclick="apSaveSettings()">Save</button>`,'Settings');
+  const f = (id,l,v,t='number') => `<div class="ap-lab">${l}</div><input class="ap-in" id="${id}" type="${t}" step="0.01" value="${esc(v)}">`;
+  apSet(f('s_rw','Watch Ad Reward (TK)',s.reward_watch) + f('s_ra','Auto Loop Reward (TK)',s.reward_auto)
+    + Object.keys(MLAB).map(k => f('s_m_'+k,'Min Withdraw - '+MLAB[k]+' (TK)',s.min[k])).join('')
+    + f('s_vpn','VPN Country',s.vpn_country,'text')
+    + '<button class="ap-big" style="margin-top:18px" onclick="apSaveSettings()">Save Settings</button>');
 }
 async function apSaveSettings(){
   const n = id => parseFloat($(id).value) || 0, min = {};
@@ -584,21 +610,26 @@ async function apSaveSettings(){
   }catch(e){ showCenterModal('Error','Save failed'); }
 }
 async function apWithdraws(){
-  apShow('<div class="ap-note">Loading...</div>','Withdraw Requests');
+  apSet('<div class="ap-empty">Loading...</div>');
   const d = await API('/api/admin/data');
-  if(d.error) return apShow('<div class="ap-note">Access denied</div>','Withdraw Requests');
-  const c = st => d.withdraws.filter(w=>w.status===st).length;
-  apShow(`<div class="ap-note">Pending ${c('Pending')} • Approved ${c('Approved')} • Rejected ${c('Rejected')}</div>` +
-    (d.withdraws.map(w=>`<div class="ap-card"><b>${esc(w.amount)} TK</b> via ${esc(w.method)} <span class="ap-st ${esc(w.status)}">${esc(w.status)}</span>
-    <small>${esc(w.name)} • ${esc(w.uid)} • ${esc(w.number)} • ${new Date(w.date*1000).toLocaleDateString()}</small>
-    <div class="ap-row"><button onclick="apWStatus(${Number(w.id)},'Approved')">Approve</button><button onclick="apWStatus(${Number(w.id)},'Pending')">Pending</button><button onclick="apWStatus(${Number(w.id)},'Rejected')">Reject</button></div></div>`).join('') || '<div class="ap-note">No requests yet</div>'),'Withdraw Requests');
+  if(d.error) return apSet('<div class="ap-empty">Access denied</div>');
+  window._apW = d.withdraws; apWRender();
+}
+function apWRender(){
+  const L = (window._apW || []).filter(w => w.status === apWF);
+  const lab = {Approved:'Approve',Rejected:'Reject',Pending:'Pending'};
+  apSet(`<div class="ap-seg">${['Pending','Approved','Rejected'].map(s => `<button class="${s===apWF?'on '+s:''}" onclick="apWF='${s}';apWRender()">${s}</button>`).join('')}</div>`
+    + (L.map(w => `<div class="ap-item"><div class="ap-main"><b>${esc(w.amount)} TK • ${esc(w.method)}</b><small>${esc(w.name)} • ${esc(w.uid)} • ${esc(w.number)} • ${new Date(w.date*1000).toLocaleDateString()}</small></div>
+      <div class="ap-act">${['Approved','Pending','Rejected'].filter(s=>s!==w.status).map(s=>`<button class="${s}" onclick="apWStatus(${Number(w.id)},'${s}')">${lab[s]}</button>`).join('')}</div></div>`).join('')
+    || `<div class="ap-empty">No ${apWF.toLowerCase()} withdraws</div>`));
 }
 async function apWStatus(id,status){ try{ await API('/api/admin/withdraw_status',{id,status}); }catch(e){} apWithdraws(); }
 async function apUsers(){
-  apShow('<div class="ap-note">Loading...</div>','Users');
+  const btn = '<button class="ap-big" onclick="apUsers()">🔄 Load Users</button>';
+  apSet(btn + '<div class="ap-empty">Loading...</div>');
   const d = await API('/api/admin/data');
-  if(d.error) return apShow('<div class="ap-note">Access denied</div>','Users');
-  apShow(`<div class="ap-note">Total Users: <b>${d.users.length}</b></div>` + d.users.map(u=>`<div class="ap-card"><b>${esc(u.name)||'User'}</b> ${u.username?'@'+esc(u.username):''}<small>ID: ${esc(u.id)} • Joined ${new Date(u.joined*1000).toLocaleDateString()}</small></div>`).join(''),'Users');
+  if(d.error) return apSet(btn + '<div class="ap-empty">Access denied</div>');
+  apSet(btn + `<div class="ap-note">Total Users: <b>${d.users.length}</b></div>` + d.users.map(u => `<div class="ap-item"><span class="ap-dot"></span><div class="ap-main"><b>${esc(u.name)||'User'} - ${esc(u.id)}</b><small>${u.username?'@'+esc(u.username)+' • ':''}Joined ${new Date(u.joined*1000).toLocaleDateString()}</small></div></div>`).join(''));
 }
 </script>
 </body>
