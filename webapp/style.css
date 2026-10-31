@@ -1030,3 +1030,49 @@ body:has(#profilePage[style*="block"]) #topStatus {
 .dev-top small{font-size:7px;font-weight:800;color:#312e81;letter-spacing:.2px;line-height:1;white-space:nowrap}
 .dev-top{gap:1px !important}.dev-top small{margin-top:-6px}
 .dev-top small{margin-top:2px !important}
+
+/* ===== v3: developer label, profile ring+tick, balance colors ===== */
+.dev-top{width:56px !important}
+.dev-top .dt-ring{width:50px !important;height:50px !important}
+.dev-top small.dt-top{font-size:6.5px;letter-spacing:.6px;color:#0e7490;margin-bottom:1px}
+.p-ring{position:relative;flex:0 0 60px !important;width:60px !important;height:60px !important;min-height:0 !important;padding:2px !important;box-sizing:border-box;border-radius:50% !important;background:linear-gradient(135deg,#22d3ee,#6366f1,#a855f7) !important;border:0 !important;box-shadow:none !important;margin:0 !important;display:block !important}
+.p-ring .profile-avatar{width:100% !important;height:100% !important;border:2px solid #fff !important}
+.p-ring .tick{position:absolute;right:-3px;bottom:-3px;width:19px;height:19px;border-radius:50%;background:#06b6d4;color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid #fff;line-height:1}
+/* main balance - soft violet/blue, not plain white */
+#homePage .bal-card:not(.dark){background:radial-gradient(circle at 100% 0%,rgba(139,92,246,.35),transparent 60%),linear-gradient(145deg,#ede9fe 0%,#dbeafe 100%) !important;border:1px solid #c4b5fd !important}
+#profilePage .pb-card:not(.dark){background:radial-gradient(circle at 100% 0%,rgba(139,92,246,.35),transparent 60%),linear-gradient(145deg,#ede9fe 0%,#dbeafe 100%) !important;border:1px solid #c4b5fd !important}
+/* pending balance - yellow/gold instead of black */
+#homePage .bal-card.dark,#profilePage .pb-card.dark{background:radial-gradient(circle at 100% 0%,rgba(255,255,255,.55),transparent 55%),linear-gradient(145deg,#fef3c7 0%,#fcd34d 100%) !important;border:1px solid #f59e0b !important;color:#5b3a00 !important;box-shadow:0 8px 22px rgba(245,158,11,.3),inset 0 1px 0 #fff !important}
+#homePage .bal-card.dark b,#profilePage .pb-card.dark b{color:#78350f !important;text-shadow:none !important;-webkit-text-fill-color:#78350f !important}
+#homePage .bal-card.dark small,#profilePage .pb-card.dark small,#homePage .bal-card.dark span{color:#92400e !important;opacity:.9}
+
+/* ===== v4: premium watch button, auto price label, limit boxes, notice popup ===== */
+#homePage #watchAdBtn.watch-btn{background:linear-gradient(135deg,#064e3b 0%,#047857 55%,#0f766e 100%) !important;border:1px solid rgba(250,204,21,.55) !important;color:#fff !important;box-shadow:0 10px 24px rgba(5,150,105,.35),inset 0 1px 0 rgba(255,255,255,.18) !important}
+#watchAdBtn .wb-tags{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-left:auto;margin-right:12px;line-height:1}
+#watchAdBtn .wb-tags i{font-style:normal;font-size:8px;font-weight:500;letter-spacing:1.3px;text-transform:uppercase}
+#watchAdBtn .wb-tags i:first-child{color:#fde68a}
+#watchAdBtn .wb-tags i:last-child{color:#a7f3d0}
+#autoBtn.action-btn{flex-direction:column !important;gap:3px !important;padding:11px 10px !important}
+#autoBtn .ab-main{display:flex;align-items:center;gap:7px}
+#autoBtn .ab-price{font-size:8px;font-weight:600;letter-spacing:.9px;color:#7c3aed;opacity:.85;line-height:1}
+#autoBtn.active-auto .ab-price{color:#fff}
+#homePage .info-card.ic-today{display:flex !important;align-items:center;gap:6px;padding:9px 8px !important}
+.ic-today .ic-left{flex:1 1 auto;min-width:0}
+.ic-today .ic-left small{font-size:10px !important;white-space:nowrap}
+.ic-today .ic-boxes{display:flex;flex-direction:column;gap:4px;flex:0 0 58px}
+.ic-today .mini-box{border-radius:8px;padding:3px 4px;text-align:center;line-height:1.1;background:linear-gradient(145deg,#fff,#ecfdf5);border:1px solid #bbf7d0;box-shadow:0 2px 6px rgba(34,197,94,.15)}
+.ic-today .mini-box:last-child{background:linear-gradient(145deg,#fff,#fffbeb);border-color:#fde68a}
+.ic-today .mini-box i{display:block;font-style:normal;font-size:6px;font-weight:700;letter-spacing:.6px;color:#6b7280}
+.ic-today .mini-box b{display:block;font-size:10px;font-weight:800;color:#065f46}
+.ic-today .mini-box:last-child b{color:#92400e}
+.nt-ov{position:fixed;inset:0;z-index:99990;background:rgba(2,6,23,.6);align-items:center;justify-content:center;padding:20px}
+.nt-box{position:relative;width:100%;max-width:340px;background:linear-gradient(180deg,#1e2d4d,#16213a);border:1px solid #2b3d66;border-radius:24px;padding:22px 16px 16px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.nt-title{text-align:center;font-size:24px;font-weight:800;color:#22d3ee;margin-bottom:14px}
+.nt-x{position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:50%;border:1px solid #3b4f7d;background:#0f172a;color:#cbd5e1;font-size:14px;line-height:1;cursor:pointer}
+.nt-inner{background:#000;border-radius:16px;padding:12px}
+.nt-msg{background:#111c33;border:1px solid #22345c;border-radius:12px;padding:14px;color:#e2e8f0;font-size:14px;line-height:1.5;white-space:pre-wrap}
+.nt-close{width:100%;margin-top:14px;padding:13px;border:0;border-radius:14px;font-size:15px;font-weight:800;color:#fff;background:linear-gradient(90deg,#7c5cff,#22b8f0);cursor:pointer}
+.ic-today .ic-left small{font-size:9.5px !important}
+.ic-today .ic-boxes{flex:0 0 52px !important}
+.ic-today .mini-box b{font-size:9.5px !important}
+#homePage .info-card.ic-today{gap:4px !important;padding:9px 7px !important}
