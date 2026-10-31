@@ -70,7 +70,7 @@ setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.
       </div>
       <div class="info-card auto-off" id="autoOffCard">
         <small>AUTO OFF</small>
-        <div class="off-dot"></div>
+        <div class="ac-row"><div class="ac-count"><b>0</b><i>ADS</i></div><div class="off-dot"></div></div>
       </div>
     </div>
 
@@ -98,7 +98,7 @@ setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.
 
     <div style="margin:15px 0 6px 0;display:flex;align-items:center;gap:10px">
       <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,#e5e7eb,transparent)"></div>
-      <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;color:#6b7280;background:#f1f5f9;padding:5px 14px;border-radius:20px;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,0.04)">ALL SUPPORT BOX</span>
+      <span class="sup-label" style="font-size:10px;font-weight:800;letter-spacing:1.2px;color:#6b7280;background:#f1f5f9;padding:5px 14px;border-radius:20px;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,0.04)">ALL SUPPORT BOX</span>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,#e5e7eb,transparent)"></div>
     </div>
 
@@ -276,23 +276,41 @@ if (tg) {
   } catch(e){console.log(e)}
 }
 
+// ===== PER-ACCOUNT STORAGE: every Telegram ID keeps its own balance & ad counts =====
+const _UID = String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id || "guest");
+const UK = k => "u" + _UID + "_" + k;
+(function(){
+  if(_UID === "guest") return;
+  // old shared data (before this update) goes to the first account that opens the bot, then is removed
+  const old = ["mainBal","pendingBal","todayAds","totalAds","adsDay","watchToday","autoToday","withdrawHistory"];
+  if(old.some(k => localStorage.getItem(k) !== null)){
+    old.forEach(k => { const v = localStorage.getItem(k); if(v !== null && localStorage.getItem(UK(k)) === null) localStorage.setItem(UK(k), v); localStorage.removeItem(k); });
+  }
+})();
+
 // ===== DEFAULT 0 BALANCES =====
-let mainBal = parseFloat(localStorage.getItem("mainBal") || "0.00");
-let pendingBal = parseFloat(localStorage.getItem("pendingBal") || "0.00");
-let todayAds = parseInt(localStorage.getItem("todayAds") || "0");
-let totalAds = parseInt(localStorage.getItem("totalAds") || "0");
+let mainBal = parseFloat(localStorage.getItem(UK("mainBal")) || "0.00");
+let pendingBal = parseFloat(localStorage.getItem(UK("pendingBal")) || "0.00");
+let todayAds = parseInt(localStorage.getItem(UK("todayAds")) || "0");
+let totalAds = parseInt(localStorage.getItem(UK("totalAds")) || "0");
 let autoRunning = false;
 let selectedMethod = null;
 let rewardWatch = 0.50, rewardAuto = 0.10;
 let limitWatch = 100, limitAuto = 100;
+let autoSession = 0; // ads done since Auto Loop was last started
+function renderAutoCard(on){
+  const c = document.getElementById("autoOffCard"); if(!c) return;
+  c.classList.toggle("auto-on", !!on);
+  c.innerHTML = `<small>${on ? "AUTO ON" : "AUTO OFF"}</small><div class="ac-row"><div class="ac-count"><b>${autoSession}</b><i>ADS</i></div><div class="off-dot"${on ? " style='background:#22c55e;border-color:#22c55e'" : ""}></div></div>`;
+}
 const _dayKey = new Date().toLocaleDateString('en-CA');
-if(localStorage.getItem("adsDay") !== _dayKey){ localStorage.setItem("adsDay", _dayKey); localStorage.setItem("watchToday","0"); localStorage.setItem("autoToday","0"); }
-let watchToday = parseInt(localStorage.getItem("watchToday")||"0"), autoToday = parseInt(localStorage.getItem("autoToday")||"0");
+if(localStorage.getItem(UK("adsDay")) !== _dayKey){ localStorage.setItem(UK("adsDay"), _dayKey); localStorage.setItem(UK("watchToday"),"0"); localStorage.setItem(UK("autoToday"),"0"); }
+let watchToday = parseInt(localStorage.getItem(UK("watchToday"))||"0"), autoToday = parseInt(localStorage.getItem(UK("autoToday"))||"0");
 function updLimits(){
   const g = id => document.getElementById(id);
   if(g("autoLimitTxt")) g("autoLimitTxt").innerText = autoToday + "/" + limitAuto;
   if(g("watchLimitTxt")) g("watchLimitTxt").innerText = watchToday + "/" + limitWatch;
-  localStorage.setItem("watchToday", watchToday); localStorage.setItem("autoToday", autoToday);
+  localStorage.setItem(UK("watchToday"), watchToday); localStorage.setItem(UK("autoToday"), autoToday);
 }
 const fmtPrice = n => (Math.round(n*100)/100).toFixed(2);
 function watchBtnHTML(){ return `<span>Watch Ad (+${fmtPrice(rewardWatch)} TK)</span><span class="wb-tags"><i>1 TAP ADS</i><i>HIGH PRICE</i></span><span class="play-icon">▶</span>`; }
@@ -331,10 +349,10 @@ function upd() {
   if(g("confirmText")) g("confirmText").innerText = totalAds + "/500 ads • +3.2%";
   if(g("wBal")) g("wBal").innerText = mainBal.toFixed(2) + " TK";
   if(g("pTotalEarned")) g("pTotalEarned").innerText = mainBal.toFixed(0) + " TK";
-  localStorage.setItem("mainBal", mainBal);
-  localStorage.setItem("pendingBal", pendingBal);
-  localStorage.setItem("todayAds", todayAds);
-  localStorage.setItem("totalAds", totalAds);
+  localStorage.setItem(UK("mainBal"), mainBal);
+  localStorage.setItem(UK("pendingBal"), pendingBal);
+  localStorage.setItem(UK("todayAds"), todayAds);
+  localStorage.setItem(UK("totalAds"), totalAds);
   updLimits();
   updPremium();
 }
@@ -449,7 +467,7 @@ async function autoLoopFlow() {
     await runAdWith16s("AUTO AD");
     if(!autoRunning) break;
     
-    pendingBal += rewardAuto; todayAds++; totalAds++; autoToday++; upd();
+    pendingBal += rewardAuto; todayAds++; totalAds++; autoToday++; autoSession++; upd(); renderAutoCard(true);
     setTopStatus("completed");
     if(autoStatus) autoStatus.innerText = "IDLE - NEXT 2s";
     
@@ -463,15 +481,14 @@ document.getElementById("watchAdBtn").onclick = watchAdFlow;
 document.getElementById("autoBtn").onclick = async () => {
   if (autoRunning) return;
   autoRunning = true;
-  document.getElementById("autoOffCard").classList.add("auto-on");
-  document.getElementById("autoOffCard").innerHTML = "<small>AUTO ON</small><div class='off-dot' style='background:#22c55e;border-color:#22c55e'></div>";
+  autoSession = 0;
+  renderAutoCard(true);
   setButtonActive("auto");
   autoLoopFlow();
 };
 document.getElementById("stopBtn").onclick = () => {
   autoRunning = false;
-  document.getElementById("autoOffCard").classList.remove("auto-on");
-  document.getElementById("autoOffCard").innerHTML = "<small>AUTO OFF</small><div class='off-dot'></div>";
+  renderAutoCard(false);
   document.getElementById("autoStatus").innerText = "IDLE";
   // old toast disabled
   setTopStatus("ready");
@@ -535,15 +552,15 @@ function requestWithdraw(){
   if(amt < minWithdrawLimits[selectedMethod]) return showCenterModal("Min Withdraw",`Minimum withdraw for ${selectedMethod} is ${minWithdrawLimits[selectedMethod]} TK`);
   if(amt > mainBal) return showCenterModal("No Balance",`You have only ${mainBal.toFixed(2)} TK`);
   // Save history
-  const history = JSON.parse(localStorage.getItem("withdrawHistory")||"[]");
+  const history = JSON.parse(localStorage.getItem(UK("withdrawHistory"))||"[]");
   history.unshift({date:new Date().toLocaleDateString(),method:selectedMethod,number:num,amount:amt,status:"Pending"});
-  localStorage.setItem("withdrawHistory",JSON.stringify(history));
+  localStorage.setItem(UK("withdrawHistory"),JSON.stringify(history));
   try{ API("/api/withdraw",{method:selectedMethod,number:num,amount:amt}).catch(()=>{}); }catch(e){}
   mainBal -= amt; upd(); renderHistory();
   showCenterModal("Requested",`Withdraw ${amt} TK via ${selectedMethod} requested!`);
 }
 function renderHistory(){
-  const h = JSON.parse(localStorage.getItem("withdrawHistory")||"[]");
+  const h = JSON.parse(localStorage.getItem(UK("withdrawHistory"))||"[]");
   const list = document.getElementById("historyList");
   const count = document.getElementById("historyCount");
   if(count) count.innerText = h.length + " records";
