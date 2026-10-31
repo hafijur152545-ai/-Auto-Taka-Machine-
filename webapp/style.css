@@ -847,3 +847,31 @@ body:has(#profilePage[style*="block"]) #topStatus {
 #homePage {
   padding-bottom: 80px !important;
 }
+
+
+/* ===== ADMIN PANEL PREMIUM STYLES - ADDED, NO OLD DESIGN TOUCHED ===== */
+#adminPanelBtn{
+  display:none !important;
+  margin-top:14px !important;
+  background:linear-gradient(135deg,#0f172a,#1e293b) !important;
+  color:white !important;
+  border:1px solid #1e293b !important;
+  box-shadow:0 8px 20px rgba(15,23,42,0.25) !important;
+}
+#adminPanelBtn.vpn-btn.outline{
+  background:linear-gradient(135deg,#0f172a,#1e293b) !important;
+  color:white !important;
+}
+#adminPage, #adminSettingsPage, #adminWithdrawPage, #adminUsersPage{
+  animation: fadeIn 0.25s ease;
+}
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+#adminPage .bal-card{
+  transition:all 0.2s ease;
+}
+#adminPage .bal-card:active{
+  transform:scale(0.96);
+}
