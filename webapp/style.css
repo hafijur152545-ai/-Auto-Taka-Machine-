@@ -851,7 +851,7 @@ body:has(#profilePage[style*="block"]) #topStatus {
 
 /* ===== ADMIN PANEL PREMIUM STYLES - ADDED, NO OLD DESIGN TOUCHED ===== */
 #adminPanelBtn{
-  display:none !important;
+  display:none; /* admin check will show */
   margin-top:14px !important;
   background:linear-gradient(135deg,#0f172a,#1e293b) !important;
   color:white !important;
