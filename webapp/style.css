@@ -1100,13 +1100,13 @@ body{background:#F8F9FF !important}
 .phone,#profilePage.phone{background:#F8F9FF !important}
 #homePage .bal-card:not(.dark),#profilePage .pb-card:not(.dark){box-shadow:0 12px 26px rgba(99,102,241,.22),0 3px 8px rgba(15,23,42,.06) !important}
 #homePage .bal-card.dark,#profilePage .pb-card.dark{box-shadow:0 12px 26px rgba(245,158,11,.32),0 3px 8px rgba(120,53,15,.1) !important}
-/* Watch Ad: purple premium (calm) */
-#homePage #watchAdBtn.watch-btn{background:linear-gradient(135deg,#7c3aed 0%,#6d28d9 55%,#5b21b6 100%) !important;border:1.5px solid rgba(167,139,250,.45) !important;color:#fff !important;box-shadow:0 6px 16px rgba(124,58,237,.28),inset 0 1px 0 rgba(255,255,255,.18) !important}
-#homePage #watchAdBtn > span:first-child{color:#fff !important;text-shadow:0 1px 3px rgba(0,0,0,.6) !important}
-#watchAdBtn .play-icon{color:#fde68a !important;text-shadow:0 1px 3px rgba(0,0,0,.5) !important}
-#watchAdBtn .wb-tags i{font-weight:800 !important;text-shadow:0 1px 2px rgba(0,0,0,.65) !important}
-#watchAdBtn .wb-tags i:first-child{color:#fde68a !important}
-#watchAdBtn .wb-tags i:last-child{color:#fff !important}
+/* Watch Ad: gold premium (like original screenshot) */
+#homePage #watchAdBtn.watch-btn{background:linear-gradient(135deg,#fff6cf 0%,#f8dc86 50%,#eab94a 100%) !important;border:1.5px solid #d9a42c !important;color:#4a2c00 !important;box-shadow:0 8px 20px rgba(217,164,44,.35),inset 0 1px 0 rgba(255,255,255,.6) !important}
+#homePage #watchAdBtn > span:first-child{color:#4a2c00 !important;text-shadow:0 1px 0 rgba(255,255,255,.6) !important}
+#watchAdBtn .play-icon{color:#4a2c00 !important;text-shadow:0 1px 2px rgba(255,255,255,.5) !important}
+#watchAdBtn .wb-tags i{font-weight:800 !important;text-shadow:0 1px 0 rgba(255,255,255,.7) !important}
+#watchAdBtn .wb-tags i:first-child{color:#8a3b00 !important}
+#watchAdBtn .wb-tags i:last-child{color:#065f46 !important}
 #autoBtn .ab-price{font-weight:700;color:#6d28d9;opacity:1;text-shadow:0 0 6px rgba(167,139,250,.55)}
 /* auto counter card */
 #autoOffCard .ac-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:6px}
@@ -1147,29 +1147,29 @@ div:has(> .sup-label) > div{background:linear-gradient(90deg,transparent,#e9c46a
 .ban-s{font-size:14px;line-height:1.6;color:#9fb0cc}
 .ban-b{display:inline-block;margin-top:18px;padding:12px 26px;border-radius:14px;font-weight:800;color:#fff;text-decoration:none;background:linear-gradient(90deg,#7c5cff,#22b8f0)}
 
-/* ============ PREMIUM WATCH AD BUTTON — calm glow, readable text ============ */
+/* ============ PREMIUM WATCH AD BUTTON — gold/yellow, readable text ============ */
 #homePage #watchAdBtn.watch-btn{
-  background:linear-gradient(135deg,#7c3aed 0%,#6d28d9 55%,#5b21b6 100%) !important;
-  border:1.5px solid rgba(167,139,250,.45) !important;
-  color:#fff !important;
-  box-shadow:0 6px 16px rgba(124,58,237,.28),inset 0 1px 0 rgba(255,255,255,.18) !important;
+  background:linear-gradient(135deg,#fff6cf 0%,#f8dc86 50%,#eab94a 100%) !important;
+  border:1.5px solid #d9a42c !important;
+  color:#4a2c00 !important;
+  box-shadow:0 8px 20px rgba(217,164,44,.35),inset 0 1px 0 rgba(255,255,255,.6) !important;
   position:relative;
   overflow:hidden;
 }
 #homePage #watchAdBtn.watch-btn:active{
   transform:scale(0.97);
-  box-shadow:0 3px 10px rgba(124,58,237,.35),inset 0 1px 0 rgba(255,255,255,.18) !important;
+  box-shadow:0 4px 12px rgba(217,164,44,.4),inset 0 1px 0 rgba(255,255,255,.6) !important;
 }
 #homePage #watchAdBtn.watch-btn::before{
   content:"";position:absolute;top:0;left:-100%;width:55%;height:100%;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
   animation:watchShine 4.5s ease-in-out infinite;
 }
 @keyframes watchShine{0%{left:-55%}55%{left:120%}100%{left:120%}}
-#watchAdBtn .wb-tags i:first-child{color:#fde68a !important;font-weight:800 !important;text-shadow:0 1px 2px rgba(0,0,0,.65),0 0 4px rgba(0,0,0,.4) !important;letter-spacing:1.1px}
-#watchAdBtn .wb-tags i:last-child{color:#fff !important;font-weight:700 !important;text-shadow:0 1px 2px rgba(0,0,0,.65) !important;letter-spacing:1px}
-#watchAdBtn > span:first-child{font-size:15px !important;font-weight:800 !important;text-shadow:0 1px 3px rgba(0,0,0,.6) !important}
-#watchAdBtn .play-icon{color:#fde68a !important;text-shadow:0 1px 3px rgba(0,0,0,.5) !important}
+#watchAdBtn .wb-tags i:first-child{color:#8a3b00 !important;font-weight:800 !important;text-shadow:0 1px 0 rgba(255,255,255,.7),0 0 3px rgba(255,255,255,.4) !important;letter-spacing:1px}
+#watchAdBtn .wb-tags i:last-child{color:#065f46 !important;font-weight:700 !important;text-shadow:0 1px 0 rgba(255,255,255,.7) !important;letter-spacing:.8px}
+#watchAdBtn > span:first-child{font-size:15px !important;font-weight:800 !important;color:#4a2c00 !important;text-shadow:0 1px 0 rgba(255,255,255,.6) !important}
+#watchAdBtn .play-icon{color:#4a2c00 !important;text-shadow:0 1px 2px rgba(255,255,255,.5) !important}
 
 /* Loading state: button grows + spinner + glow */
 #watchAdBtn.ad-preparing, #autoBtn.ad-preparing{
@@ -1301,3 +1301,89 @@ div:has(> .sup-label) > div{background:linear-gradient(90deg,transparent,#e9c46a
   animation:bellRing 1.4s ease-in-out infinite;
 }
 @keyframes bellRing{0%,100%{transform:scale(1)}50%{transform:scale(1.3);box-shadow:0 0 12px rgba(239,68,68,.8)}}
+
+/* ============ Auto Loop button new structure (icon + text + price) ============ */
+#autoBtn.action-btn{flex-direction:row !important;gap:10px !important;padding:14px 12px !important;align-items:center !important;justify-content:space-between !important}
+#autoBtn .ab-main{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+#autoBtn .ab-icon{
+  width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:15px;font-weight:800;
+  box-shadow:0 3px 8px rgba(124,58,237,.35);flex:0 0 auto;animation:abSpin 4s linear infinite;
+}
+@keyframes abSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+#autoBtn .ab-text{display:flex;flex-direction:column;line-height:1.15;flex:1;min-width:0;text-align:left}
+#autoBtn .ab-text small{font-size:9px;font-weight:700;letter-spacing:1px;color:#7c3aed;opacity:.8;text-transform:uppercase}
+#autoBtn .ab-text b{font-size:13px;color:#0f1115;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#autoBtn .ab-price{
+  font-size:11px !important;font-weight:800 !important;color:#16a34a !important;
+  background:linear-gradient(135deg,#dcfce7,#bbf7d0);padding:5px 9px;border-radius:8px;
+  border:1px solid #86efac;white-space:nowrap;flex:0 0 auto;letter-spacing:.3px;
+}
+#autoBtn.active-auto .ab-price{background:rgba(255,255,255,.18);color:#fff !important;border-color:rgba(255,255,255,.3)}
+
+/* Auto OFF box: small "per ad X TK" text */
+.ac-perad{font-size:9px !important;font-weight:800 !important;color:#dc2626;margin-top:4px;letter-spacing:.4px;background:#fee2e2;padding:3px 6px;border-radius:6px;border:1px solid #fecaca;text-align:center}
+
+/* ============ Admin withdraw card status colors ============ */
+.ap-wcard.st-pending{background:linear-gradient(135deg,#fffbeb,#fef3c7) !important;border:1.5px solid #fde68a !important;box-shadow:0 4px 12px rgba(245,158,11,.15) !important}
+.ap-wcard.st-approved{background:linear-gradient(135deg,#f0fdf4,#dcfce7) !important;border:1.5px solid #86efac !important;box-shadow:0 4px 12px rgba(34,197,94,.18) !important}
+.ap-wcard.st-rejected{background:linear-gradient(135deg,#fef2f2,#fee2e2) !important;border:1.5px solid #fecaca !important;box-shadow:0 4px 12px rgba(239,68,68,.18) !important}
+.ap-delete{background:rgba(239,68,68,.12);color:#dc2626;border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.ap-delete:hover{background:#ef4444;color:#fff}
+.ap-delete:active{transform:scale(0.95)}
+.ap-act{display:flex;gap:6px;flex-wrap:wrap}
+
+/* Profile lifetime ads card highlight */
+.ps-card:has(#pLifetimeAds){background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:#fbbf24}
+
+/* ============ Special 5th-ad popup (countdown 10→0 + "বুঝেছি, বিজ্ঞাপন দেখতে যাই" button) ============ */
+.special-ad-ov{position:fixed;inset:0;z-index:99996;background:rgba(2,6,23,.7);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:18px}
+.special-ad-ov[style*="display: flex"]{display:flex !important}
+.special-ad-box{
+  position:relative;width:100%;max-width:360px;
+  background:linear-gradient(180deg,#1e2d4d 0%,#16213a 100%);
+  border:2px solid #3b82f6;border-radius:22px;padding:24px 18px 18px;
+  box-shadow:0 22px 50px rgba(0,0,0,.55),0 0 24px rgba(59,130,246,.3);
+  text-align:center;animation:spadPop 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes spadPop{from{opacity:0;transform:translateY(18px) scale(0.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+.spad-icon-wrap{display:flex;justify-content:center;margin-bottom:10px}
+.spad-icon{
+  width:54px;height:54px;border-radius:50%;
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+  box-shadow:0 6px 16px rgba(239,68,68,.4),0 0 0 4px rgba(239,68,68,.15);
+  animation:spadPulse 1.4s ease-in-out infinite;
+}
+@keyframes spadPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.spad-title{font-size:18px;font-weight:800;color:#fca5a5;margin-bottom:10px;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.spad-msg{font-size:13px;color:#e2e8f0;line-height:1.6;margin-bottom:16px;white-space:pre-wrap;text-align:center}
+.spad-countdown-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:16px}
+.spad-countdown{
+  width:72px;height:72px;border-radius:50%;
+  background:linear-gradient(135deg,#3b82f6,#2563eb);
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;font-weight:800;color:#fff;
+  box-shadow:0 6px 20px rgba(59,130,246,.5),inset 0 2px 0 rgba(255,255,255,.25);
+  border:3px solid rgba(255,255,255,.2);
+  animation:spadTick 1s ease-in-out infinite;
+}
+@keyframes spadTick{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.spad-countdown-label{font-size:10px;color:#94a3b8;margin-top:6px;letter-spacing:.5px}
+.spad-go-btn{
+  width:100%;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;
+  border:none;border-radius:14px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;
+  box-shadow:0 6px 16px rgba(59,130,246,.4);transition:all 0.2s;
+}
+.spad-go-btn:active{transform:scale(0.97)}
+
+/* ============ Green glow on Watch Ad button when reward lands in main balance ============ */
+#watchAdBtn.green-glow{
+  animation:greenGlow 2.2s ease-out !important;
+}
+@keyframes greenGlow{
+  0%{box-shadow:0 0 0 0 rgba(34,197,94,.9),0 8px 20px rgba(217,164,44,.35) !important}
+  20%{box-shadow:0 0 24px 8px rgba(34,197,94,.7),0 0 40px 12px rgba(34,197,94,.4) !important}
+  60%{box-shadow:0 0 16px 4px rgba(34,197,94,.4),0 0 24px 6px rgba(34,197,94,.2) !important}
+  100%{box-shadow:0 0 0 0 rgba(34,197,94,0),0 8px 20px rgba(217,164,44,.35) !important}
+}
