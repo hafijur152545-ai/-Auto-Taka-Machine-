@@ -1314,9 +1314,6 @@ div:has(> .sup-label) > div{background:linear-gradient(90deg,transparent,#e9c46a
 .ac-perad{font-size:9px !important;font-weight:800 !important;color:#dc2626;margin-top:4px;letter-spacing:.4px;background:#fee2e2;padding:3px 6px;border-radius:6px;border:1px solid #fecaca;text-align:center}
 
 /* ============ Admin withdraw card status colors ============ */
-.ap-wcard.st-pending{background:linear-gradient(135deg,#fffbeb,#fef3c7) !important;border:1.5px solid #fde68a !important;box-shadow:0 4px 12px rgba(245,158,11,.15) !important}
-.ap-wcard.st-approved{background:linear-gradient(135deg,#f0fdf4,#dcfce7) !important;border:1.5px solid #86efac !important;box-shadow:0 4px 12px rgba(34,197,94,.18) !important}
-.ap-wcard.st-rejected{background:linear-gradient(135deg,#fef2f2,#fee2e2) !important;border:1.5px solid #fecaca !important;box-shadow:0 4px 12px rgba(239,68,68,.18) !important}
 .ap-delete{background:rgba(239,68,68,.12);color:#dc2626;border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s}
 .ap-delete:hover{background:#ef4444;color:#fff}
 .ap-delete:active{transform:scale(0.95)}
@@ -1376,3 +1373,25 @@ div:has(> .sup-label) > div{background:linear-gradient(90deg,transparent,#e9c46a
   60%{box-shadow:0 0 16px 4px rgba(34,197,94,.4),0 0 24px 6px rgba(34,197,94,.2) !important}
   100%{box-shadow:0 0 0 0 rgba(34,197,94,0),0 8px 20px rgba(217,164,44,.35) !important}
 }
+
+/* ============ 5th-ad notice popup - "গুরুত্বপূর্ণ নোটিশ" look ============ */
+.special-ad-box{
+  background:linear-gradient(180deg,#0e1b33 0%,#0a1428 100%) !important;
+  border:1.5px solid #1e5a78 !important;border-radius:26px !important;padding:26px 16px 18px !important;
+  box-shadow:0 22px 50px rgba(0,0,0,.6),0 0 26px rgba(34,211,238,.22) !important;max-height:92vh;overflow-y:auto;
+}
+.special-ad-box .spad-icon{width:70px;height:70px;font-size:34px;box-shadow:0 6px 18px rgba(239,68,68,.45),0 0 0 8px rgba(239,68,68,.16)}
+.special-ad-box .spad-title{font-size:22px !important;font-weight:800;color:#ef4444 !important;margin:10px 0 14px !important;text-shadow:none}
+.spad-info{background:rgba(255,255,255,.05);border:1px solid rgba(148,163,184,.25);border-radius:16px;padding:14px 12px;color:#e2e8f0;font-size:15px;line-height:1.6;margin-bottom:12px;text-align:center}
+.spad-hl{color:#38bdf8;font-weight:800}
+.spad-rules{background:rgba(127,29,29,.35);border:1px solid rgba(239,68,68,.45);border-left:5px solid #ef4444;border-radius:14px;padding:12px;color:#fecaca;font-size:14px;line-height:1.65;margin-bottom:14px;text-align:center}
+.special-ad-box .spad-countdown{background:radial-gradient(circle at 35% 30%,#67e8f9,#0ea5e9) !important;color:#04243a !important;border:4px solid rgba(34,211,238,.35) !important;box-shadow:0 0 22px rgba(34,211,238,.55) !important}
+.special-ad-box .spad-countdown-label{font-size:12px !important;color:#7dd3fc !important}
+.special-ad-box .spad-go-btn{background:linear-gradient(90deg,#06b6d4,#3b82f6 60%,#6366f1) !important;border-radius:18px !important;padding:15px !important;font-size:15px !important;box-shadow:0 6px 18px rgba(14,165,233,.45) !important}
+
+/* Withdraw request cards: dark card, status badge on the right (approved / rejected) */
+.ap-wcard{align-items:flex-start !important}
+.ap-act{flex-direction:column !important;flex-wrap:nowrap !important;align-items:flex-end}
+.ap-badge{display:inline-block;font-size:12px;font-weight:800;color:#fff;border-radius:8px;padding:4px 10px;line-height:1.2}
+.ap-badge.approved{background:#2ecc71}
+.ap-badge.rejected{background:#e74c3c}
