@@ -32,6 +32,20 @@
   </div>
 </div>
 
+<!-- (3) Special 5th-ad popup — countdown 10→0, user must click "বুঝেছি, বিজ্ঞাপন দেখতে যাই" or the ad is cancelled -->
+<div id="specialAdOv" class="special-ad-ov" style="display:none">
+  <div class="special-ad-box">
+    <div class="spad-icon-wrap"><div class="spad-icon">📢</div></div>
+    <div class="spad-title">⚠️ বিজ্ঞাপন দেখুন</div>
+    <div class="spad-msg">নিয়ম না মানলে টাকা যোগ হবে না।<br>১০ সেকেন্ডের মধ্যে নিচের বাটনে ক্লিক করে বিজ্ঞাপন দেখুন। না করলে আবার নতুন করে শুরু করতে হবে।</div>
+    <div class="spad-countdown-wrap">
+      <div class="spad-countdown" id="spadCountdown">10</div>
+      <small class="spad-countdown-label">বিজ্ঞাপন ক্লিক কাউন্টডাউন</small>
+    </div>
+    <button class="spad-go-btn" id="spadGoBtn" onclick="onSpecialAdClick()">বুঝেছি, বিজ্ঞাপন দেখতে যাই</button>
+  </div>
+</div>
+
 <script>
 // ===== NEW notice system: welcome popup + thin banner + red bell indicator =====
 var NOTICE = {version:0, has_new:false, welcome_text:"", welcome_btn_text:"", welcome_btn_url:"", banner:""};
@@ -187,17 +201,18 @@ setTimeout(function(){
       <div class="info-card auto-off" id="autoOffCard">
         <small>AUTO OFF</small>
         <div class="ac-row"><div class="ac-count"><b>0</b><i>ADS</i></div><div class="off-dot"></div></div>
+        <small class="ac-perad" id="autoPerAd">+0.10 TK / AD</small>
       </div>
     </div>
 
     <button id="watchAdBtn" class="watch-btn">
       <span>Watch Ad (+0.50 TK)</span>
-      <span class="wb-tags"><i>TAP & WATCH</i><i>REWARD AD</i></span>
+      <span class="wb-tags"><i>1 TAP ADS</i><i>HIGH PRICE</i></span>
       <span class="play-icon">▶</span>
     </button>
 
     <div class="action-row">
-      <button id="autoBtn" class="action-btn"><span class="ab-main"><span>⇄</span> Auto Loop</span><small class="ab-price">LOW PRICE 0.10 TK</small></button>
+      <button id="autoBtn" class="action-btn"><span class="ab-main"><span class="ab-icon">⇄</span><span class="ab-text"><small>AUTO LOOP</small><b>Run Ads Automatically</b></span></span><small class="ab-price">+0.10 TK / AD</small></button>
       <button id="stopBtn" class="action-btn danger"><span>○</span> Auto Ad Stop</button>
     </div>
 
@@ -252,9 +267,10 @@ setTimeout(function(){
       <div class="pb-card dark"><small>PENDING</small><b id="pPendingBal">0.00 TK</b><small style="font-size:10px;opacity:0.6">Ready to confirm</small></div>
     </div>
     <div class="profile-stats-grid">
-      <div class="ps-card"><small>📈 TOTAL EARNED</small><b id="pTotalEarned">0 TK</b></div>
+      <div class="ps-card"><small>📈 TOTAL EARNED</small><b id="pTotalEarned">0 TK</b><span class="dim">Lifetime earning</span></div>
       <div class="ps-card"><small>📅 JOINED</small><b id="pJoined">Just now</b><span class="dim">Since Today</span></div>
       <div class="ps-card"><small>▶ TOTAL ADS</small><b id="pTotalAds">0 Ads</b><span class="dim" id="pTotalPercent">0.0% of daily</span></div>
+      <div class="ps-card"><small>🏆 LIFETIME ADS</small><b id="pLifetimeAds">0 Ads</b><span class="dim">Never resets</span></div>
       <div class="ps-card"><small>👥 REFERRALS</small><b id="pRefs">0 Referrals</b><span class="dim" id="refBonusTxt">10% bonus active</span></div>
     </div>
   </div>
@@ -427,6 +443,7 @@ function clearLegacy(all){
 
 // ===== DEFAULT 0 BALANCES =====
 let mainBal = 0, pendingBal = 0, todayAds = 0, totalAds = 0; // real values come from the server (applyState)
+let lifetimeEarned = 0, lifetimeAds = 0;   // permanent counters shown on profile page
 let autoRunning = false;
 let selectedMethod = null;
 let rewardWatch = 0.50, rewardAuto = 0.10;
@@ -435,13 +452,15 @@ let autoSession = 0; // ads done since Auto Loop was last started
 function renderAutoCard(on){
   const c = document.getElementById("autoOffCard"); if(!c) return;
   c.classList.toggle("auto-on", !!on);
-  c.innerHTML = `<small>${on ? "AUTO ON" : "AUTO OFF"}</small><div class="ac-row"><div class="ac-count"><b>${autoSession}</b><i>ADS</i></div><div class="off-dot"${on ? " style='background:#22c55e;border-color:#22c55e'" : ""}></div></div>`;
+  c.innerHTML = `<small>${on ? "AUTO ON" : "AUTO OFF"}</small><div class="ac-row"><div class="ac-count"><b>${autoSession}</b><i>ADS</i></div><div class="off-dot"${on ? " style='background:#22c55e;border-color:#22c55e'" : ""}></div></div><small class="ac-perad">+${fmtPrice(rewardAuto)} TK / AD</small>`;
 }
 let watchToday = 0, autoToday = 0;
 let serverHistory = [];
 function applyState(st){
   if(!st) return;
   mainBal = st.main; pendingBal = st.pending; todayAds = st.today_ads; totalAds = st.total_ads; watchToday = st.watch_today; autoToday = st.auto_today;
+  if(typeof st.lifetime_earned === "number") lifetimeEarned = st.lifetime_earned;
+  if(typeof st.lifetime_ads === "number") lifetimeAds = st.lifetime_ads;
   upd();
 }
 function fmtDT(ts){
@@ -455,8 +474,8 @@ function updLimits(){
   if(g("watchLimitTxt")) g("watchLimitTxt").innerText = watchToday + "/" + limitWatch;
 }
 const fmtPrice = n => (Math.round(n*100)/100).toFixed(2);
-function watchBtnHTML(){ return `<span>Watch Ad (+${fmtPrice(rewardWatch)} TK)</span><span class="wb-tags"><i>TAP & WATCH</i><i>REWARD AD</i></span><span class="play-icon">▶</span>`; }
-function autoBtnHTML(){ return `<span class="ab-main"><span>⇄</span> Auto Loop</span><small class="ab-price">LOW PRICE ${fmtPrice(rewardAuto)} TK</small>`; }
+function watchBtnHTML(){ return `<span>Watch Ad (+${fmtPrice(rewardWatch)} TK)</span><span class="wb-tags"><i>1 TAP ADS</i><i>HIGH PRICE</i></span><span class="play-icon">▶</span>`; }
+function autoBtnHTML(){ return `<span class="ab-main"><span class="ab-icon">⇄</span><span class="ab-text"><small>AUTO LOOP</small><b>Run Ads Automatically</b></span></span><small class="ab-price">+${fmtPrice(rewardAuto)} TK / AD</small>`; }
 let _prevPending = pendingBal;
 
 // ===== MIN WITHDRAW LIMITS - ADMIN CONTROLLABLE =====
@@ -535,17 +554,31 @@ function upd() {
   const g = id => document.getElementById(id);
   if(g("mainBal")) g("mainBal").innerText = mainBal.toFixed(2) + " TK";
   if(g("pendingBal")) g("pendingBal").innerText = pendingBal.toFixed(2) + " TK";
+  // Main balance subtitle: show actual main balance + VERIFIED (was hardcoded "0 TK · VERIFIED")
+  if(g("mainSub")) g("mainSub").innerText = mainBal.toFixed(2) + " TK · VERIFIED";
   if(g("pMainBal")) g("pMainBal").innerText = mainBal.toFixed(2) + " TK";
   if(g("pPendingBal")) g("pPendingBal").innerText = pendingBal.toFixed(2) + " TK";
   if(g("todayCount")) g("todayCount").innerText = todayAds;
   if(g("todayCountTop")) g("todayCountTop").innerText = todayAds;
   if(g("pTotalAds")) g("pTotalAds").innerText = totalAds + " Ads";
+  // Profile page: show lifetime earned + lifetime ads (these never decrease, never reset)
+  if(g("pTotalEarned")) g("pTotalEarned").innerText = lifetimeEarned.toFixed(0) + " TK";
+  if(g("pLifetimeAds")) g("pLifetimeAds").innerText = lifetimeAds + " Ads";
   if(g("todayPercent")) g("todayPercent").innerText = (todayAds/500*100).toFixed(1) + "%";
   if(g("pTotalPercent")) g("pTotalPercent").innerText = (todayAds/500*100).toFixed(1) + "% of daily";
-  if(g("todayProgress")) g("todayProgress").style.width = Math.min(todayAds/500*100,100) + "%";
+  if(g("todayProgress")) {
+    const pct = Math.min(todayAds/500*100, 100);
+    g("todayProgress").style.width = pct + "%";
+    // Color shifts from green → orange → red as the daily limit fills up
+    const r = Math.round(34 + (pct/100) * (239-34));     // 34 → 239
+    const gr = Math.round(197 - (pct/100) * (197-68));    // 197 → 68
+    const bl = Math.round(94 - (pct/100) * (94-68));      // 94 → 68
+    g("todayProgress").style.background = `linear-gradient(90deg, rgb(${r},${gr},${bl}), rgb(${Math.min(255,r+30)},${Math.max(40,gr-30)},${bl}))`;
+  }
   if(g("confirmText")) g("confirmText").innerText = totalAds + "/500 ads • +" + refBonusPct + "% ref bonus";
   if(g("wBal")) g("wBal").innerText = mainBal.toFixed(2) + " TK";
-  if(g("pTotalEarned")) g("pTotalEarned").innerText = mainBal.toFixed(0) + " TK";
+  // Auto OFF box: small "per ad X TK" text under the count
+  if(g("autoPerAd")) g("autoPerAd").innerText = "+" + fmtPrice(rewardAuto) + " TK / AD";
   updLimits();
   updPremium();
 }
@@ -604,13 +637,14 @@ function setButtonActive(active) {
 
 // ===== 16s RULE: balance comes exactly 16s after the ad opens, even if the user leaves the ad early =====
 const AD_WAIT_MS = 16000;
-async function runAdWith16s(statusLabel) {
+async function runAdWith16s(statusLabel, customWaitMs) {
+  const waitMs = customWaitMs || AD_WAIT_MS;
   const autoStatus = document.getElementById("autoStatus");
   const tg = window.Telegram?.WebApp;
   const userId = tg?.initDataUnsafe?.user?.id || 0;
   const t0 = Date.now();
   const tick = setInterval(() => {
-    const left = Math.max(0, Math.ceil((AD_WAIT_MS - (Date.now() - t0)) / 1000));
+    const left = Math.max(0, Math.ceil((waitMs - (Date.now() - t0)) / 1000));
     if(autoStatus) autoStatus.innerText = statusLabel + " " + left + "s";
   }, 500);
   const ad = (async () => {
@@ -619,21 +653,21 @@ async function runAdWith16s(statusLabel) {
       else if (typeof showAdsparkPopup === 'function') await showAdsparkPopup({ ymid: userId });
     } catch(e){}
   })();
-  const wait16 = new Promise(r => setTimeout(r, AD_WAIT_MS));
-  const cap = new Promise(r => setTimeout(r, 45000)); // safety if the ad never reports closing
-  await Promise.all([Promise.race([ad, cap]), wait16]);
+  const waitP = new Promise(r => setTimeout(r, waitMs));
+  const cap = new Promise(r => setTimeout(r, Math.max(45000, waitMs + 5000))); // safety if the ad never reports closing
+  await Promise.all([Promise.race([ad, cap]), waitP]);
   clearInterval(tick);
 }
 
 async function srvAdStart(type){
   let r; try{ r = await API('/api/ad/start',{type, phone_tz: getPhoneTz()}); }catch(e){ r = {error:'net'}; }
-  if(r && r.ok) return true;
-  adError(r); return false;
+  if(r && r.ok) return r;     // return full response so caller can check r.special
+  adError(r); return null;
 }
 async function srvAdClaim(){
   let r; try{ r = await API('/api/ad/claim',{}); }catch(e){ r = {error:'net'}; }
-  if(r && r.ok){ applyState(r.state); return true; }
-  adError(r); return false;
+  if(r && r.ok){ applyState(r.state); return r; }
+  adError(r); return null;
 }
 function adError(r){
   const e = r && r.error;
@@ -658,10 +692,26 @@ async function watchAdFlow() {
   if(autoBtn) autoBtn.classList.add("btn-dimmed");
 
   // Start server-side ad session
-  if(!(await srvAdStart("watch"))){
+  const startResp = await srvAdStart("watch");
+  if(!startResp){
     if(autoBtn) autoBtn.classList.remove("btn-dimmed");
     return;
   }
+
+  // If this is a 5th watch ad → show special countdown popup. User must click or ad is cancelled.
+  const isSpecial = !!startResp.special;
+  if(isSpecial){
+    const proceeded = await showSpecialAdPopup();
+    if(!proceeded){
+      // Countdown expired — user didn't click in time. Don't claim the ad.
+      if(autoBtn) autoBtn.classList.remove("btn-dimmed");
+      setTopStatus("ready");
+      return;
+    }
+  }
+
+  // Ad wait time: 25s for special 5th ad, 16s for normal ads
+  const adWaitMs = isSpecial ? 25000 : AD_WAIT_MS;
 
   // Phase 1: READY (red) -> Loading (grow, glow) for 2s
   if(watchBtn){ watchBtn.classList.add("ad-preparing"); watchBtn.innerHTML = '<span class="ad-prep-text">PREPARING AD…</span><span class="ad-spinner"></span>'; }
@@ -669,10 +719,10 @@ async function watchAdFlow() {
   setTopStatus("manual_loading");
   await new Promise(r => setTimeout(r, 2000));
 
-  // Phase 2: Ad plays (16s)
-  if(watchBtn){ watchBtn.classList.remove("ad-preparing"); watchBtn.classList.add("ad-playing"); watchBtn.innerHTML = '<span class="ad-prep-text">AD PLAYING…</span><span class="ad-spinner"></span>'; }
+  // Phase 2: Ad plays (25s for special, 16s for normal)
+  if(watchBtn){ watchBtn.classList.remove("ad-preparing"); watchBtn.classList.add("ad-playing"); watchBtn.innerHTML = isSpecial ? '<span class="ad-prep-text">AD PLAYING (25s)…</span><span class="ad-spinner"></span>' : '<span class="ad-prep-text">AD PLAYING…</span><span class="ad-spinner"></span>'; }
   setTopStatus("confirming");
-  await runAdWith16s("AD");
+  await runAdWith16s("AD", adWaitMs);
 
   // Phase 3: After ad, 2s "Confirming Reward..." loading
   if(watchBtn){ watchBtn.classList.remove("ad-playing"); watchBtn.classList.add("ad-confirming"); watchBtn.innerHTML = '<span class="ad-prep-text">CONFIRMING REWARD…</span><span class="ad-spinner gold"></span>'; }
@@ -680,12 +730,59 @@ async function watchAdFlow() {
   await new Promise(r => setTimeout(r, 2000));
 
   // Phase 4: Claim reward from server
-  const ok = await srvAdClaim();
+  const claimResp = await srvAdClaim();
+  const ok = !!claimResp;
   setTopStatus(ok ? "completed" : "ready");
   if(autoStatus) autoStatus.innerText = "IDLE";
   // Restore buttons
   if(watchBtn){ watchBtn.classList.remove("ad-confirming","ad-playing","ad-preparing"); watchBtn.innerHTML = watchBtnHTML(); }
   if(autoBtn) autoBtn.classList.remove("btn-dimmed");
+  // Green glow on Watch Ad button when reward was added to main balance
+  if(ok && claimResp.to_main){
+    flashGreenGlow(watchBtn);
+  }
+}
+
+// Special 5th-ad popup: returns true if user clicked the button, false if countdown expired
+function showSpecialAdPopup(){
+  return new Promise(resolve => {
+    const ov = document.getElementById("specialAdOv");
+    const numEl = document.getElementById("spadCountdown");
+    const goBtn = document.getElementById("spadGoBtn");
+    if(!ov || !numEl || !goBtn){ resolve(true); return; }
+    ov.style.display = "flex";
+    let n = 10;
+    numEl.innerText = n;
+    let timer = setInterval(() => {
+      n -= 1;
+      numEl.innerText = n;
+      if(n <= 3) numEl.style.color = "#ef4444";
+      if(n <= 0){
+        clearInterval(timer);
+        ov.style.display = "none";
+        numEl.style.color = "";
+        // Countdown expired — show message
+        showCenterModal("সময় শেষ", "সময়ের মধ্যে ক্লিক করেন না। আবার Watch Ad বাটনে চাপ দিন।");
+        resolve(false);
+      }
+    }, 1000);
+    // Save timer + resolver so onSpecialAdClick can use them
+    window._spadTimer = timer;
+    window._spadResolve = resolve;
+  });
+}
+function onSpecialAdClick(){
+  // User clicked "বুঝেছি, বিজ্ঞাপন দেখতে যাই" — close popup and proceed with ad
+  const ov = document.getElementById("specialAdOv");
+  if(ov) ov.style.display = "none";
+  if(window._spadTimer){ clearInterval(window._spadTimer); window._spadTimer = null; }
+  if(window._spadResolve){ window._spadResolve(true); window._spadResolve = null; }
+}
+// Brief green glow on a button when watch-ad reward lands in main balance
+function flashGreenGlow(btn){
+  if(!btn) return;
+  btn.classList.add("green-glow");
+  setTimeout(() => btn.classList.remove("green-glow"), 2200);
 }
 
 async function autoLoopFlow() {
@@ -1220,19 +1317,30 @@ function apCopy(btn){
 function apWRender(){
   const all = window._apW || [], L = all.filter(w => w.status === apWF);
   const cnt = s => all.filter(w => w.status === s).length;
+  // Card background color depends on status: pending=light yellow, approved=light green, rejected=light red
+  const cardClass = s => s === "Approved" ? "ap-wcard st-approved" : s === "Rejected" ? "ap-wcard st-rejected" : "ap-wcard st-pending";
   apSet(`<div class="ap-seg">${['Pending','Approved','Rejected'].map(s => `<button class="${s===apWF?'on '+s:''}" onclick="apWF='${s}';apWRender()">${s} (${cnt(s)})</button>`).join('')}</div>`
-    + (L.map(w => `<div class="ap-wcard"><div class="ap-wl">
+    + (L.map(w => `<div class="${cardClass(w.status)}"><div class="ap-wl">
         <b>${esc(w.name)||'User'} - ID:${esc(w.uid)}</b>
         <div class="ap-wrow"><span>${esc(w.amount)} TK - ${esc(MLAB[w.method]||w.method)} - ${esc(w.number)}</span><button class="ap-copy" data-n="${esc(w.number)}" onclick="apCopy(this)">Copy</button></div>
         <div class="ap-bal">Bal: ${w.bal != null ? esc(w.bal) : '-'} TK</div>
         <small>${fmtDT(w.date)}</small></div>
-      ${w.status === 'Pending' ? `<div class="ap-act"><button class="Approved" onclick="apWStatus(${Number(w.id)},'Approved')">Approve</button><button class="Rejected" onclick="apWStatus(${Number(w.id)},'Rejected')">Reject</button></div>` : ''}</div>`).join('')
+      <div class="ap-act">
+        ${w.status === 'Pending' ? `<button class="Approved" onclick="apWStatus(${Number(w.id)},'Approved')">Approve</button><button class="Rejected" onclick="apWStatus(${Number(w.id)},'Rejected')">Reject</button>` : ''}
+        <button class="ap-delete" onclick="apWDelete(${Number(w.id)})" title="Delete this record">🗑️ Delete</button>
+      </div></div>`).join('')
     || `<div class="ap-empty">No ${apWF.toLowerCase()} withdraws</div>`));
 }
 async function apWStatus(id,status){
   let r; try{ r = await API('/api/admin/withdraw_status',{id,status}); }catch(e){ r = {}; }
   if(r.error === 'locked') showCenterModal('Locked','Already approved/rejected - cannot change');
   apWithdraws();
+}
+async function apWDelete(id){
+  if(!confirm('এই withdraw record টা স্থায়ীভাবে মুছে ফেলবে? এটা আর ফিরে আসবে না!')) return;
+  let r; try{ r = await API('/api/admin/withdraw_delete', {id}); }catch(e){ r = {error:'net'}; }
+  if(r && r.ok){ showCenterModal('Deleted', `${r.deleted} টি record মুছে ফেলা হয়েছে ✅`); apWithdraws(); }
+  else showCenterModal('Error', 'Delete করতে সমস্যা হয়েছে');
 }
 async function apUsers(){
   const btn = '<button class="ap-big" onclick="apUsers()">🔄 Load Users</button>';
