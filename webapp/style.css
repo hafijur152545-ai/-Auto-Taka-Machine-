@@ -1302,24 +1302,13 @@ div:has(> .sup-label) > div{background:linear-gradient(90deg,transparent,#e9c46a
 }
 @keyframes bellRing{0%,100%{transform:scale(1)}50%{transform:scale(1.3);box-shadow:0 0 12px rgba(239,68,68,.8)}}
 
-/* ============ Auto Loop button new structure (icon + text + price) ============ */
-#autoBtn.action-btn{flex-direction:row !important;gap:10px !important;padding:14px 12px !important;align-items:center !important;justify-content:space-between !important}
-#autoBtn .ab-main{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
-#autoBtn .ab-icon{
-  width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:15px;font-weight:800;
-  box-shadow:0 3px 8px rgba(124,58,237,.35);flex:0 0 auto;animation:abSpin 4s linear infinite;
-}
-@keyframes abSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-#autoBtn .ab-text{display:flex;flex-direction:column;line-height:1.15;flex:1;min-width:0;text-align:left}
-#autoBtn .ab-text small{font-size:9px;font-weight:700;letter-spacing:1px;color:#7c3aed;opacity:.8;text-transform:uppercase}
-#autoBtn .ab-text b{font-size:13px;color:#0f1115;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#autoBtn .ab-price{
-  font-size:11px !important;font-weight:800 !important;color:#16a34a !important;
-  background:linear-gradient(135deg,#dcfce7,#bbf7d0);padding:5px 9px;border-radius:8px;
-  border:1px solid #86efac;white-space:nowrap;flex:0 0 auto;letter-spacing:.3px;
-}
-#autoBtn.active-auto .ab-price{background:rgba(255,255,255,.18);color:#fff !important;border-color:rgba(255,255,255,.3)}
+/* ============ Auto Loop button - classic look (icon + "Auto Loop" + small LOW PRICE line) ============ */
+#autoBtn.action-btn{flex-direction:column !important;gap:3px !important;padding:12px 10px !important;align-items:center !important;justify-content:center !important}
+#homePage #autoBtn .ab-main{display:flex;align-items:center;justify-content:center;gap:7px;font-size:15px !important;font-weight:800;color:#4f46e5;text-shadow:none}
+#homePage #autoBtn .ab-icon{color:#6366f1;font-size:15px;text-shadow:0 0 10px rgba(99,102,241,.8)}
+#homePage #autoBtn .ab-label{font-size:15px;font-weight:800;color:#4f46e5;white-space:nowrap}
+#autoBtn .ab-price{font-size:8px !important;font-weight:700 !important;letter-spacing:.9px;color:#6d28d9 !important;background:none !important;border:none !important;padding:0 !important;opacity:1;line-height:1;white-space:nowrap}
+#autoBtn.active-auto .ab-price,#autoBtn.active-auto .ab-label,#autoBtn.active-auto .ab-icon{color:#fff !important;text-shadow:none}
 
 /* Auto OFF box: small "per ad X TK" text */
 .ac-perad{font-size:9px !important;font-weight:800 !important;color:#dc2626;margin-top:4px;letter-spacing:.4px;background:#fee2e2;padding:3px 6px;border-radius:6px;border:1px solid #fecaca;text-align:center}
