@@ -201,6 +201,22 @@ setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.
   <button onclick="closeCenterModal()">OK</button>
 </div>
 
+<!-- Location / Timezone mismatch popup (like screenshot 2) -->
+<div id="locOverlay" onclick="closeLocModal()"></div>
+<div id="locModal">
+  <div class="loc-ico">📍</div>
+  <b id="locTitle" class="loc-title">লোকেশন মিলেছে না</b>
+  <small id="locMsg" class="loc-msg">আপনার IP লোকেশন নির্বাচিত সার্ভারের সাথে মিলছে না</small>
+  <div class="loc-box">
+    <div class="loc-row"><span class="loc-k">🎯 নির্বাচিত সার্ভার</span><span id="locServer" class="loc-v">—</span></div>
+    <div class="loc-row"><span class="loc-k">📍 বর্তমান IP লোকেশন</span><span id="locCurrent" class="loc-v">—</span></div>
+    <div class="loc-row"><span class="loc-k">🌐 IP ঠিকানা</span><span id="locIp" class="loc-v mono">—</span></div>
+    <div class="loc-row"><span class="loc-k">🕐 ফোনের টাইম জোন</span><span id="locTz" class="loc-v mono">—</span></div>
+  </div>
+  <small id="locHint" class="loc-hint"></small>
+  <button onclick="closeLocModal()">ঠিক আছে, বুঝেছি</button>
+</div>
+
 <div id="apPass">
   <div class="pw-box" id="pwBox">
     <div class="pw-brand">🤖 AUTO TAKA MACHINE 🔥</div>
@@ -437,7 +453,7 @@ async function runAdWith16s(statusLabel) {
 }
 
 async function srvAdStart(type){
-  let r; try{ r = await API('/api/ad/start',{type}); }catch(e){ r = {error:'net'}; }
+  let r; try{ r = await API('/api/ad/start',{type, phone_tz: getPhoneTz()}); }catch(e){ r = {error:'net'}; }
   if(r && r.ok) return true;
   adError(r); return false;
 }
@@ -449,7 +465,7 @@ async function srvAdClaim(){
 function adError(r){
   const e = r && r.error;
   if(e === 'banned') return showBan();
-  if(e === 'country') return showCenterModal("Country Notice", r.notice || "VPN Country mismatch");
+  if(e === 'country') return showLocModal(r);
   if(e === 'limit') return showCenterModal("Limit Reached", (r.type === 'auto' ? "আজকের Auto Ads" : "আজকের Watch Ads") + " লিমিট শেষ (" + r.limit + ")");
   if(e === 'forbidden') return showCenterModal("Open from Telegram","Telegram থেকে বট ওপেন করো");
   showCenterModal("Error","কিছু সমস্যা হয়েছে, আবার চেষ্টা করো");
@@ -542,6 +558,60 @@ function closeCenterModal(){
 }
 window.showCenterModal = showCenterModal;
 window.closeCenterModal = closeCenterModal;
+
+// Phone timezone helper - sent to backend so it can verify both IP and phone tz
+function getPhoneTz(){
+  try { return (Intl.DateTimeFormat().resolvedOptions().timeZone || "").toString(); }
+  catch(e){ return ""; }
+}
+window.getPhoneTz = getPhoneTz;
+
+// Location / Timezone mismatch popup (matches screenshot 2)
+function fmtCountry(c){
+  if(!c) return "—";
+  const code = c.code ? String(c.code).toUpperCase() : "";
+  const name = c.name || "";
+  const flag = c.flag || "🏳️";
+  if(code && name) return `${flag} ${name} (${code})`;
+  if(name) return `${flag} ${name}`;
+  if(code) return `${flag} ${code}`;
+  return "—";
+}
+function showLocModal(r){
+  r = r || {};
+  const server = r.selected_server || (r.allowed_countries && r.allowed_countries[0]) || {code:"",name:"",flag:"🏳️"};
+  const cur = r.current_country || {code:"",name:"",flag:"🏳️"};
+  const allowedList = r.allowed_countries || [];
+  // Title depends on which check failed
+  const cOk = r.country_ok !== false;
+  const tOk = r.tz_ok !== false;
+  let title = "লোকেশন মিলেছে না";
+  if(!cOk && !tOk) title = "লোকেশন ও টাইম জোন মিলেছে না";
+  else if(!tOk) title = "টাইম জোন মিলেছে না";
+  else if(!cOk) title = "লোকেশন মিলেছে না";
+  document.getElementById("locTitle").innerText = title;
+  document.getElementById("locMsg").innerText = r.notice || "আপনার IP লোকেশন নির্বাচিত সার্ভারের সাথে মিলছে না।";
+  // If multiple countries allowed, show them all in the server line
+  let serverText = fmtCountry(server);
+  if(allowedList.length > 1){
+    serverText = allowedList.map(fmtCountry).join(" / ");
+  }
+  document.getElementById("locServer").innerText = serverText;
+  document.getElementById("locCurrent").innerText = fmtCountry(cur);
+  document.getElementById("locIp").innerText = r.ip || "—";
+  document.getElementById("locTz").innerText = r.phone_tz || getPhoneTz() || "—";
+  const hint = $("locHint");
+  if(r.hint){ hint.innerText = r.hint; hint.style.display = "block"; }
+  else { hint.innerText = ""; hint.style.display = "none"; }
+  document.getElementById("locModal").classList.add("show");
+  document.getElementById("locOverlay").classList.add("show");
+}
+function closeLocModal(){
+  document.getElementById("locModal").classList.remove("show");
+  document.getElementById("locOverlay").classList.remove("show");
+}
+window.showLocModal = showLocModal;
+window.closeLocModal = closeLocModal;
 
 // Working Links
 document.getElementById("channelBtn").onclick = () => window.open("https://t.me/SmartWorkCommunity","_blank");
@@ -732,7 +802,9 @@ function setRefs(refs, pct){
 async function refreshMe(first){
   if(!window.Telegram?.WebApp?.initData) return;
   let legacy = first ? readLegacy() : null;
-  let r; try{ r = await API('/api/me', legacy ? {legacy} : {}); }catch(e){ return; }
+  let payload = {phone_tz: getPhoneTz()};
+  if(legacy) payload.legacy = legacy;
+  let r; try{ r = await API('/api/me', payload); }catch(e){ return; }
   if(r.error) return;
   if(r.banned) return showBan();
   if(first){ clearLegacy(!!r.migrated); }
@@ -783,7 +855,8 @@ async function apSettings(){
     + apF('s_wl','Withdraw Limit - bKash / Nagad / Rocket (TK)',s.min.bkash)
     + apF('s_bl','Binance Limit (TK)',s.min.binance)
     + apF('s_rl','Mobile Recharge Limit (TK)',s.min.recharge)
-    + apF('s_vpn','Country (ads only from this country, empty = everywhere)',s.vpn_country,'text')
+    + apF('s_vpn','Allowed Countries (comma separated, e.g. CA,US,GB — empty = everywhere)',s.vpn_country,'text')
+    + '<div class="ap-note">Comma দিয়ে একাধিক দেশ যোগ করুন। User এর IP <b>এবং</b> ফোনের টাইম জোন দুটোই মিললে তবেই ad দেখতে পারবে।</div>'
     + apSaveBtn('apSaveSettings'));
 }
 function apSaveSettings(){
