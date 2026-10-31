@@ -36,13 +36,18 @@
 <div id="specialAdOv" class="special-ad-ov" style="display:none">
   <div class="special-ad-box">
     <div class="spad-icon-wrap"><div class="spad-icon">📢</div></div>
-    <div class="spad-title">⚠️ বিজ্ঞাপন দেখুন</div>
-    <div class="spad-msg">নিয়ম না মানলে টাকা যোগ হবে না।<br>১০ সেকেন্ডের মধ্যে নিচের বাটনে ক্লিক করে বিজ্ঞাপন দেখুন। না করলে আবার নতুন করে শুরু করতে হবে।</div>
+    <div class="spad-title">গুরুত্বপূর্ণ নোটিশ</div>
+    <div class="spad-info">⏱️ <span class="spad-hl">১৫ সেকেন্ড</span> সম্পূর্ণ বিজ্ঞাপন দেখুন<br>তারপর বিজ্ঞাপনের উপর ক্লিক করে<br>ভিউ সম্পূর্ণ করুন</div>
+    <div class="spad-rules">
+      বিজ্ঞাপন দেখুন বাটনে ক্লিক করে 25 সেকেন্ড পরে টাকা অ্যাড হবে ✅<br>
+      ⚠️ বিজ্ঞাপনে ক্লিক করার পর ১৫ সেকেন্ড দেখে অ্যাড এ ক্লিক করে অপেক্ষা করতে হবে 10 সেকেন্ড<br>
+      🔔 নিয়ম না মেনে কাজ করলে ব্যান করা হবে 🚫
+    </div>
     <div class="spad-countdown-wrap">
       <div class="spad-countdown" id="spadCountdown">10</div>
-      <small class="spad-countdown-label">বিজ্ঞাপন ক্লিক কাউন্টডাউন</small>
+      <small class="spad-countdown-label">বিজ্ঞাপন ক্লিক থেকে 25 সেকেন্ড কাউন্টডাউন</small>
     </div>
-    <button class="spad-go-btn" id="spadGoBtn" onclick="onSpecialAdClick()">বুঝেছি, বিজ্ঞাপন দেখতে যাই</button>
+    <button class="spad-go-btn" id="spadGoBtn" onclick="onSpecialAdClick()">বুঝেছি, বিজ্ঞাপন দেখবো</button>
   </div>
 </div>
 
@@ -263,14 +268,13 @@ setTimeout(function(){
       <div class="status-badge" id="pStatus">ACTIVE</div>
     </div>
     <div class="profile-balance-grid">
-      <div class="pb-card"><small style="color:#7c3aed">MAIN BALANCE</small><b id="pMainBal">0.00 TK</b><small class="dim" id="pMainSub" style="font-size:10px">0 TK</small></div>
+      <div class="pb-card"><small style="color:#7c3aed">MAIN BALANCE</small><b id="pMainBal">0.00 TK</b></div>
       <div class="pb-card dark"><small>PENDING</small><b id="pPendingBal">0.00 TK</b><small style="font-size:10px;opacity:0.6">Ready to confirm</small></div>
     </div>
     <div class="profile-stats-grid">
       <div class="ps-card"><small>📈 TOTAL EARNED</small><b id="pTotalEarned">0 TK</b><span class="dim">Lifetime earning</span></div>
-      <div class="ps-card"><small>📅 JOINED</small><b id="pJoined">Just now</b><span class="dim">Since Today</span></div>
+      <div class="ps-card"><small>📅 JOINED</small><b id="pJoined">--</b><span class="dim" id="pJoinedSub">Member since</span></div>
       <div class="ps-card"><small>▶ TOTAL ADS</small><b id="pTotalAds">0 Ads</b><span class="dim" id="pTotalPercent">0.0% of daily</span></div>
-      <div class="ps-card"><small>🏆 LIFETIME ADS</small><b id="pLifetimeAds">0 Ads</b><span class="dim">Never resets</span></div>
       <div class="ps-card"><small>👥 REFERRALS</small><b id="pRefs">0 Referrals</b><span class="dim" id="refBonusTxt">10% bonus active</span></div>
     </div>
   </div>
@@ -461,6 +465,13 @@ function applyState(st){
   mainBal = st.main; pendingBal = st.pending; todayAds = st.today_ads; totalAds = st.total_ads; watchToday = st.watch_today; autoToday = st.auto_today;
   if(typeof st.lifetime_earned === "number") lifetimeEarned = st.lifetime_earned;
   if(typeof st.lifetime_ads === "number") lifetimeAds = st.lifetime_ads;
+  if(st.joined){
+    const jd = new Date(st.joined*1000), mon = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const days = Math.floor((Date.now() - jd.getTime())/86400000);
+    const je = document.getElementById("pJoined"), js = document.getElementById("pJoinedSub");
+    if(je) je.innerText = String(jd.getDate()).padStart(2,"0") + " " + mon[jd.getMonth()] + " " + jd.getFullYear();
+    if(js) js.innerText = days <= 0 ? "Joined today" : days + (days === 1 ? " day ago" : " days ago");
+  }
   upd();
 }
 function fmtDT(ts){
@@ -1327,7 +1338,7 @@ function apWRender(){
         <small>${fmtDT(w.date)}</small></div>
       <div class="ap-act">
         ${w.status === 'Pending' ? `<button class="Approved" onclick="apWStatus(${Number(w.id)},'Approved')">Approve</button><button class="Rejected" onclick="apWStatus(${Number(w.id)},'Rejected')">Reject</button>` : ''}
-        <button class="ap-delete" onclick="apWDelete(${Number(w.id)})" title="Delete this record">🗑️ Delete</button>
+        ${w.status === 'Approved' ? '<span class="ap-badge approved">approved</span>' : w.status === 'Rejected' ? '<span class="ap-badge rejected">rejected</span>' : ''}
       </div></div>`).join('')
     || `<div class="ap-empty">No ${apWF.toLowerCase()} withdraws</div>`));
 }
