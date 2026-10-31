@@ -724,3 +724,408 @@ body:has(#profilePage[style*="block"]) #topStatus {
   margin-right: auto !important;
   display: block !important;
 }
+
+
+
+/* ===== Choto kaj - Gap 1/7 kom, Alex mota na, Bell premium ===== */
+
+/* ALL SUPPORT BOX gap 7 vag er 1 vag kom - 22px -> 18px */
+#confirmBtn, .confirm-card {
+  margin-bottom: 10px !important;
+}
+
+/* Alex Card - ak suta o mota hobe na, dane bame lomba */
+#alexCard {
+  height: 95px !important;
+  min-height: 95px !important;
+  max-height: 95px !important;
+  width: calc(100% + 8px) !important;
+  margin-left: -4px !important;
+  margin-right: -4px !important;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+
+/* HEN logo - upore sobuj dag - ak suta o mota na, dane bame lomba */
+#alexCard::after {
+  content: 'HEN' !important;
+  padding: 3px 16px !important;
+  font-size: 10px !important;
+  letter-spacing: 1.5px !important;
+  height: 20px !important;
+  line-height: 14px !important;
+  top: -6px !important;
+  right: 16px !important;
+  min-width: 48px !important;
+  text-align: center !important;
+}
+
+/* Bell Icon - dan paser upore - choto premium */
+#bellIcon {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 15px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #fefce8, #fde68a) !important;
+  box-shadow: 0 2px 6px rgba(251,191,36,0.25), inset 0 1px 0 rgba(255,255,255,0.6) !important;
+  border: 1px solid #fde68a !important;
+  transition: all 0.2s ease !important;
+}
+#bellIcon:active {
+  transform: scale(0.95) !important;
+}
+
+/* Gap kom - niser baton alpo upore */
+#bottomButtons {
+  margin-top: 2px !important;
+}
+#bottomButtons .action-row {
+  margin-top: 6px !important;
+}
+
+
+
+/* ===== FINAL FIX - Alex 90px, All Support 15px, VPN always visible, Red box same size ===== */
+
+/* Alex Card 90px - 9px koro */
+#alexCard {
+  height: 90px !important;
+  min-height: 90px !important;
+  max-height: 90px !important;
+  margin-top: 2px !important;
+}
+
+/* ALL SUPPORT BOX 15px gap */
+#confirmBtn, .confirm-card {
+  margin-bottom: 8px !important;
+}
+
+/* Red mark - Main Balance, Pending, Today, Auto Off, Watch Ad, Auto Loop, Stop, Confirm - same size, not too wide */
+.balance-row, .info-row, .watch-btn, .action-row, #confirmBtn, .confirm-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.bal-card, .info-card {
+  width: calc(50% - 6px) !important;
+}
+
+/* VPN button always visible like Home button - bottom padding + up */
+#bottomButtons {
+  padding-bottom: 90px !important;
+  margin-bottom: 0 !important;
+}
+
+#vpnBtn, #adminPanelBtn {
+  width: 70% !important;
+  max-width: 260px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Alex and Confirm slightly up - khub kom */
+#alexCard {
+  margin-bottom: 10px !important;
+}
+.balance-row {
+  margin-bottom: 10px !important;
+}
+.info-row {
+  margin-bottom: 10px !important;
+}
+.watch-btn {
+  margin-bottom: 10px !important;
+}
+
+/* Bottom nav - ensure VPN not hidden */
+.phone {
+  padding-bottom: 20px !important;
+}
+#homePage {
+  padding-bottom: 80px !important;
+}
+
+
+
+/* ===== FIX - Alex ager moto 95px, lomba 97%, Balance box overflow fix ===== */
+
+/* Alex Card - ager motoi hobe, mota na, lomba 97% */
+#alexCard {
+  height: 95px !important;
+  min-height: 95px !important;
+  max-height: 95px !important;
+  width: 97% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  box-sizing: border-box !important;
+}
+
+/* Balance box overflow fix - sob ak moton, bahire jabe na */
+#mainContent {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  overflow-x: hidden !important;
+}
+
+.balance-row, .info-row, .watch-btn, .action-row, #confirmBtn, .confirm-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.bal-card {
+  width: calc(50% - 5px) !important;
+  max-width: calc(50% - 5px) !important;
+  box-sizing: border-box !important;
+}
+
+.info-card {
+  width: calc(50% - 5px) !important;
+  max-width: calc(50% - 5px) !important;
+  box-sizing: border-box !important;
+}
+
+.watch-btn {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* HEN logo - mota na, lomba */
+#alexCard::after {
+  width: auto !important;
+  min-width: 52px !important;
+  padding: 3px 18px !important;
+  box-sizing: border-box !important;
+}
+
+
+
+/* ===== FINAL FIX - KAJER VPN + ADMIN PANEL visible, not hidden behind Home nav ===== */
+#bottomButtons {
+  padding-bottom: 140px !important;
+  margin-bottom: 0 !important;
+}
+
+#vpnBtn {
+  margin-bottom: 10px !important;
+}
+
+#adminPanelBtn {
+  margin-bottom: 20px !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+#homePage {
+  padding-bottom: 160px !important;
+}
+
+.phone {
+  padding-bottom: 30px !important;
+}
+
+/* Bottom navigation - ensure not overlapping */
+.bottom-nav, .nav-pill, .bottom-navigation {
+  z-index: 100 !important;
+  bottom: 10px !important;
+}
+
+/* Ensure all content above nav */
+#mainContent {
+  padding-bottom: 20px !important;
+}
+
+
+
+/* ===== FINAL - Alex sobche lomba, Balance box soman, VPN vasa, Admin gaib ok ===== */
+
+/* Alex Morgan - sobuj dag - sobche lomba, niser sob box/btn er chaite lomba */
+#alexCard {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  height: 95px !important;
+  min-height: 95px !important;
+  max-height: 95px !important;
+  box-sizing: border-box !important;
+}
+
+/* Balance box, Today, Watch Ad, Auto Loop, Stop, Confirm - Alex er chaite choto, soman, dane bame aktu niye majhkhane */
+.balance-row, .info-row, .watch-btn, .action-row, #confirmBtn, .confirm-card {
+  width: 95% !important;
+  max-width: 95% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box !important;
+}
+
+.bal-card, .info-card {
+  width: calc(50% - 5px) !important;
+}
+
+/* Bot Channel, Admin - niser baton gulor sathe soman */
+#bottomButtons .action-row {
+  width: 95% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* KAJER VPN - hal simple, aktu vasa, Home er upore */
+#vpnBtn {
+  width: 70% !important;
+  max-width: 260px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-bottom: 10px !important;
+  margin-top: 10px !important;
+  background: #0f172a !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 14px !important;
+  padding: 12px 20px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 4px 16px rgba(15,23,42,0.3), 0 2px 6px rgba(0,0,0,0.1) !important;
+  transform: translateY(-2px) !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* ADMIN PANEL - gaib huk somosa nai, nisei thakbe, sudu admin dekhbe - user er jonno hide */
+#adminPanelBtn {
+  display: none !important;
+}
+
+/* Home nav er upore VPN vasa */
+#bottomButtons {
+  padding-bottom: 100px !important;
+}
+#homePage {
+  padding-bottom: 120px !important;
+}
+
+
+
+/* ===== FINAL - 1 number design, Balance 2 box = nicher 4 ta baton box ak soman, bahire jabe na ===== */
+
+/* Main container - padding soman */
+#mainContent {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  width: 100% !important;
+}
+
+/* Alex - sobche lomba - 100% */
+#alexCard {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Balance 2 box - Main + Pending - nicher 4 ta baton box er soman */
+.balance-row {
+  width: 96% !important;
+  max-width: 96% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+}
+
+.bal-card {
+  width: calc(50% - 4px) !important;
+  max-width: calc(50% - 4px) !important;
+  min-width: calc(50% - 4px) !important;
+  padding: 14px 12px !important;
+  box-sizing: border-box !important;
+  border-radius: 16px !important;
+}
+
+/* Nicher 4 ta baton box - Today, Auto Off, Auto Loop, Stop, Bot Channel, Admin - Balance er soman */
+.info-row {
+  width: 96% !important;
+  max-width: 96% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  gap: 8px !important;
+}
+
+.info-card {
+  width: calc(50% - 4px) !important;
+  max-width: calc(50% - 4px) !important;
+  min-width: calc(50% - 4px) !important;
+  padding: 12px !important;
+  border-radius: 14px !important;
+  box-sizing: border-box !important;
+}
+
+.action-row {
+  width: 96% !important;
+  max-width: 96% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  gap: 8px !important;
+}
+
+.action-row .action-btn {
+  width: calc(50% - 4px) !important;
+  max-width: calc(50% - 4px) !important;
+  min-width: calc(50% - 4px) !important;
+  padding: 14px 12px !important;
+  border-radius: 14px !important;
+  font-size: 14px !important;
+  box-sizing: border-box !important;
+}
+
+.watch-btn {
+  width: 96% !important;
+  max-width: 96% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 16px !important;
+  border-radius: 16px !important;
+}
+
+#confirmBtn, .confirm-card {
+  width: 96% !important;
+  max-width: 96% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  border-radius: 16px !important;
+  padding: 14px !important;
+}
+
+/* VPN - vasa, Home er upore */
+#vpnBtn {
+  width: 68% !important;
+  max-width: 240px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-top: 16px !important;
+  margin-bottom: 10px !important;
+  transform: translateY(-4px) !important;
+  box-shadow: 0 6px 20px rgba(15,23,42,0.35) !important;
+}
+
+#bottomButtons {
+  padding-bottom: 110px !important;
+}
+#homePage {
+  padding-bottom: 130px !important;
+}
