@@ -900,3 +900,67 @@ body:has(#profilePage[style*="block"]) #topStatus {
 .pw-ok{background:linear-gradient(90deg,#00a2ff,#1e90ff)}
 .pw-box.shake{animation:pwShake .35s}
 @keyframes pwShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+/* ===== PREMIUM HOME UI (index.html only) ===== */
+.phone{background:linear-gradient(180deg,#f4f1ff 0%,#eaf1ff 45%,#e8f8ff 100%)}
+
+/* --- 1. Profile card --- */
+#homePage #alexCard{height:auto !important;min-height:70px !important;max-height:none !important;width:calc(100% + 16px) !important;margin-left:-8px !important;margin-right:-8px !important;padding:10px 16px !important;gap:10px !important;background:linear-gradient(135deg,#F8F9FF 0%,#eff1ff 100%) !important;border:1px solid #e3e7fb !important;border-radius:16px !important;box-shadow:0 8px 24px rgba(99,102,241,.13),0 2px 6px rgba(15,23,42,.05),inset 0 1px 0 #fff !important;overflow:visible !important}
+#homePage #alexCard .ph-left{flex:1 1 auto;min-width:0}
+#homePage #alexCard .avatar-sm{box-shadow:0 0 0 2px #fff,0 0 0 4px #c7d2fe,0 4px 10px rgba(99,102,241,.25)}
+#homePage #alexCard .ph-info{flex-direction:column !important;align-items:flex-start !important;gap:3px !important;flex-wrap:nowrap !important;min-width:0}
+#homePage #alexCard #userName{font-size:14px !important;font-weight:800;color:#111827;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.15}
+#homePage #alexCard .ph-sub{display:flex !important;flex-wrap:wrap;gap:3px 6px !important}
+#homePage #alexCard .ph-sub small{font-size:10.5px !important;color:#6b7280}
+#homePage #alexCard .verified{font-size:9.5px;padding:1px 7px;border-radius:999px;background:#fff;border:1px solid #e5e7f5}
+#homePage #alexCard .automation-badge{flex-shrink:0;min-width:84px;border-radius:999px !important;padding:6px 14px !important;background:linear-gradient(135deg,#eef2ff,#e0e7ff) !important;border:1px solid #c7d2fe !important;box-shadow:0 3px 10px rgba(99,102,241,.2),inset 0 1px 0 #fff;text-align:center}
+#homePage #alexCard .automation-badge small{font-size:7.5px !important;color:#6366f1 !important;letter-spacing:1px}
+#homePage #alexCard .automation-badge span{display:block;font-size:10.5px !important;font-weight:800;color:#3730a3 !important;white-space:nowrap}
+#homePage #alexCard::after{content:'HEN' !important;top:-10px !important;right:22px !important;height:20px !important;line-height:20px !important;min-width:52px !important;padding:0 14px !important;border-radius:999px !important;font-size:10px !important;font-weight:900 !important;letter-spacing:1.6px !important;text-align:center !important;color:#fde68a !important;background:linear-gradient(135deg,#0f172a,#312e81) !important;border:1px solid rgba(250,204,21,.45) !important;box-shadow:0 4px 12px rgba(49,46,129,.4),0 0 10px rgba(250,204,21,.25) !important}
+
+/* --- 2. Main / Pending balance --- */
+#homePage .balance-row{padding:0 !important;min-height:0 !important;gap:10px !important}
+#homePage .bal-card{position:relative;transition:transform .2s}
+#homePage .bal-card:not(.dark){background:linear-gradient(145deg,#ffffff 0%,#eef1ff 100%) !important;border:1px solid #dfe5ff !important;box-shadow:0 8px 22px rgba(99,102,241,.16),0 0 18px rgba(129,140,248,.2),inset 0 1px 0 #fff !important}
+#homePage .bal-card:not(.dark) b{background:linear-gradient(90deg,#1e1b4b,#4338ca);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#homePage .bal-card.dark{background:linear-gradient(145deg,#1b1d24 0%,#08090c 100%) !important;border:1px solid rgba(250,204,21,.28) !important;box-shadow:0 8px 22px rgba(0,0,0,.4),0 0 18px rgba(250,204,21,.16),inset 0 0 18px rgba(250,204,21,.08) !important}
+#homePage .bal-card.dark b{color:#fff;text-shadow:0 0 12px rgba(250,204,21,.35)}
+#homePage .bal-card.dark::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;box-shadow:0 0 30px 7px rgba(250,204,21,.9),inset 0 0 24px rgba(250,204,21,.5);border:1px solid rgba(253,224,71,.9)}
+#homePage .bal-card.dark.pulse-gold::after{animation:pendPulse .6s ease-in-out 3}
+@keyframes pendPulse{0%,100%{opacity:0}50%{opacity:1}}
+
+/* --- 3. Today / Auto off --- */
+#homePage .info-card:not(.auto-off){background:linear-gradient(145deg,#ffffff 0%,#e9fbf1 100%) !important;border:1px solid #c9f1d9 !important;box-shadow:0 6px 18px rgba(34,197,94,.15),0 0 14px rgba(34,197,94,.14) !important}
+#homePage .prog-fill{box-shadow:0 0 8px rgba(34,197,94,.7)}
+#homePage .info-card.auto-off{background:linear-gradient(145deg,#ffffff 0%,#f3ecff 100%) !important;border:1.5px dashed #c4b5fd !important;box-shadow:0 6px 18px rgba(139,92,246,.16),0 0 14px rgba(139,92,246,.16) !important}
+#homePage .info-card.auto-off.auto-on{background:linear-gradient(145deg,#ffffff 0%,#e9fbf1 100%) !important;border:1.5px dashed #4ade80 !important;box-shadow:0 6px 18px rgba(34,197,94,.22),0 0 16px rgba(34,197,94,.3) !important}
+
+#homePage #watchAdBtn{background:linear-gradient(135deg,#232733 0%,#0b0c10 55%,#171a22 100%) !important;color:#fff !important;border:1px solid rgba(255,255,255,.06) !important;box-shadow:0 10px 24px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.08) !important;transition:box-shadow .3s,transform .15s}
+#homePage #watchAdBtn:hover,#homePage #watchAdBtn:active{box-shadow:0 10px 26px rgba(0,0,0,.35),0 0 24px rgba(250,204,21,.5),inset 0 0 0 1px rgba(250,204,21,.35) !important}
+
+#homePage #autoBtn,#homePage #stopBtn{border-radius:16px !important;transition:box-shadow .3s,transform .15s}
+#homePage #autoBtn{background:linear-gradient(145deg,#fff 0%,#eef0ff 100%) !important;border:1px solid #dbe0ff !important;color:#312e81 !important;box-shadow:0 6px 16px rgba(99,102,241,.18) !important}
+#homePage #autoBtn span:first-child{color:#6366f1;font-size:17px;text-shadow:0 0 10px rgba(99,102,241,.8)}
+#homePage #autoBtn.active-auto{background:linear-gradient(135deg,#22c55e,#16a34a) !important;border-color:#22c55e !important;color:#fff !important;box-shadow:0 6px 18px rgba(34,197,94,.4) !important}
+#homePage #autoBtn.active-auto span:first-child{color:#fff;text-shadow:0 0 10px rgba(255,255,255,.9)}
+#homePage #stopBtn{background:linear-gradient(145deg,#fff 0%,#fff1f1 100%) !important;border:1px solid #fecaca !important;color:#dc2626 !important;box-shadow:0 6px 16px rgba(239,68,68,.2),0 0 14px rgba(239,68,68,.16) !important}
+#homePage #stopBtn span:first-child{color:#ef4444;font-size:15px;text-shadow:0 0 10px rgba(239,68,68,.85)}
+
+/* Confirm Pending Balance - yellow fill 15% -> 100% */
+#homePage #confirmBtn{position:relative !important;overflow:hidden;background:linear-gradient(145deg,#fff,#fffdf2) !important;border:1px solid #fde68a !important;box-shadow:0 6px 18px rgba(250,204,21,.2) !important;transition:background 1s ease,box-shadow 1s ease}
+#homePage #confirmBtn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--fill,15%);background:linear-gradient(90deg,#fef9c3 0%,#fde047 70%,#facc15 100%);opacity:.9;transition:width 1s ease;z-index:0;pointer-events:none}
+#homePage #confirmBtn > *{position:relative;z-index:1}
+#homePage #confirmBtn .check-icon{background:linear-gradient(135deg,#1f2937,#000);box-shadow:0 0 0 2px #fde047,0 0 12px rgba(250,204,21,.6)}
+
+/* Support buttons */
+#homePage #channelBtn,#homePage #adminBtn{border-radius:16px !important}
+#homePage #channelBtn{background:linear-gradient(145deg,#fff 0%,#e9f6ff 100%) !important;border:1px solid #cfe9fb !important;box-shadow:0 6px 16px rgba(34,158,217,.2),0 0 12px rgba(34,158,217,.12) !important}
+#homePage #channelBtn span{color:#229ED9;font-size:15px;text-shadow:0 0 10px rgba(34,158,217,.85)}
+#homePage #adminBtn{background:linear-gradient(145deg,#fff 0%,#fff4e6 100%) !important;border:1px solid #fde0b8 !important;box-shadow:0 6px 16px rgba(249,115,22,.2),0 0 12px rgba(249,115,22,.12) !important}
+#homePage #adminBtn span{color:#f97316;font-size:15px;filter:drop-shadow(0 0 6px rgba(249,115,22,.85))}
+#homePage #vpnBtn{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%) !important;color:#fff !important;border:1px solid rgba(96,165,250,.5) !important;box-shadow:0 8px 20px rgba(30,64,175,.35),0 0 16px rgba(96,165,250,.28),inset 0 1px 0 rgba(255,255,255,.1) !important;letter-spacing:1.2px}
+
+/* --- 4. Bottom nav click glow --- */
+.bottom-nav button{position:relative}
+.bottom-nav button.nav-glow{animation:navGlow .5s ease-out}
+@keyframes navGlow{0%{box-shadow:0 0 0 0 rgba(59,130,246,0)}40%{box-shadow:0 0 24px 7px rgba(59,130,246,.85),0 0 0 2px rgba(96,165,250,.95)}100%{box-shadow:0 0 0 0 rgba(59,130,246,0)}}
