@@ -212,7 +212,7 @@ setTimeout(function(){
     </button>
 
     <div class="action-row">
-      <button id="autoBtn" class="action-btn"><span class="ab-main"><span class="ab-icon">⇄</span><span class="ab-text"><small>AUTO LOOP</small><b>Run Ads Automatically</b></span></span><small class="ab-price">+0.10 TK / AD</small></button>
+      <button id="autoBtn" class="action-btn"><span class="ab-main"><span class="ab-icon">⇄</span><span class="ab-label">Auto Loop</span></span><small class="ab-price">LOW PRICE 0.10 TK</small></button>
       <button id="stopBtn" class="action-btn danger"><span>○</span> Auto Ad Stop</button>
     </div>
 
@@ -475,7 +475,7 @@ function updLimits(){
 }
 const fmtPrice = n => (Math.round(n*100)/100).toFixed(2);
 function watchBtnHTML(){ return `<span>Watch Ad (+${fmtPrice(rewardWatch)} TK)</span><span class="wb-tags"><i>1 TAP ADS</i><i>HIGH PRICE</i></span><span class="play-icon">▶</span>`; }
-function autoBtnHTML(){ return `<span class="ab-main"><span class="ab-icon">⇄</span><span class="ab-text"><small>AUTO LOOP</small><b>Run Ads Automatically</b></span></span><small class="ab-price">+${fmtPrice(rewardAuto)} TK / AD</small>`; }
+function autoBtnHTML(){ return `<span class="ab-main"><span class="ab-icon">⇄</span><span class="ab-label">Auto Loop</span></span><small class="ab-price">LOW PRICE ${fmtPrice(rewardAuto)} TK</small>`; }
 let _prevPending = pendingBal;
 
 // ===== MIN WITHDRAW LIMITS - ADMIN CONTROLLABLE =====
