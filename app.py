@@ -152,7 +152,7 @@ DEFAULTS = {"settings": {"reward_watch": 0.5, "reward_auto": 0.10, "limit_watch"
                          "country_notice": "⚠️ {country} VPN/Proxy on korun, tarpor ad dekhun. Apnar current country: {current}",
                          "ref_bonus": 10,
                          "min": {"bkash": 0, "nagad": 0, "rocket": 0, "binance": 0, "recharge": 0}, "vpn_country": ""},
-            "users": {}, "withdraws": [], "refs": {}, "legacy_done": False}
+            "users": {}, "withdraws": [], "refs": {}}
 
 # ---------- storage: Firebase Firestore (permanent) with JSON-file fallback ----------
 # Set FIREBASE_CREDENTIALS in Render (service-account JSON). Everything is kept in memory (one gunicorn worker)
@@ -189,34 +189,15 @@ def _boot_load():
         try:
             m = _db.collection("atm_meta").document("main").get()
             md = m.to_dict() if m.exists else {}
-            d["settings"] = md.get("settings", {}); d["refs"] = md.get("refs", {}); d["legacy_done"] = bool(md.get("legacy_done"))
+            d["settings"] = md.get("settings", {}); d["refs"] = md.get("refs", {})
             d["users"] = {x.id: x.to_dict() for x in _db.collection("atm_users").stream()}
             d["withdraws"] = sorted([x.to_dict() for x in _db.collection("atm_withdraws").stream()], key=lambda w: -int(w.get("id", 0)))
-            if not d["legacy_done"]:
-                # one-time: bring over the OLD data kept in Firestore document  atm/main_data  (the old docs are never deleted)
-                ld = _db.collection("atm").document("main_data").get()
-                if ld.exists:
-                    old = ld.to_dict() or {}
-                    for uid, rec in (old.get("users") or {}).items():
-                        if isinstance(rec, dict): d["users"].setdefault(str(uid), rec)
-                    have = {int(w.get("id", 0)) for w in d["withdraws"]}
-                    for w in (old.get("withdraws") or []):
-                        if not isinstance(w, dict) or int(w.get("id", 0)) in have: continue
-                        for k, v in (("id", 0), ("uid", 0), ("name", ""), ("method", ""), ("number", ""), ("amount", 0), ("status", "Pending"), ("date", 0)): w.setdefault(k, v)
-                        d["withdraws"].append(w)
-                    d["withdraws"].sort(key=lambda w: -int(w.get("id", 0)))
-                    os_ = old.get("settings") or {}
-                    if os_:
-                        cur = d["settings"]; newer = {k: v for k, v in cur.items() if k != "min" and v != DEFAULTS["settings"].get(k)}
-                        newer_min = {k: v for k, v in (cur.get("min") or {}).items() if v != DEFAULTS["settings"]["min"].get(k)}
-                        d["settings"] = dict(os_); d["settings"].update(newer)
-                        d["settings"].setdefault("min", {}); d["settings"]["min"].update(newer_min)
-                else:
-                    try:
-                        with open(DATA_FILE, encoding='utf-8') as f: old = json.load(f)
-                        for uid, rec in (old.get("users") or {}).items(): d["users"].setdefault(str(uid), rec)
-                    except Exception: pass
-                d["legacy_done"] = True
+            empty = not md and not d["users"] and not d["withdraws"]
+            if empty:  # first run on Firebase: bring over the old JSON file if there is one
+                try:
+                    with open(DATA_FILE, encoding='utf-8') as f: old = json.load(f)
+                    if old.get("users") or old.get("withdraws"): d = old
+                except Exception: pass
             return d
         except Exception:
             import traceback; traceback.print_exc()
@@ -253,7 +234,7 @@ def save(d):
             batch.set(_db.collection(coll).document(doc), data); pend.append((store, key, h)); n += 1
             if n >= 400:
                 batch.commit(); [s.__setitem__(k, v) for s, k, v in pend]; pend.clear(); batch = _db.batch(); n = 0
-        meta = {"settings": d["settings"], "refs": d["refs"], "legacy_done": bool(d.get("legacy_done"))}; mh = _js(meta)
+        meta = {"settings": d["settings"], "refs": d["refs"]}; mh = _js(meta)
         if _hashes["meta"] != mh:
             batch.set(_db.collection("atm_meta").document("main"), meta); pend.append((_hashes, "meta", mh)); n += 1
         for uid, rec in d["users"].items(): put("atm_users", str(uid), rec, _hashes["users"], uid)
@@ -333,15 +314,141 @@ def ref_stats(d, uid):
     return {"count": cnt, "earned": round(d["users"].get(uid, {}).get("ref_earned", 0), 2)}
 
 def user_withdraws(d, uid):
-    return [{"id": w.get("id", 0), "method": w.get("method", ""), "number": w.get("number", ""), "amount": w.get("amount", 0), "status": w.get("status", "Pending"), "date": w.get("date", 0)}
-            for w in d["withdraws"] if str(w.get("uid")) == str(uid)][:50]
+    return [{"id": w["id"], "method": w["method"], "number": w["number"], "amount": w["amount"], "status": w["status"], "date": w["date"]}
+            for w in d["withdraws"] if str(w["uid"]) == str(uid)][:50]
 
 # ---------- country check ----------
 CNAME = {"US": "United States", "AU": "Australia", "BD": "Bangladesh", "IN": "India", "GB": "United Kingdom", "CA": "Canada", "DE": "Germany",
          "SG": "Singapore", "MY": "Malaysia", "AE": "United Arab Emirates", "SA": "Saudi Arabia", "FR": "France", "NL": "Netherlands",
-         "JP": "Japan", "PK": "Pakistan", "NZ": "New Zealand", "IE": "Ireland", "SE": "Sweden", "CH": "Switzerland", "IT": "Italy", "ES": "Spain"}
+         "JP": "Japan", "PK": "Pakistan", "NZ": "New Zealand", "IE": "Ireland", "SE": "Sweden", "CH": "Switzerland", "IT": "Italy", "ES": "Spain",
+         "RU": "Russia", "BR": "Brazil", "MX": "Mexico", "ZA": "South Africa", "KR": "South Korea", "CN": "China", "ID": "Indonesia",
+         "PH": "Philippines", "VN": "Vietnam", "TH": "Thailand", "TR": "Turkey", "EG": "Egypt", "NG": "Nigeria", "AR": "Argentina",
+         "CL": "Chile", "CO": "Colombia", "PE": "Peru", "BD": "Bangladesh", "LK": "Sri Lanka", "NP": "Nepal", "BN": "Brunei",
+         "HK": "Hong Kong", "TW": "Taiwan", "IL": "Israel", "PT": "Portugal", "AT": "Austria", "BE": "Belgium", "DK": "Denmark",
+         "FI": "Finland", "NO": "Norway", "PL": "Poland", "CZ": "Czech Republic", "GR": "Greece", "HU": "Hungary", "RO": "Romania",
+         "BG": "Bulgaria", "HR": "Croatia", "SK": "Slovakia", "SI": "Slovenia", "EE": "Estonia", "LV": "Latvia", "LT": "Lithuania",
+         "UA": "Ukraine", "BY": "Belarus", "KZ": "Kazakhstan", "UZ": "Uzbekistan", "QA": "Qatar", "KW": "Kuwait", "BH": "Bahrain",
+         "OM": "Oman", "JO": "Jordan", "LB": "Lebanon", "IQ": "Iraq", "IR": "Iran", "AF": "Afghanistan", "MM": "Myanmar",
+         "KH": "Cambodia", "LA": "Laos", "MO": "Macau"}
 ALIAS = {v.lower(): k.lower() for k, v in CNAME.items()}
-ALIAS.update({"usa": "us", "america": "us", "united states of america": "us", "uk": "gb", "england": "gb", "britain": "gb", "uae": "ae"})
+ALIAS.update({"usa": "us", "america": "us", "united states of america": "us", "uk": "gb", "england": "gb", "britain": "gb", "uae": "ae",
+              "korea": "kr", "south korea": "kr", "czechia": "cz", "hong kong": "hk", "macau": "mo"})
+
+# Country flag emojis (rendered in Telegram WebApp)
+FLAG = {"US":"🇺🇸","CA":"🇨🇦","GB":"🇬🇧","AU":"🇦🇺","BD":"🇧🇩","IN":"🇮🇳","DE":"🇩🇪","SG":"🇸🇬","MY":"🇲🇾","AE":"🇦🇪",
+        "SA":"🇸🇦","FR":"🇫🇷","NL":"🇳🇱","JP":"🇯🇵","PK":"🇵🇰","NZ":"🇳🇿","IE":"🇮🇪","SE":"🇸🇪","CH":"🇨🇭","IT":"🇮🇹",
+        "ES":"🇪🇸","RU":"🇷🇺","BR":"🇧🇷","MX":"🇲🇽","ZA":"🇿🇦","KR":"🇰🇷","CN":"🇨🇳","ID":"🇮🇩","PH":"🇵🇭","VN":"🇻🇳",
+        "TH":"🇹🇭","TR":"🇹🇷","EG":"🇪🇬","NG":"🇳🇬","AR":"🇦🇷","CL":"🇨🇱","CO":"🇨🇴","PE":"🇵🇪","LK":"🇱🇰","NP":"🇳🇵",
+        "BN":"🇧🇳","HK":"🇭🇰","TW":"🇹🇼","IL":"🇮🇱","PT":"🇵🇹","AT":"🇦🇹","BE":"🇧🇪","DK":"🇩🇰","FI":"🇫🇮","NO":"🇳🇴",
+        "PL":"🇵🇱","CZ":"🇨🇿","GR":"🇬🇷","HU":"🇭🇺","RO":"🇷🇴","BG":"🇧🇬","HR":"🇭🇷","SK":"🇸🇰","SI":"🇸🇮","EE":"🇪🇪",
+        "LV":"🇱🇻","LT":"🇱🇹","UA":"🇺🇦","BY":"🇧🇾","KZ":"🇰🇿","UZ":"🇺🇿","QA":"🇶🇦","KW":"🇰🇼","BH":"🇧🇭","OM":"🇴🇲",
+        "JO":"🇯🇴","LB":"🇱🇧","IQ":"🇮🇶","IR":"🇮🇷","AF":"🇦🇫","MM":"🇲🇲","KH":"🇰🇭","LA":"🇱🇦","MO":"🇲🇴"}
+
+# Country -> acceptable phone timezones (IANA). The user's phone timezone must match one of these
+# for at least one allowed country, otherwise the ad is blocked (even if the IP matches via VPN).
+COUNTRY_TZ = {
+    "US": ["America/New_York","America/Detroit","America/Kentucky/Louisville","America/Kentucky/Monticello",
+           "America/Indiana/Indianapolis","America/Indiana/Vincennes","America/Indiana/Winamac","America/Indiana/Marengo",
+           "America/Indiana/Petersburg","America/Indiana/Vevay","America/Chicago","America/Menominee",
+           "America/North_Dakota/Center","America/North_Dakota/New_Salem","America/North_Dakota/Beulah",
+           "America/Denver","America/Boise","America/Phoenix","America/Los_Angeles","America/Metlakatla",
+           "America/Anchorage","America/Juneau","America/Sitka","America/Yakutat","America/Nome","America/Adak",
+           "Pacific/Honolulu","US/Eastern","US/Central","US/Mountain","US/Pacific","US/Alaska","US/Hawaii",
+           "US/Arizona","US/East-Indiana","US/Indiana-Starke","US/Michigan"],
+    "CA": ["America/Toronto","America/Vancouver","America/Halifax","America/Edmonton","America/Winnipeg",
+           "America/St_Johns","America/Regina","America/Swift_Current","America/Moncton","America/Blanc-Sablon",
+           "America/Glace_Bay","America/Goose_Bay","America/Rainy_River","America/Atikokan","America/Fort_Nelson",
+           "America/Creston","Canada/Eastern","Canada/Central","Canada/Mountain","Canada/Pacific","Canada/Atlantic",
+           "Canada/Newfoundland","Canada/Saskatchewan","Canada/Yukon"],
+    "GB": ["Europe/London","GMT","GMT+0","GMT0","GB","Etc/GMT","Etc/GMT+0"],
+    "AU": ["Australia/Sydney","Australia/Melbourne","Australia/Brisbane","Australia/Perth","Australia/Adelaide",
+           "Australia/Hobart","Australia/Darwin","Australia/Lindeman","Australia/Lord_Howe","Australia/Broken_Hill",
+           "Australia/Eucla","Antarctica/Macquarie"],
+    "BD": ["Asia/Dhaka","Asia/Thimphu","Asia/Almaty","Asia/Bishkek","Asia/Omsk","Asia/Qyzylorda","Asia/Yekaterinburg","Dhaka"],
+    "IN": ["Asia/Kolkata","Asia/Calcutta","Asia/Colombo","Asia/Karachi"],
+    "DE": ["Europe/Berlin","Europe/Busingen","CET","Etc/GMT-1"],
+    "SG": ["Asia/Singapore","Singapore","Asia/Kuala_Lumpur","Asia/Makassar","Asia/Manila"],
+    "MY": ["Asia/Kuala_Lumpur","Asia/Kuching","Asia/Singapore","Singapore","Asia/Makassar"],
+    "AE": ["Asia/Dubai","Asia/Muscat","Asia/Qatar","Asia/Riyadh","Asia/Aden","Asia/Kuwait","Asia/Bahrain"],
+    "SA": ["Asia/Riyadh","Asia/Qatar","Asia/Bahrain","Asia/Kuwait","Asia/Aden","Asia/Dubai","Asia/Muscat"],
+    "FR": ["Europe/Paris","Europe/Monaco","CET","Etc/GMT-1"],
+    "NL": ["Europe/Amsterdam","Europe/Berlin","CET","Etc/GMT-1"],
+    "JP": ["Asia/Tokyo","Asia/Jayapura","Japan","Asia/Dili","Asia/Palau","Asia/Jayapura"],
+    "PK": ["Asia/Karachi","Asia/Kolkata","Asia/Colombo","Pakistan"],
+    "NZ": ["Pacific/Auckland","Pacific/Chatham","Antarctica/McMurdo","NZ"],
+    "IE": ["Europe/Dublin","Europe/London","GMT","Eire"],
+    "SE": ["Europe/Stockholm","Europe/Berlin","CET","Europe/Helsinki","Etc/GMT-1"],
+    "CH": ["Europe/Zurich","Europe/Vaduz","CET","Etc/GMT-1"],
+    "IT": ["Europe/Rome","Europe/Vatican","Europe/San_Marino","CET","Italy","Etc/GMT-1"],
+    "ES": ["Europe/Madrid","Africa/Ceuta","Atlantic/Canary","CET","Europe/Lisbon"],
+    "RU": ["Europe/Kaliningrad","Europe/Moscow","Europe/Simferopol","Europe/Kirov","Europe/Volgograd","Europe/Samara",
+           "Europe/Saratov","Europe/Ulyanovsk","Asia/Yekaterinburg","Asia/Omsk","Asia/Novosibirsk","Asia/Barnaul",
+           "Asia/Tomsk","Asia/Novokuznetsk","Asia/Krasnoyarsk","Asia/Irkutsk","Asia/Chita","Asia/Yakutsk","Asia/Khandyga",
+           "Asia/Vladivostok","Asia/Ust-Nera","Asia/Magadan","Asia/Sakhalin","Asia/Srednekolymsk","Asia/Ust-Nera",
+           "Asia/Anadyr","Asia/Kamchatka","Asia/Chita"],
+    "BR": ["America/Noronha","America/Belem","America/Fortaleza","America/Recife","America/Araguaina","America/Maceio",
+           "America/Bahia","America/Sao_Paulo","America/Campo_Grande","America/Cuiaba","America/Santarem","America/Porto_Velho",
+           "America/Boa_Vista","America/Manaus","America/Eirunepe","America/Rio_Branco"],
+    "MX": ["America/Mexico_City","America/Cancun","America/Merida","America/Monterrey","America/Matamoros","America/Mazatlan",
+           "America/Chihuahua","America/Ojinaga","America/Hermosillo","America/Tijuana","America/Bahia_Banderas"],
+    "ZA": ["Africa/Johannesburg","Africa/Maseru","Africa/Mbabane","Africa/Maputo","Africa/Gaborone","Africa/Harare"],
+    "KR": ["Asia/Seoul","Asia/Pyongyang","ROK","Korea"],
+    "CN": ["Asia/Shanghai","Asia/Urumqi","Asia/Hong_Kong","Asia/Macau","Asia/Taipei","PRC","Asia/Chongqing","Asia/Harbin"],
+    "ID": ["Asia/Jakarta","Asia/Pontianak","Asia/Makassar","Asia/Jayapura"],
+    "PH": ["Asia/Manila","Asia/Brunei","Asia/Makassar"],
+    "VN": ["Asia/Ho_Chi_Minh","Asia/Bangkok","Asia/Saigon","Asia/Phnom_Penh","Asia/Vientiane"],
+    "TH": ["Asia/Bangkok","Asia/Ho_Chi_Minh","Asia/Phnom_Penh","Asia/Vientiane","Asia/Brunei","Asia/Saigon","Asia/Jakarta","Asia/Krasnoyarsk"],
+    "TR": ["Europe/Istanbul","Asia/Bahrain","Asia/Baghdad","Asia/Riyadh","Europe/Moscow","Etc/GMT-3"],
+    "EG": ["Africa/Cairo","Asia/Jerusalem","Asia/Gaza","Asia/Hebron","EET","Africa/Tripoli"],
+    "NG": ["Africa/Lagos","Africa/Porto-Novo","Africa/Niamey","Africa/Luanda","Africa/Libreville","Africa/Douala","WAT"],
+    "AR": ["America/Argentina/Buenos_Aires","America/Argentina/Cordoba","America/Argentina/Salta","America/Argentina/Jujuy",
+           "America/Argentina/Tucuman","America/Argentina/Catamarca","America/Argentina/La_Rioja","America/Argentina/San_Juan",
+           "America/Argentina/Mendoza","America/Argentina/San_Luis","America/Argentina/Rio_Gallegos","America/Argentina/Ushuaia"],
+    "CL": ["America/Santiago","America/Punta_Arenas","Pacific/Easter","Chile/Continental","Chile/EasterIsland"],
+    "CO": ["America/Bogota","America/Lima","America/Guayaquil","America/Rio_Branco","America/Eirunepe","America/Cayenne"],
+    "PE": ["America/Lima","America/Bogota","America/Guayaquil","America/Rio_Branco","America/Eirunepe","America/Cayenne"],
+    "LK": ["Asia/Colombo","Asia/Kolkata","Asia/Calcutta"],
+    "NP": ["Asia/Kathmandu","Asia/Calcutta","Asia/Kolkata","Asia/Dhaka"],
+    "BN": ["Asia/Brunei","Asia/Makassar","Asia/Kuching","Asia/Manila"],
+    "HK": ["Asia/Hong_Kong","Asia/Shanghai","Asia/Macau","Asia/Taipei","Hongkong"],
+    "TW": ["Asia/Taipei","Asia/Shanghai","Asia/Hong_Kong","Asia/Macau","ROC"],
+    "IL": ["Asia/Jerusalem","Asia/Gaza","Asia/Hebron","Asia/Amman","Asia/Beirut","Asia/Damascus","Asia/Tel_Aviv","Israel"],
+    "PT": ["Europe/Lisbon","Atlantic/Madeira","Atlantic/Azores","Portugal","WET"],
+    "AT": ["Europe/Vienna","Europe/Berlin","CET","Etc/GMT-1"],
+    "BE": ["Europe/Brussels","Europe/Amsterdam","Europe/Berlin","CET","Etc/GMT-1"],
+    "DK": ["Europe/Copenhagen","Europe/Berlin","CET","Etc/GMT-1"],
+    "FI": ["Europe/Helsinki","Europe/Berlin","CET","Etc/GMT-2","Europe/Tallinn"],
+    "NO": ["Europe/Oslo","Europe/Berlin","CET","Etc/GMT-1"],
+    "PL": ["Europe/Warsaw","Europe/Berlin","CET","Poland","Etc/GMT-1"],
+    "CZ": ["Europe/Prague","Europe/Berlin","CET","Etc/GMT-1"],
+    "GR": ["Europe/Athens","Europe/Bucharest","Europe/Helsinki","EET","Etc/GMT-2"],
+    "HU": ["Europe/Budapest","Europe/Belgrade","CET","Etc/GMT-1"],
+    "RO": ["Europe/Bucharest","Europe/Athens","Europe/Helsinki","EET","Etc/GMT-2"],
+    "BG": ["Europe/Sofia","Europe/Athens","EET","Etc/GMT-2"],
+    "HR": ["Europe/Zagreb","Europe/Belgrade","CET","Etc/GMT-1"],
+    "SK": ["Europe/Bratislava","Europe/Prague","Europe/Berlin","CET","Etc/GMT-1"],
+    "SI": ["Europe/Ljubljana","Europe/Belgrade","Europe/Zagreb","CET","Etc/GMT-1"],
+    "EE": ["Europe/Tallinn","Europe/Helsinki","Europe/Riga","EET","Etc/GMT-2"],
+    "LV": ["Europe/Riga","Europe/Tallinn","Europe/Helsinki","EET","Etc/GMT-2"],
+    "LT": ["Europe/Vilnius","Europe/Riga","Europe/Tallinn","EET","Etc/GMT-2"],
+    "UA": ["Europe/Kyiv","Europe/Kiev","Europe/Minsk","Europe/Helsinki","EET","Etc/GMT-2"],
+    "BY": ["Europe/Minsk","Europe/Moscow","Europe/Kyiv","MSK","Etc/GMT-3"],
+    "KZ": ["Asia/Almaty","Asia/Qyzylorda","Asia/Aqtobe","Asia/Aqtau","Asia/Atyrau","Asia/Oral","Asia/Oral","Asia/Qyzylorda"],
+    "UZ": ["Asia/Tashkent","Asia/Samarkand","Asia/Dushanbe","Asia/Bishkek","Asia/Almaty","Asia/Yekaterinburg"],
+    "QA": ["Asia/Qatar","Asia/Bahrain","Asia/Riyadh","Asia/Kuwait","Asia/Aden","Asia/Dubai","Asia/Muscat"],
+    "KW": ["Asia/Kuwait","Asia/Riyadh","Asia/Qatar","Asia/Bahrain","Asia/Aden","Asia/Dubai","Asia/Muscat"],
+    "BH": ["Asia/Bahrain","Asia/Qatar","Asia/Riyadh","Asia/Kuwait","Asia/Aden","Asia/Dubai","Asia/Muscat"],
+    "OM": ["Asia/Muscat","Asia/Dubai","Asia/Qatar","Asia/Riyadh","Asia/Kuwait","Asia/Bahrain","Asia/Aden"],
+    "JO": ["Asia/Amman","Asia/Jerusalem","Asia/Gaza","Asia/Hebron","Asia/Beirut","Asia/Damascus"],
+    "LB": ["Asia/Beirut","Asia/Jerusalem","Asia/Gaza","Asia/Hebron","Asia/Amman","Asia/Damascus"],
+    "IQ": ["Asia/Baghdad","Asia/Riyadh","Asia/Kuwait","Asia/Tehran","Asia/Bahrain"],
+    "IR": ["Asia/Tehran","Asia/Qazvin","Asia/Tehran","Iran"],
+    "AF": ["Asia/Kabul","Asia/Karachi","Asia/Tashkent","Asia/Dushanbe","Asia/Tehran","Asia/Ashgabat"],
+    "MM": ["Asia/Yangon","Asia/Rangoon","Asia/Dhaka","Asia/Bangkok","Asia/Ho_Chi_Minh","Asia/Kolkata","Indian/Christmas"],
+    "KH": ["Asia/Phnom_Penh","Asia/Bangkok","Asia/Ho_Chi_Minh","Asia/Vientiane","Asia/Saigon"],
+    "LA": ["Asia/Vientiane","Asia/Bangkok","Asia/Ho_Chi_Minh","Asia/Phnom_Penh","Asia/Saigon"],
+    "MO": ["Asia/Macau","Asia/Hong_Kong","Asia/Shanghai","Asia/Taipei"],
+}
 _ipcache = {}
 
 def client_ip():
@@ -366,14 +473,94 @@ def get_country():
     return code, name
 
 def country_ok(allowed, code, name):
-    a = (allowed or "").strip().lower()
-    if not a: return True
-    if not code and not name: return True  # could not detect -> do not block
-    a = ALIAS.get(a, a)
-    return a in {code.lower(), name.lower(), ALIAS.get(name.lower(), "")}
+    """allowed may be a single country code/name or comma-separated list.
+    Returns True if no restriction is set OR the user's country matches any allowed country."""
+    a_list = parse_allowed(allowed)
+    if not a_list: return True  # nothing required -> allow everyone
+    if not code and not name: return True  # could not detect -> don't block (legacy behavior)
+    user_codes = set()
+    if code: user_codes.add(code.lower())
+    if name: user_codes.add(ALIAS.get(name.lower(), name.lower()))
+    return any(c.lower() in user_codes for c in a_list)
+
+def tz_ok(allowed, user_tz):
+    """user_tz = e.g. 'Asia/Dhaka'. Returns True if it matches any allowed country's tz list.
+    If no restriction set, or no tz provided, or no tz-data for any allowed country, returns True
+    (so we never block harder than the IP check when we don't have tz data)."""
+    a_list = parse_allowed(allowed)
+    if not a_list: return True  # nothing required
+    if not user_tz: return True  # couldn't read phone tz -> don't block (legacy / old client)
+    user_tz = str(user_tz).strip()
+    has_any_tz = False
+    for c in a_list:
+        tzs = COUNTRY_TZ.get(c.upper(), [])
+        if tzs:
+            has_any_tz = True
+            if user_tz in tzs: return True
+    # If we don't have tz data for any allowed country, don't block on tz
+    if not has_any_tz: return True
+    return False
+
+def tz_ok_for_any(allowed, user_tz):
+    """same as tz_ok but returns True also when no tz data — used internally for clarity."""
+    return tz_ok(allowed, user_tz)
+
+def parse_allowed(allowed):
+    """returns list of upper-case 2-letter codes parsed from comma/semicolon/space separated input.
+    Accepts both codes (CA) and country names (Canada) and common aliases (USA, UK)."""
+    if not allowed: return []
+    out = []
+    seen = set()
+    raw = str(allowed).replace(";", ",").replace("/", ",").replace(" ", ",")
+    for x in raw.split(","):
+        x = x.strip()
+        if not x: continue
+        xl = x.lower()
+        code = ALIAS.get(xl, xl)
+        if len(code) == 2:
+            code = code.upper()
+            if code not in seen:
+                seen.add(code); out.append(code)
+    return out
+
+def allowed_display(allowed):
+    """returns list of dicts {code, name, flag} for the allowed countries (for the popup)."""
+    out = []
+    for c in parse_allowed(allowed):
+        out.append({"code": c, "name": CNAME.get(c, c), "flag": FLAG.get(c, "🏳️")})
+    return out
 
 def country_notice(s, name, code):
     return str(s.get("country_notice", "")).replace("{country}", s.get("vpn_country", "")).replace("{current}", name or code or "Unknown")
+
+def loc_block_response(s, code, name, ip, phone_tz):
+    """Build the JSON response for /api/ad/start when the ad is blocked because of
+    country / timezone mismatch. Includes everything the frontend needs to render
+    the popup exactly like screenshot 2."""
+    allowed = s.get("vpn_country", "")
+    allowed_list = allowed_display(allowed)
+    # Primary "selected server" = first allowed country (for the headline)
+    primary = allowed_list[0] if allowed_list else {"code": "", "name": "—", "flag": "🏳️"}
+    c_ok = country_ok(allowed, code, name)
+    t_ok = tz_ok(allowed, phone_tz)
+    # Headline message
+    if not c_ok and not t_ok:
+        msg = "আপনার IP লোকেশন এবং ফোনের টাইম জোন নির্বাচিত সার্ভারের সাথে মিলছে না।"
+        hint = "VPN/Proxy অন করুন এবং ফোনের Settings → টাইম জোন পরিবর্তন করুন।"
+    elif not c_ok:
+        msg = "আপনার IP লোকেশন নির্বাচিত সার্ভারের সাথে মিলছে না।"
+        hint = "VPN/Proxy অন করুন এবং অনুমোদিত দেশ সিলেক্ট করুন।"
+    elif not t_ok:
+        msg = "আপনার ফোনের টাইম জোন নির্বাচিত সার্ভারের সাথে মিলছে না।"
+        hint = "ফোনের Settings → টাইম জোন পরিবর্তন করুন। (VPN অন থাকলেও টাইম জোন ঠিক করতে হবে)"
+    else:
+        msg = "লোকেশন যাচাই ব্যর্থ হয়েছে।"
+        hint = ""
+    return jsonify(error="country", notice=msg, hint=hint,
+                   selected_server=primary,
+                   allowed_countries=allowed_list,
+                   current_country={"code": code, "name": name or (CNAME.get(code, "") if code else ""), "flag": FLAG.get(code, "🏳️") if code else "🏳️"},
+                   ip=ip, phone_tz=phone_tz, country_ok=c_ok, tz_ok=t_ok)
 
 # ---------- public / user API ----------
 @app.route('/api/settings', methods=['GET', 'POST'])
@@ -388,7 +575,7 @@ def api_settings():
                     if k in s: cur[k] = max(0.0, float(s[k]))
                 for k in cur["min"]:
                     if k in s.get("min", {}): cur["min"][k] = max(0.0, float(s["min"][k]))
-                if "vpn_country" in s: cur["vpn_country"] = str(s["vpn_country"])[:40]
+                if "vpn_country" in s: cur["vpn_country"] = str(s["vpn_country"])[:200]
                 if "notice" in s: cur["notice"] = str(s["notice"])[:300]
                 if "country_notice" in s: cur["country_notice"] = str(s["country_notice"])[:300]
                 if "ref_bonus" in s: cur["ref_bonus"] = min(100.0, max(0.0, float(s["ref_bonus"])))
@@ -411,12 +598,14 @@ def api_me():
     u = tg_user()
     if not u: return jsonify(error="forbidden"), 403
     b = request.get_json(silent=True) or {}
+    phone_tz = str(b.get("phone_tz") or "").strip()
     code, name = get_country()
     with _lock:
         d = load(); s = settings_of(d); uid = str(u["id"])
         fresh = uid not in d["users"] or "bal" not in d["users"][uid]
         rec = ensure_user(d, u); migrated = False
         rec["last_seen"] = int(time.time()); rec["country"] = code; rec["country_name"] = name
+        if phone_tz: rec["phone_tz"] = phone_tz[:60]
         lg = b.get("legacy")
         if fresh and isinstance(lg, dict):
             try:
@@ -429,27 +618,42 @@ def api_me():
             except Exception: pass
         save(d)
         if rec.get("banned"): return jsonify(ok=True, banned=True)
+        allowed = s.get("vpn_country", "")
+        c_ok = country_ok(allowed, code, name)
+        t_ok = tz_ok(allowed, phone_tz)
+        loc_ok = c_ok and t_ok
         return jsonify(ok=True, banned=False, migrated=migrated, state=state(rec), settings=s,
-                       country={"code": code, "name": name, "ok": country_ok(s["vpn_country"], code, name)},
+                       country={"code": code, "name": name, "ok": loc_ok, "country_ok": c_ok, "tz_ok": t_ok,
+                                "phone_tz": phone_tz, "allowed": allowed_display(allowed), "ip": client_ip()},
                        refs=ref_stats(d, uid), withdraws=user_withdraws(d, uid), is_admin=is_admin(u))
 
 @app.route('/api/ad/start', methods=['POST'])
 def api_ad_start():
     u = tg_user()
     if not u: return jsonify(error="forbidden"), 403
-    t = (request.get_json(silent=True) or {}).get("type")
+    body = request.get_json(silent=True) or {}
+    t = body.get("type")
+    phone_tz = str(body.get("phone_tz") or "").strip()
     if t not in ("watch", "auto"): return jsonify(error="bad data"), 400
     with _lock:
         d = load(); s = settings_of(d); rec = ensure_user(d, u)
         if rec.get("banned"): return jsonify(error="banned")
     code, name = get_country()
+    ip = client_ip()
     with _lock:
         d = load(); s = settings_of(d); rec = ensure_user(d, u)
-        if not country_ok(s["vpn_country"], code, name): return jsonify(error="country", notice=country_notice(s, name, code))
+        allowed = s.get("vpn_country", "")
+        c_ok = country_ok(allowed, code, name)
+        t_ok = tz_ok(allowed, phone_tz)
+        # Block if either IP location OR phone timezone doesn't match the allowed country.
+        # This way: even if VPN makes the IP look right, the user's phone timezone must also match.
+        if not c_ok or not t_ok:
+            return loc_block_response(s, code, name, ip, phone_tz)
         roll(rec); b = rec["bal"]
         lim = s["limit_watch"] if t == "watch" else s["limit_auto"]
         if b[t + "_today"] >= lim: return jsonify(error="limit", type=t, limit=lim)
         rec["ad"] = {"type": t, "t": time.time()}
+        if phone_tz: rec["phone_tz"] = phone_tz[:60]
         save(d)
     return jsonify(ok=True)
 
