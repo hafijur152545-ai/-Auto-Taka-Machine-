@@ -158,7 +158,15 @@ DEFAULTS = {"settings": {"reward_watch": 0.5, "reward_auto": 0.10, "limit_watch"
                          "ref_bonus": 10,
                          "min": {"bkash": 0, "nagad": 0, "rocket": 0, "binance": 0, "recharge": 0}, "vpn_country": "",
                          "bot_guidelines": DEFAULT_GUIDELINES,
-                         "home_notice": "",
+                         # ====== NEW notice system ======
+                         # Welcome popup — shown to a user once per notice_version when they open the bot.
+                         "welcome_notice": "",
+                         "welcome_btn_text": "Click Here",
+                         "welcome_btn_url": "",
+                         # Thin red banner — broadcasts to active users immediately when notice_version bumps.
+                         "notice_banner": "",
+                         # notice_version: incremented every time admin saves a notice. Users store the version they last saw.
+                         "notice_version": 1,
                          "usdt_rate": 123.0,
                          "payment_methods": {"bkash": True, "nagad": True, "rocket": True, "binance": True, "recharge": True}},
             "users": {}, "withdraws": [], "refs": {}}
@@ -592,6 +600,24 @@ def api_settings():
                 if "notice" in s: cur["notice"] = str(s["notice"])[:300]
                 if "country_notice" in s: cur["country_notice"] = str(s["country_notice"])[:300]
                 if "bot_guidelines" in s: cur["bot_guidelines"] = str(s["bot_guidelines"])[:2000]
+                # ===== NEW notice system: bump version whenever any notice field changes =====
+                _notice_changed = False
+                if "welcome_notice" in s:
+                    v = str(s["welcome_notice"])[:1500]
+                    if cur.get("welcome_notice","") != v: _notice_changed = True
+                    cur["welcome_notice"] = v
+                if "welcome_btn_text" in s: cur["welcome_btn_text"] = str(s["welcome_btn_text"])[:60]
+                if "welcome_btn_url" in s: cur["welcome_btn_url"] = str(s["welcome_btn_url"])[:500]
+                if "notice_banner" in s:
+                    v = str(s["notice_banner"])[:300]
+                    if cur.get("notice_banner","") != v: _notice_changed = True
+                    cur["notice_banner"] = v
+                if "notice_version" in s:
+                    try: cur["notice_version"] = max(1, int(float(s["notice_version"])))
+                    except Exception: pass
+                elif _notice_changed:
+                    # Auto-bump version so all users see a "new notice" indicator (red bell + banner).
+                    cur["notice_version"] = int(cur.get("notice_version", 1) or 1) + 1
                 if "home_notice" in s: cur["home_notice"] = str(s["home_notice"])[:500]
                 if "usdt_rate" in s: cur["usdt_rate"] = max(0.0, float(s["usdt_rate"]))
                 if "payment_methods" in s and isinstance(s["payment_methods"], dict):
@@ -642,10 +668,36 @@ def api_me():
         c_ok = country_ok(allowed, code, name)
         t_ok = tz_ok(allowed, phone_tz)
         loc_ok = c_ok and t_ok
+        # ===== Notice system: tell the client if there is an unseen notice (so bell turns red + banner shows) =====
+        cur_ver = int(s.get("notice_version", 1) or 1)
+        user_ver = int(rec.get("last_notice_version", 0) or 0)
+        has_new = cur_ver > user_ver
+        notice_info = {
+            "version": cur_ver,
+            "has_new": has_new,
+            "welcome_text": str(s.get("welcome_notice", "") or ""),
+            "welcome_btn_text": str(s.get("welcome_btn_text", "") or ""),
+            "welcome_btn_url": str(s.get("welcome_btn_url", "") or ""),
+            "banner": str(s.get("notice_banner", "") or ""),
+        }
         return jsonify(ok=True, banned=False, migrated=migrated, state=state(rec), settings=s,
                        country={"code": code, "name": name, "ok": loc_ok, "country_ok": c_ok, "tz_ok": t_ok,
                                 "phone_tz": phone_tz, "allowed": allowed_display(allowed), "ip": client_ip()},
+                       notice=notice_info,
                        refs=ref_stats(d, uid), withdraws=user_withdraws(d, uid), is_admin=is_admin(u))
+
+@app.route('/api/notice/seen', methods=['POST'])
+def api_notice_seen():
+    """Marks the current notice_version as seen by this user (so bell no longer red, banner stops)."""
+    u = tg_user()
+    if not u: return jsonify(error="forbidden"), 403
+    with _lock:
+        d = load(); s = settings_of(d); rec = ensure_user(d, u)
+        if rec.get("banned"): return jsonify(error="banned")
+        cur_ver = int(s.get("notice_version", 1) or 1)
+        rec["last_notice_version"] = cur_ver
+        save(d)
+    return jsonify(ok=True, version=cur_ver)
 
 @app.route('/api/ad/start', methods=['POST'])
 def api_ad_start():
