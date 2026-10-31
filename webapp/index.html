@@ -64,7 +64,7 @@
 
     <div class="action-row">
       <button id="autoBtn" class="action-btn"><span>⇄</span> Auto Loop</button>
-      <button id="stopBtn" class="action-btn danger"><span>○</span> Stop</button>
+      <button id="stopBtn" class="action-btn danger"><span>○</span> Auto Ad Stop</button>
     </div>
 
     <button id="confirmBtn" class="confirm-card">
@@ -266,6 +266,7 @@ let totalAds = parseInt(localStorage.getItem("totalAds") || "0");
 let autoRunning = false;
 let selectedMethod = null;
 let rewardWatch = 0.50, rewardAuto = 0.50;
+let _prevPending = pendingBal;
 
 // ===== MIN WITHDRAW LIMITS - ADMIN CONTROLLABLE =====
 let minWithdrawLimits = JSON.parse(localStorage.getItem("minWithdrawLimits") || '{"bkash":0,"nagad":0,"rocket":0}');
@@ -303,6 +304,7 @@ function upd() {
   localStorage.setItem("pendingBal", pendingBal);
   localStorage.setItem("todayAds", todayAds);
   localStorage.setItem("totalAds", totalAds);
+  updPremium();
 }
 upd();
 
@@ -418,12 +420,14 @@ document.getElementById("watchAdBtn").onclick = watchAdFlow;
 document.getElementById("autoBtn").onclick = async () => {
   if (autoRunning) return;
   autoRunning = true;
+  document.getElementById("autoOffCard").classList.add("auto-on");
   document.getElementById("autoOffCard").innerHTML = "<small>AUTO ON</small><div class='off-dot' style='background:#22c55e;border-color:#22c55e'></div>";
   setButtonActive("auto");
   autoLoopFlow();
 };
 document.getElementById("stopBtn").onclick = () => {
   autoRunning = false;
+  document.getElementById("autoOffCard").classList.remove("auto-on");
   document.getElementById("autoOffCard").innerHTML = "<small>AUTO OFF</small><div class='off-dot'></div>";
   document.getElementById("autoStatus").innerText = "IDLE";
   // old toast disabled
@@ -511,6 +515,45 @@ window.showHistory = showHistory;
 // Admin guideline dynamic
 const savedGuideline = localStorage.getItem("adminGuidelines");
 if(savedGuideline) document.getElementById("adminGuidelines").innerText = savedGuideline;
+
+// ===== PREMIUM EFFECTS: tok sound, pending pulse, confirm fill, nav glow =====
+function tokBeep(){
+  try{
+    const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
+    window._ac = window._ac || new C();
+    const o = _ac.createOscillator(), g = _ac.createGain();
+    o.type = 'sine'; o.frequency.value = 880;
+    g.gain.setValueAtTime(.25, _ac.currentTime); g.gain.exponentialRampToValueAtTime(.001, _ac.currentTime + .12);
+    o.connect(g); g.connect(_ac.destination); o.start(); o.stop(_ac.currentTime + .13);
+  }catch(e){}
+}
+function tokSound(){
+  try{
+    const p = new Audio('https://cdn.freesound.org/previews/270/270404_5123851-lq.mp3').play();
+    if(p && p.catch) p.catch(tokBeep);
+  }catch(e){ tokBeep(); }
+}
+function pendingPulse(){
+  const el = document.getElementById('pendingBal')?.closest('.bal-card'); if(!el) return;
+  el.classList.remove('pulse-gold'); void el.offsetWidth; el.classList.add('pulse-gold');
+  setTimeout(() => el.classList.remove('pulse-gold'), 1900);
+}
+function updPremium(){
+  try{
+    const cb = document.getElementById('confirmBtn');
+    if(cb) cb.style.setProperty('--fill', (15 + 85 * Math.min(totalAds / 500, 1)).toFixed(1) + '%');
+    if(pendingBal > _prevPending){ pendingPulse(); tokSound(); }
+    _prevPending = pendingBal;
+  }catch(e){}
+}
+function navFx(btn){
+  if(!btn) return;
+  tokSound();
+  btn.classList.remove('nav-glow'); void btn.offsetWidth; btn.classList.add('nav-glow');
+  setTimeout(() => btn.classList.remove('nav-glow'), 550);
+}
+['homeNav','profileNav'].forEach(id => { const b = document.getElementById(id); if(b) b.addEventListener('click', () => navFx(b)); });
+updPremium();
 
 console.log("✅ Auto Taka Machine FINAL PREMIUM - All Tasks Combined");
 
