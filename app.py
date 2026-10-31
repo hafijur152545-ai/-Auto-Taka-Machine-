@@ -297,7 +297,11 @@ def today_key():
     return (datetime.datetime.utcnow() + datetime.timedelta(hours=6)).strftime("%Y-%m-%d")  # Bangladesh day
 
 def new_bal():
-    return {"main": 0.0, "pending": 0.0, "today_ads": 0, "total_ads": 0, "watch_today": 0, "auto_today": 0, "day": today_key()}
+    return {"main": 0.0, "pending": 0.0, "today_ads": 0, "total_ads": 0, "watch_today": 0, "auto_today": 0, "day": today_key(),
+            # Lifetime counters — never reset by admin "Reset Ads". Used by profile page.
+            "lifetime_earned": 0.0, "lifetime_ads": 0,
+            # Lifetime WATCH-ad counter — used to detect every 5th watch ad (5, 10, 15...) for the special popup.
+            "lifetime_watch_ads": 0}
 
 def roll(rec):
     b = rec["bal"]
@@ -305,8 +309,14 @@ def roll(rec):
 
 def state(rec):
     roll(rec); b = rec["bal"]
+    # Backfill lifetime fields for old accounts that don't have them yet
+    if "lifetime_earned" not in b: b["lifetime_earned"] = round(float(b.get("main", 0)) + float(b.get("pending", 0)), 4)
+    if "lifetime_ads" not in b: b["lifetime_ads"] = int(b.get("total_ads", 0))
+    if "lifetime_watch_ads" not in b: b["lifetime_watch_ads"] = int(b.get("watch_today", 0))
     return {"main": round(b["main"], 2), "pending": round(b["pending"], 2), "today_ads": b["today_ads"], "total_ads": b["total_ads"],
-            "watch_today": b["watch_today"], "auto_today": b["auto_today"]}
+            "watch_today": b["watch_today"], "auto_today": b["auto_today"],
+            "lifetime_earned": round(b.get("lifetime_earned", 0), 2), "lifetime_ads": int(b.get("lifetime_ads", 0)),
+            "lifetime_watch_ads": int(b.get("lifetime_watch_ads", 0))}
 
 def ensure_user(d, u):
     uid = str(u["id"]); rec = d["users"].get(uid)
@@ -724,10 +734,17 @@ def api_ad_start():
         roll(rec); b = rec["bal"]
         lim = s["limit_watch"] if t == "watch" else s["limit_auto"]
         if b[t + "_today"] >= lim: return jsonify(error="limit", type=t, limit=lim)
-        rec["ad"] = {"type": t, "t": time.time()}
+        # Detect every 5th WATCH ad (5, 10, 15...) for the special popup + 25s wait
+        is_special = False
+        if t == "watch":
+            cur_watch = int(b.get("lifetime_watch_ads", 0))
+            # (cur_watch + 1) is the ad number we are ABOUT to serve. If divisible by 5 → special.
+            if (cur_watch + 1) % 5 == 0:
+                is_special = True
+        rec["ad"] = {"type": t, "t": time.time(), "special": is_special}
         if phone_tz: rec["phone_tz"] = phone_tz[:60]
         save(d)
-    return jsonify(ok=True)
+    return jsonify(ok=True, special=is_special)
 
 @app.route('/api/ad/claim', methods=['POST'])
 def api_ad_claim():
@@ -738,7 +755,10 @@ def api_ad_claim():
         if rec.get("banned"): return jsonify(error="banned")
         ad = rec.get("ad")
         if not ad: return jsonify(error="noad")
-        wait = AD_MIN_SECONDS - (time.time() - ad["t"])
+        # Special 5th watch ad requires 25s wait; normal ads use AD_MIN_SECONDS (15s)
+        is_special = bool(ad.get("special"))
+        min_seconds = 25.0 if is_special else AD_MIN_SECONDS
+        wait = min_seconds - (time.time() - ad["t"])
         if wait > 0: return jsonify(error="early", wait=round(wait, 1))
         roll(rec); b = rec["bal"]; t = ad["type"]
         lim = s["limit_watch"] if t == "watch" else s["limit_auto"]
@@ -746,8 +766,17 @@ def api_ad_claim():
         if b[t + "_today"] >= lim:
             save(d); return jsonify(error="limit", type=t, limit=lim)
         reward = float(s["reward_watch"] if t == "watch" else s["reward_auto"])
-        b["pending"] = round(b["pending"] + reward, 4)
+        # WATCH ad reward → goes DIRECTLY to MAIN balance (not pending).
+        # AUTO ad reward → still goes to PENDING balance (as before).
+        if t == "watch":
+            b["main"] = round(b["main"] + reward, 4)
+            b["lifetime_watch_ads"] = int(b.get("lifetime_watch_ads", 0)) + 1
+        else:
+            b["pending"] = round(b["pending"] + reward, 4)
         b["today_ads"] += 1; b["total_ads"] += 1; b[t + "_today"] += 1
+        # Lifetime counters — these NEVER reset (even when admin clicks "Reset All Users Ads")
+        b["lifetime_earned"] = round(float(b.get("lifetime_earned", 0)) + reward, 4)
+        b["lifetime_ads"] = int(b.get("lifetime_ads", 0)) + 1
         pct = float(s.get("ref_bonus", 0) or 0); rid = rec.get("ref")
         if rid and pct > 0:
             rr = d["users"].get(str(rid))
@@ -755,7 +784,7 @@ def api_ad_claim():
                 bonus = round(reward * pct / 100.0, 4)
                 rr["bal"]["main"] = round(rr["bal"]["main"] + bonus, 4); rr["ref_earned"] = round(rr.get("ref_earned", 0) + bonus, 4)
         save(d)
-        return jsonify(ok=True, state=state(rec), reward=reward)
+        return jsonify(ok=True, state=state(rec), reward=reward, to_main=(t == "watch"), special=is_special)
 
 @app.route('/api/confirm', methods=['POST'])
 def api_confirm():
@@ -813,12 +842,52 @@ def api_admin_wstatus():
     if b.get("status") not in ("Approved", "Rejected"): return jsonify(error="bad status"), 400
     with _lock:
         d = load()
-        for w in d["withdraws"]:
-            if w["id"] == b.get("id"):
-                if w["status"] != "Pending": return jsonify(error="locked")  # once approved/rejected it can never change again
-                w["status"] = b["status"]  # no refund on reject
+        w = None
+        for x in d["withdraws"]:
+            if x["id"] == b.get("id"):
+                if x["status"] != "Pending": return jsonify(error="locked")  # once approved/rejected it can never change again
+                x["status"] = b["status"]  # no refund on reject
+                w = x
         save(d)
+    # Send Telegram notification to the user (only on approve/reject, not on initial request)
+    if w and BOT_TOKEN:
+        try:
+            import urllib.request, urllib.parse
+            status_txt = "✅ Withdrawal Approved!" if w["status"] == "Approved" else "❌ Withdrawal Rejected!"
+            color_emoji = "✅" if w["status"] == "Approved" else "❌"
+            msg = (f"{color_emoji} *Withdrawal {w['status']}!*\n\n"
+                   f"💰 Amount: *{w['amount']} TK*\n"
+                   f"🏦 Method: *{w['method'].upper()}*\n"
+                   f"📱 Number: `{w['number']}`\n")
+            if w["status"] == "Approved":
+                msg += "\n🎉 আপনার withdraw request approve করা হয়েছে। টাকা পাঠানো হবে।"
+            else:
+                msg += "\n⚠️ আপনার withdraw request reject করা হয়েছে। প্রয়োজনে admin এর সাথে যোগাযোগ করুন।"
+            payload = urllib.parse.urlencode({
+                "chat_id": w["uid"],
+                "text": msg,
+                "parse_mode": "Markdown",
+            }).encode("utf-8")
+            req = urllib.request.Request(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data=payload, method="POST")
+            urllib.request.urlopen(req, timeout=5).read()
+        except Exception:
+            pass  # notification failure shouldn't fail the API call
     return jsonify(ok=True)
+
+@app.route('/api/admin/withdraw_delete', methods=['POST'])
+def api_admin_wdelete():
+    """Permanently delete a single withdraw record by id (admin only). Record cannot come back."""
+    if not is_admin(tg_user()): return jsonify(error="forbidden"), 403
+    b = request.get_json(force=True) or {}
+    try: wid = int(b.get("id"))
+    except Exception: return jsonify(error="bad data"), 400
+    with _lock:
+        d = load()
+        before = len(d["withdraws"])
+        d["withdraws"] = [x for x in d["withdraws"] if x["id"] != wid]
+        after = len(d["withdraws"])
+        save(d)
+    return jsonify(ok=True, deleted=(before - after))
 
 @app.route('/api/admin/user_ban', methods=['POST'])
 def api_admin_ban():
@@ -859,7 +928,8 @@ def api_admin_clear_withdraws():
 
 @app.route('/api/admin/reset_ads', methods=['POST'])
 def api_admin_reset_ads():
-    """Resets every user's ad counters (today_ads, total_ads, watch_today, auto_today) to 0."""
+    """Resets every user's DAILY/TOTAL ad counters (today_ads, total_ads, watch_today, auto_today) to 0.
+    Does NOT touch lifetime_earned / lifetime_ads (those are permanent on profile page)."""
     if not is_admin(tg_user()): return jsonify(error="forbidden"), 403
     with _lock:
         d = load(); cnt = 0
@@ -869,6 +939,7 @@ def api_admin_reset_ads():
                 b["today_ads"] = 0; b["total_ads"] = 0
                 b["watch_today"] = 0; b["auto_today"] = 0
                 b["day"] = today_key()
+                # lifetime_earned and lifetime_ads are intentionally NOT reset
                 cnt += 1
             rec.pop("ad", None)
         save(d)
