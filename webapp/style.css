@@ -850,17 +850,53 @@ body:has(#profilePage[style*="block"]) #topStatus {
 
 /* ===== ADMIN PANEL ===== */
 #adminPanelBtn.ap-hide{display:none !important}
-#adminPanel{position:fixed;inset:0;z-index:90;background:#f8fafc;overflow-y:auto;padding:16px 16px 40px;display:none}
-.ap-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-.ap-head button{background:#0f1115;color:#fff;border:none;border-radius:12px;width:38px;height:38px;font-size:16px;cursor:pointer}
-#apHome .vpn-btn,#apBody .vpn-btn{width:100%;max-width:none}
-.ap-sec{display:block;margin:14px 0 4px;font-size:12px;color:#374151}
-.ap-f{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:700}
-.ap-f span{width:120px;flex-shrink:0}
-.ap-note{font-size:12px;color:#6b7280;margin:8px 0}
-.ap-card{background:#fff;border:1px solid #f1f1f5;border-radius:14px;padding:12px;margin-bottom:8px;font-size:13px}
-.ap-card small{display:block;color:#9ca3af;margin-top:4px}
-.ap-st{float:right;font-size:11px;font-weight:800;color:#f59e0b}
-.ap-st.Approved{color:#16a34a}.ap-st.Rejected{color:#dc2626}
-.ap-row{display:flex;gap:6px;margin-top:8px}
-.ap-row button{flex:1;border:1px solid #e5e7eb;background:#f9fafb;border-radius:10px;padding:8px 0;font-size:11px;font-weight:700;cursor:pointer}
+#adminPanel{position:fixed;inset:0;z-index:90;background:rgba(3,10,22,.8);backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;padding:40px 14px 14px}
+.ap-card{width:100%;max-width:420px;max-height:calc(100vh - 60px);display:flex;flex-direction:column;background:#0e1b31;border:1px solid #1c2b47;border-radius:28px;box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 40px rgba(34,200,232,.08);color:#fff;overflow:hidden}
+.ap-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #1c2b47}
+.ap-ttl{font-size:19px}
+.ap-x{width:42px;height:42px;border-radius:50%;background:transparent;border:1.5px solid #243756;color:#fff;font-size:17px;cursor:pointer}
+.ap-tabs{display:flex;gap:8px;overflow-x:auto;padding:14px 16px;border-bottom:1px solid #1c2b47;scrollbar-width:none}
+.ap-tabs::-webkit-scrollbar{display:none}
+.ap-tabs button{flex-shrink:0;background:#0b1730;border:1px solid #1c2b47;color:#8b9ab4;border-radius:14px;padding:10px 16px;font-size:13.5px;font-weight:600;cursor:pointer}
+.ap-tabs button.on{background:#22c8e8;border-color:#22c8e8;color:#fff;font-weight:800}
+.ap-body{flex:1;overflow-y:auto;padding:16px}
+.ap-lab{font-size:13px;color:#8b9ab4;margin:14px 0 6px 4px}
+.ap-in{width:100%;background:#091325;border:1px solid #1c2b47;border-radius:18px;padding:15px 18px;font-size:16px;color:#fff;outline:none}
+.ap-big{width:100%;border:none;border-radius:22px;padding:16px;font-size:16px;font-weight:800;color:#fff;background:linear-gradient(90deg,#6a5cf2,#12bcd8);box-shadow:0 8px 24px rgba(18,188,216,.25);cursor:pointer;margin-bottom:12px}
+.ap-empty{text-align:center;color:#6f7f99;padding:34px 0;font-size:15px}
+.ap-note{font-size:13px;color:#8b9ab4;margin:4px 4px 10px}
+.ap-seg{display:flex;gap:8px;margin-bottom:12px}
+.ap-seg button{flex:1;background:#0b1730;border:1px solid #1c2b47;color:#8b9ab4;border-radius:14px;padding:12px 0;font-size:13.5px;font-weight:700;cursor:pointer}
+.ap-seg button.on.Pending{background:#f1c40f;border-color:#f1c40f;color:#111}
+.ap-seg button.on.Approved{background:#22c55e;border-color:#22c55e;color:#04210f}
+.ap-seg button.on.Rejected{background:#ef4444;border-color:#ef4444;color:#fff}
+.ap-item{display:flex;align-items:center;gap:12px;background:#0b1730;border:1px solid #1c2b47;border-radius:18px;padding:14px;margin-bottom:10px}
+.ap-main{flex:1;min-width:0}
+.ap-main b{display:block;font-size:15px;word-break:break-word}
+.ap-main small{display:block;color:#7f8ea8;font-size:12px;margin-top:4px;word-break:break-word}
+.ap-dot{width:12px;height:12px;border-radius:50%;background:#22e07a;box-shadow:0 0 8px #22e07a;flex-shrink:0}
+.ap-act{display:flex;flex-direction:column;gap:6px}
+.ap-act button{border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer;color:#fff;background:#243756}
+.ap-act button.Approved{background:#22c55e;color:#04210f}
+.ap-act button.Rejected{background:#ff6b6b}
+.ap-foot{padding:16px;border-top:1px solid #1c2b47}
+.ap-foot button{width:100%;background:#1d2d49;color:#fff;border:none;border-radius:20px;padding:17px;font-size:17px;font-weight:800;cursor:pointer}
+
+/* ===== ADMIN BUTTON (premium) + PASSWORD POPUP ===== */
+#homePage #adminPanelBtn{background:linear-gradient(135deg,#0f2a4a,#2d2a78) !important;border:1.5px solid #22c8e8 !important;color:#fff !important;border-radius:20px !important;padding:14px 10px !important;box-shadow:0 0 22px rgba(34,200,232,.35),inset 0 0 14px rgba(34,200,232,.12) !important;max-width:300px !important;width:80% !important}
+#adminPanelBtn .apb-t{display:block;font-size:18px;font-weight:900;letter-spacing:.8px}
+#adminPanelBtn .apb-s{display:block;margin-top:4px;font-size:12px;font-weight:800;letter-spacing:1.2px;color:#5eead4}
+#homePage #adminPanelBtn.ap-hide{display:none !important}
+#apPass{position:fixed;inset:0;z-index:95;background:rgba(3,10,22,.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
+.pw-box{width:100%;max-width:340px;background:linear-gradient(160deg,#10213c,#0e1b31);border:1.5px solid #22c8e8;border-radius:24px;padding:22px 18px;box-shadow:0 0 36px rgba(34,200,232,.3);text-align:center;color:#fff}
+.pw-brand{font-size:16px;font-weight:900;color:#22d3ee;letter-spacing:.5px}
+.pw-title{font-size:19px;font-weight:800;margin:14px 0}
+.pw-inwrap{display:flex;align-items:center;gap:8px;background:#091325;border:2px solid #22c8e8;border-radius:18px;padding:0 14px;box-shadow:0 0 14px rgba(34,200,232,.35)}
+.pw-inwrap input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:16px;padding:15px 0;min-width:0}
+.pw-err{min-height:18px;font-size:12px;font-weight:700;color:#ff6b6b;margin:8px 0 2px}
+.pw-row{display:flex;gap:10px;margin-top:8px}
+.pw-row button{flex:1;border:none;border-radius:16px;padding:14px 0;font-size:15px;font-weight:800;cursor:pointer;color:#fff}
+.pw-cancel{background:#243756;color:#9fb0cc !important}
+.pw-ok{background:linear-gradient(90deg,#00a2ff,#1e90ff)}
+.pw-box.shake{animation:pwShake .35s}
+@keyframes pwShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
