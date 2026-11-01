@@ -75,13 +75,11 @@ def min_text(s):
     return ("%.2f" % min(vals)) if vals else ""
 
 def welcome_html(name, s):
-    lines = ["💎 <b>" + BRAND + "</b> 💰", "", "👋 Hello <b>" + hesc(name) + "</b>", ""]
-    ct = countries_text(s)
-    if ct: lines.append("✅ VPN দিয়ে কাজ করতে হবে (<b>" + ct + "</b>)")
-    mt = min_text(s)
-    if mt: lines.append("✅ মিনিমাম Withdraw <b>" + mt + " TK</b>")
-    lines += ["", "📢 <b>Bot Channel</b> এ অবশ্যই জয়েন থাকুন!", "আপডেট, পেমেন্ট নোটিশ আর প্রুফ সবার আগে ওখানেই পাবেন ✨",
-              "", "👇 নিচের বাটনে ক্লিক করে বট ওপেন করুন:"]
+    lines = ["💎 <b>" + BRAND + "</b> 💰", "", "👋 Hello <b>" + hesc(name) + "</b>", "",
+             "✅ VPN দিয়ে কাজ করতে হবে (<b>🇦🇺 Australia</b>)",
+             "✅ মিনিমাম Withdraw <b>100.00 TK</b>",
+             "", "📢 <b>Bot Channel</b> এ অবশ্যই জয়েন থাকুন!", "আপডেট, পেমেন্ট নোটিশ আর প্রুফ সবার আগে ওখানেই পাবেন ✨",
+             "", "👇 নিচের বাটনে ক্লিক করে বট ওপেন করুন:"]
     return "\n".join(lines)
 
 def maint_html():
@@ -185,6 +183,19 @@ def _args_text(update, n=1):
     parts = t.split(None, n)
     return parts[1:] if len(parts) > 1 else []
 
+async def refresh_menu(bot, user_id):
+    """sets the Menu button + command list for this chat (admin = full list, others = only /start)."""
+    try:
+        from telegram import BotCommand, BotCommandScopeChat, MenuButtonCommands
+        cmds = ADMIN_COMMANDS if int(user_id) == ADMIN_ID else [("start", "🚀 বট চালু করুন")]
+        await bot.set_my_commands([BotCommand(c, d) for c, d in cmds], scope=BotCommandScopeChat(chat_id=int(user_id)))
+        await bot.set_chat_menu_button(chat_id=int(user_id), menu_button=MenuButtonCommands())
+    except Exception:
+        import traceback; traceback.print_exc()
+
+async def h_id(update, context):
+    await update.effective_message.reply_text("🆔 Your ID: " + str(update.effective_user.id) + "\nAdmin ID in bot: " + str(ADMIN_ID))
+
 async def h_start(update, context):
     u = update.effective_user; msg = update.effective_message
     try:
@@ -197,6 +208,7 @@ async def h_start(update, context):
             save(d)
         stopped = bool(s.get("bot_stopped")); html = welcome_html(u.first_name or "User", s)
     admin = int(u.id) == ADMIN_ID
+    await refresh_menu(context.bot, u.id)
     if stopped and not admin:
         await msg.reply_text(maint_html(), parse_mode="HTML", reply_markup=_mk([[("📢 Official Channel", TG_CHANNEL_URL), ("👤 Admin ID", TG_ADMIN_URL)]]))
         return
@@ -314,6 +326,7 @@ def build_tg_app():
     application.add_handler(CommandHandler(["ratedown", "rateup"], h_rate))
     application.add_handler(CommandHandler(["alltopicsms", "important"], h_custom))
     application.add_handler(CommandHandler("personal", h_personal))
+    application.add_handler(CommandHandler("id", h_id))
     application.add_handler(CallbackQueryHandler(h_bc_cb, pattern=r"^bc"))
     return application
 
@@ -409,7 +422,7 @@ def check():
     """
 
 # ===== ADMIN API =====
-ADMIN_ID = 6560485203
+ADMIN_ID = int(os.getenv("ADMIN_ID", "6560485203"))
 DATA_FILE = os.getenv("DATA_FILE", "/tmp/atm_data.json")  # NOT inside BASE_DIR, so static route can't serve it
 AD_MIN_SECONDS = float(os.getenv("AD_MIN_SECONDS", "15"))  # server-side check: ad reward only after this many seconds
 _lock = threading.Lock()
