@@ -168,7 +168,7 @@ DEFAULTS = {"settings": {"reward_watch": 0.5, "reward_auto": 0.10, "limit_watch"
                          # notice_version: incremented every time admin saves a notice. Users store the version they last saw.
                          "notice_version": 1,
                          "usdt_rate": 123.0,
-                         "confirm_ads": 500, "claim_ads": 5, "notice_every": 5,
+                         "confirm_ads": 500, "claim_ads": 5, "claim_enabled": True, "claim_gap_min": 2.0, "notice_every": 5,
                          "payment_methods": {"bkash": True, "nagad": True, "rocket": True, "binance": True, "recharge": True}},
             "users": {}, "withdraws": [], "refs": {}}
 
@@ -642,6 +642,8 @@ def api_settings():
                         if mk in s["payment_methods"]:
                             cur["payment_methods"][mk] = bool(s["payment_methods"][mk])
                 if "confirm_ads" in s: cur["confirm_ads"] = max(1, int(float(s["confirm_ads"])))
+                if "claim_enabled" in s: cur["claim_enabled"] = bool(s["claim_enabled"])
+                if "claim_gap_min" in s: cur["claim_gap_min"] = min(1440.0, max(0.0, float(s["claim_gap_min"])))
                 if "claim_ads" in s: cur["claim_ads"] = max(1, int(float(s["claim_ads"])))
                 if "notice_every" in s: cur["notice_every"] = max(1, int(float(s["notice_every"])))
                 if "ref_bonus" in s: cur["ref_bonus"] = min(100.0, max(0.0, float(s["ref_bonus"])))
@@ -719,6 +721,32 @@ def api_notice_seen():
         save(d)
     return jsonify(ok=True, version=cur_ver)
 
+def confirm_gate(s, b, check_gap):
+    """Rules for the Confirm-Pending ads. Returns an error dict, or None when the user may continue."""
+    need = int(s.get("confirm_ads", 500))
+    if not s.get("claim_enabled", True): return {"error": "claimoff"}
+    if int(b.get("cfill", 0)) < need: return {"error": "locked", "need": need - int(b.get("cfill", 0))}
+    if b["pending"] <= 0: return {"error": "nopending"}
+    if check_gap and int(b.get("cclaim", 0)) > 0:
+        gap = float(s.get("claim_gap_min", 2.0) or 0)
+        wait = gap * 60 - (time.time() - float(b.get("cclaim_t", 0)))
+        if wait > 0: return {"error": "cooldown", "wait": int(wait) + 1, "gap_min": gap}
+    return None
+
+@app.route('/api/confirm_check', methods=['POST'])
+def api_confirm_check():
+    u = tg_user()
+    if not u: return jsonify(error="forbidden"), 403
+    with _lock:
+        d = load(); s = settings_of(d); rec = ensure_user(d, u)
+        if rec.get("banned"): return jsonify(error="banned")
+        roll(rec); b = rec["bal"]
+        if "cfill" not in b: b["cfill"] = int(b.get("total_ads", 0))
+        if "cclaim" not in b: b["cclaim"] = 0
+        err = confirm_gate(s, b, True)
+        if err: return jsonify(**err)
+        return jsonify(ok=True, step=int(b["cclaim"]) + 1, total=int(s.get("claim_ads", 5)))
+
 @app.route('/api/ad/start', methods=['POST'])
 def api_ad_start():
     u = tg_user()
@@ -743,9 +771,10 @@ def api_ad_start():
             return loc_block_response(s, code, name, ip, phone_tz)
         roll(rec); b = rec["bal"]
         if t == "confirm":
-            # Confirm-Pending ads: only when the yellow bar is 100% full AND there is pending balance to move
-            if b.get("cfill", 0) < int(s.get("confirm_ads", 500)): return jsonify(error="locked", need=int(s.get("confirm_ads", 500)) - int(b.get("cfill", 0)))
-            if b["pending"] <= 0: return jsonify(error="nopending")
+            if "cfill" not in b: b["cfill"] = int(b.get("total_ads", 0))
+            if "cclaim" not in b: b["cclaim"] = 0
+            err = confirm_gate(s, b, True)
+            if err: return jsonify(**err)
             rec["ad"] = {"type": "confirm", "t": time.time(), "special": False}
             if phone_tz: rec["phone_tz"] = phone_tz[:60]
             save(d)
@@ -775,7 +804,7 @@ def api_ad_claim():
         if not ad: return jsonify(error="noad")
         # Special 5th watch ad requires 25s wait; normal ads use AD_MIN_SECONDS (15s)
         is_special = bool(ad.get("special"))
-        min_seconds = 25.0 if is_special else AD_MIN_SECONDS
+        min_seconds = 25.0 if (is_special or ad.get("type") == "confirm") else AD_MIN_SECONDS
         wait = min_seconds - (time.time() - ad["t"])
         if wait > 0: return jsonify(error="early", wait=round(wait, 1))
         roll(rec); b = rec["bal"]; t = ad["type"]
@@ -784,9 +813,9 @@ def api_ad_claim():
         if t == "confirm":
             rec.pop("ad", None)
             need = int(s.get("confirm_ads", 500)); steps = max(1, int(s.get("claim_ads", 5)))
-            if b["cfill"] < need: save(d); return jsonify(error="locked", need=need - int(b["cfill"]))
-            if b["pending"] <= 0: save(d); return jsonify(error="nopending")
-            b["cclaim"] = int(b.get("cclaim", 0)) + 1
+            err = confirm_gate(s, b, False)
+            if err: save(d); return jsonify(**err)
+            b["cclaim"] = int(b.get("cclaim", 0)) + 1; b["cclaim_t"] = time.time()
             done = b["cclaim"] >= steps
             if done:
                 # all confirm-ads watched → pending moves to MAIN, bar empties, everything starts again
@@ -807,7 +836,7 @@ def api_ad_claim():
         else:
             b["pending"] = round(b["pending"] + reward, 4)
         b["today_ads"] += 1; b["total_ads"] += 1; b[t + "_today"] += 1
-        b["cfill"] = int(b.get("cfill", 0)) + 1   # one more ad toward the yellow Confirm bar
+        if t == "auto": b["cfill"] = int(b.get("cfill", 0)) + 1   # ONLY Auto-loop ads fill the yellow Confirm bar (watch ads go straight to main)
         # Lifetime counters — these NEVER reset (even when admin clicks "Reset All Users Ads")
         b["lifetime_earned"] = round(float(b.get("lifetime_earned", 0)) + reward, 4)
         b["lifetime_ads"] = int(b.get("lifetime_ads", 0)) + 1
