@@ -46,33 +46,257 @@ def static_files(path):
                 return f"Error reading {path}: {e}", 500
     return f"File not found: {path}", 404
 
+# =====================================================================
+#  TELEGRAM CHAT SIDE  (/start message, admin commands, /stopbot, /startbot, notices)
+# =====================================================================
+from html import escape as hesc
+TG_CHANNEL_URL = os.getenv("CHANNEL_URL", "https://t.me/SmartWorkCommunity")
+TG_ADMIN_URL = os.getenv("ADMIN_URL", "https://t.me/noyonfb1020")
+BRAND = "AUTO TAKA MACHINE"
+_bc_lock = threading.Lock(); _bc_running = False
+
+def fancy(title, body):
+    return ("┏━━━━━━━━━━━━━━━━━━┓\n  💎 <b>" + title + "</b> 💰\n┗━━━━━━━━━━━━━━━━━━┛\n\n" + body +
+            "\n\n──────────────────\n🤖 <b>" + BRAND + "</b>")
+
+def countries_text(s):
+    out = []
+    for c in parse_allowed(s.get("vpn_country", "")):
+        c = str(c).upper(); out.append(FLAG.get(c, "🏳️") + " " + CNAME.get(c, c))
+    return ", ".join(out)
+
+def min_text(s):
+    m = s.get("min") or {}
+    vals = []
+    for k in ("bkash", "nagad", "rocket", "recharge"):
+        try: v = float(m.get(k, 0) or 0)
+        except Exception: v = 0
+        if v > 0: vals.append(v)
+    return ("%.2f" % min(vals)) if vals else ""
+
+def welcome_html(name, s):
+    lines = ["💎 <b>" + BRAND + "</b> 💰", "", "👋 Hello <b>" + hesc(name) + "</b>", ""]
+    ct = countries_text(s)
+    if ct: lines.append("✅ VPN দিয়ে কাজ করতে হবে (<b>" + ct + "</b>)")
+    mt = min_text(s)
+    if mt: lines.append("✅ মিনিমাম Withdraw <b>" + mt + " TK</b>")
+    lines += ["", "📢 <b>Bot Channel</b> এ অবশ্যই জয়েন থাকুন!", "আপডেট, পেমেন্ট নোটিশ আর প্রুফ সবার আগে ওখানেই পাবেন ✨",
+              "", "👇 নিচের বাটনে ক্লিক করে বট ওপেন করুন:"]
+    return "\n".join(lines)
+
+def maint_html():
+    return fancy("BOT UPDATE চলছে 🛠️",
+                 "⚠️ বট আপডেটের কাজ চলছে, তাই কিছুক্ষণের জন্য <b>বন্ধ</b> আছে।\n\n"
+                 "⏳ একটু পরে আবার চেষ্টা করুন।\n📢 নতুন আপডেট পেতে Channel এ থাকুন।\n\n🙏 ধন্যবাদ")
+
+def live_html():
+    return fancy("🚀 BOT IS NOW LIVE", "🟢 <b>বট এখন সম্পূর্ণ চালু!</b>\n\n🎉 সবাই এখন আবার কাজ শুরু করতে পারবেন।\n💎 " + BRAND + "-এ স্বাগতম!\n\n👇 বট start করে কাজ শুরু করুন।")
+
+def _mk(rows):
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+    out = []
+    for row in rows:
+        r = []
+        for label, v in row:
+            if isinstance(v, dict) and "web_app" in v: r.append(InlineKeyboardButton(label, web_app=WebAppInfo(url=v["web_app"])))
+            elif isinstance(v, dict) and "cb" in v: r.append(InlineKeyboardButton(label, callback_data=v["cb"]))
+            else: r.append(InlineKeyboardButton(label, url=v))
+        out.append(r)
+    return InlineKeyboardMarkup(out)
+
+def home_markup():
+    return _mk([[("🚀 Open Auto Taka Machine 💰", {"web_app": WEBAPP_URL})],
+                [("📢 Official Channel", TG_CHANNEL_URL), ("👤 Admin ID", TG_ADMIN_URL)]])
+
+# ---- fixed notices the admin can send to everybody (edit the texts here if you want) ----
+def notice_msg(key, s):
+    if key == "payment":
+        return fancy("PAYMENT NOTICE", "💳 <b>Payment Update:</b> পেমেন্ট সংক্রান্ত আপডেটের জন্য অপেক্ষা করুন এবং সঠিক তথ্য অনুসরণ করুন।")
+    if key == "payrunning":
+        return fancy("🔄 PAYMENT RUNNING", "📣 যারা এখনো Withdraw Request দেননি, তাড়াতাড়ি দিয়ে দিন।\n\n💰 <b>All Payment Running</b>")
+    if key == "allpayment":
+        return fancy("ALL PAYMENT COMPLETE ✅",
+                     "📣 এই পর্যন্ত যতগুলো রিকোয়েস্ট দিয়েছিলেন, সকল পেমেন্ট <b>ক্লিয়ার</b> ✅\n\n"
+                     "👍 সবাই নিজের একাউন্ট চেক করুন, পেমেন্ট চলে গেছে 🔔\n\n"
+                     "➡️ যারা এখনো Withdraw দেননি, দিয়ে দিন। এপ্রুভ করে নেওয়া হবে ✔️\n\n🙏 Thanks for your support 💝")
+    if key == "autorate":
+        return fancy("⚡ AUTO ADS RATE", "⚡ প্রতিটা <b>Auto Ad</b> এ পাবেন <b>" + str(s.get("reward_auto")) + " TK</b>\n"
+                     "📊 দৈনিক লিমিট: <b>" + str(s.get("limit_auto")) + "</b> টা\n\n💡 Auto Loop চালু করে নিজে নিজেই ad দেখুন।")
+    if key == "watchrate":
+        return fancy("▶️ WATCH ADS RATE", "▶️ প্রতিটা <b>Watch Ad</b> এ পাবেন <b>" + str(s.get("reward_watch")) + " TK</b> (সরাসরি Main Balance এ)\n"
+                     "📊 দৈনিক লিমিট: <b>" + str(s.get("limit_watch")) + "</b> টা")
+    return None
+
+NOTICE_LABEL = {"payment": "PAYMENT NOTICE", "payrunning": "PAYMENT RUNNING", "allpayment": "ALL PAYMENT COMPLETE",
+                "autorate": "AUTO ADS RATE", "watchrate": "WATCH ADS RATE"}
+
+def start_broadcast(html, button=None, report_to=None, label="Broadcast"):
+    """Sends a message to every known user in a background thread (so the webhook answers Telegram instantly)."""
+    global _bc_running
+    with _bc_lock:
+        if _bc_running: return False
+        _bc_running = True
+    with _lock:
+        d = load(); ids = [int(r["id"]) for r in d["users"].values() if r.get("id") and not r.get("banned")]
+    def work():
+        global _bc_running
+        import asyncio
+        async def run():
+            from telegram import Bot
+            from telegram.error import RetryAfter
+            ok = fail = 0
+            markup = _mk([[button]]) if button else None
+            async with Bot(BOT_TOKEN) as bot:
+                for cid in ids:
+                    for attempt in (1, 2):
+                        try:
+                            await bot.send_message(cid, html, parse_mode="HTML", reply_markup=markup, disable_web_page_preview=True)
+                            ok += 1; break
+                        except RetryAfter as e:
+                            await asyncio.sleep(float(e.retry_after) + 1)
+                            if attempt == 2: fail += 1
+                        except Exception:
+                            fail += 1; break
+                    await asyncio.sleep(0.05)
+                if report_to:
+                    try: await bot.send_message(report_to, "✅ " + label + ": " + str(ok) + " জনকে পাঠানো হয়েছে" + ((" • ব্যর্থ " + str(fail)) if fail else ""))
+                    except Exception: pass
+        try: asyncio.run(run())
+        except Exception:
+            import traceback; traceback.print_exc()
+        finally:
+            with _bc_lock: _bc_running = False
+    threading.Thread(target=work, daemon=True).start()
+    return True
+
+def _is_admin_update(update):
+    u = update.effective_user
+    return bool(u) and int(u.id) == ADMIN_ID
+
+def _args_text(update, n=1):
+    """text after the command, keeps new lines. n = how many leading words to split off after the command."""
+    t = (update.effective_message.text or "")
+    parts = t.split(None, n)
+    return parts[1:] if len(parts) > 1 else []
+
+async def h_start(update, context):
+    u = update.effective_user; msg = update.effective_message
+    try:
+        if context.args and context.args[0].isdigit(): register_ref(u.id, context.args[0])
+    except Exception: pass
+    with _lock:
+        d = load(); s = settings_of(d); uid = str(u.id)
+        if uid not in d["users"]:   # remember chat-only users so notices can reach them too (balance record is created later when the app opens)
+            d["users"][uid] = {"id": u.id, "name": ((u.first_name or "") + " " + (u.last_name or "")).strip(), "username": u.username or "", "joined": int(time.time())}
+            save(d)
+        stopped = bool(s.get("bot_stopped")); html = welcome_html(u.first_name or "User", s)
+    admin = int(u.id) == ADMIN_ID
+    if stopped and not admin:
+        await msg.reply_text(maint_html(), parse_mode="HTML", reply_markup=_mk([[("📢 Official Channel", TG_CHANNEL_URL), ("👤 Admin ID", TG_ADMIN_URL)]]))
+        return
+    if stopped and admin: html = "🛑 <i>বট এখন বন্ধ আছে (শুধু Admin চালাতে পারছে)</i>\n\n" + html
+    await msg.reply_text(html, parse_mode="HTML", reply_markup=home_markup(), disable_web_page_preview=True)
+
+async def h_stopbot(update, context):
+    if not _is_admin_update(update): return
+    with _lock:
+        d = load(); settings_of(d)["bot_stopped"] = True; save(d)
+    await update.effective_message.reply_text(
+        "🛑 <b>Bot বন্ধ করা হলো!</b>\n\n✅ এখন সাধারণ User রা Bot ওপেন করলে Update মেসেজ দেখবে!\n"
+        "✅ তোমার Admin ID (" + str(ADMIN_ID) + ") তে সব চলবে, Admin Panel ও চলবে!", parse_mode="HTML")
+
+async def h_startbot(update, context):
+    if not _is_admin_update(update): return
+    with _lock:
+        d = load(); settings_of(d)["bot_stopped"] = False; save(d)
+    uname_ = context.bot.username or ""
+    btn = ("▶️ /start", "https://t.me/" + uname_ + "?start=live") if uname_ else None
+    started = start_broadcast(live_html(), button=btn, report_to=update.effective_user.id, label="BOT LIVE নোটিশ")
+    await update.effective_message.reply_text(
+        "✅ <b>Bot চালু করা হলো!</b>\n\n📢 " + ("সব User-কে চালু হওয়ার নোটিশ পাঠানো হচ্ছে... (শেষ হলে রিপোর্ট আসবে)" if started else "আরেকটা Broadcast চলছে, তাই নোটিশ পাঠানো হয়নি।"), parse_mode="HTML")
+
+async def h_notice_ask(update, context):
+    """fixed notices: ask the admin to confirm first (the menu can be tapped by mistake)."""
+    if not _is_admin_update(update): return
+    cmd = (update.effective_message.text or "").split()[0].lstrip("/").split("@")[0].lower()
+    with _lock:
+        d = load(); s = settings_of(d); html = notice_msg(cmd, s)
+    if not html: return
+    await update.effective_message.reply_text("👀 <b>Preview</b> — সবাইকে পাঠাবেন?\n\n" + html, parse_mode="HTML",
+                                              reply_markup=_mk([[("✅ সবাইকে পাঠান", {"cb": "bc:" + cmd}), ("❌ বাতিল", {"cb": "bcx"})]]))
+
+async def h_bc_cb(update, context):
+    q = update.callback_query
+    if not q or int(q.from_user.id) != ADMIN_ID:
+        if q: await q.answer("⛔", show_alert=False)
+        return
+    data = q.data or ""
+    if data == "bcx":
+        await q.answer("বাতিল"); await q.edit_message_text("❌ বাতিল করা হয়েছে।"); return
+    key = data.split(":", 1)[1] if ":" in data else ""
+    with _lock:
+        d = load(); s = settings_of(d); html = notice_msg(key, s)
+    if not html: await q.answer("?"); return
+    started = start_broadcast(html, report_to=q.from_user.id, label=NOTICE_LABEL.get(key, "Notice"))
+    await q.answer("শুরু হয়েছে" if started else "আরেকটা Broadcast চলছে")
+    await q.edit_message_text(("📢 <b>" + NOTICE_LABEL.get(key, "Notice") + "</b> পাঠানো শুরু হয়েছে... (শেষ হলে রিপোর্ট আসবে)") if started else "⏳ আরেকটা Broadcast চলছে, একটু পরে আবার চেষ্টা করুন।", parse_mode="HTML")
+
+async def h_custom(update, context):
+    """/alltopicsms <text>  and  /important <text>  → broadcast your own text to every user."""
+    if not _is_admin_update(update): return
+    cmd = (update.effective_message.text or "").split()[0].lstrip("/").split("@")[0].lower()
+    a = _args_text(update, 1)
+    if not a:
+        await update.effective_message.reply_text("✍️ ব্যবহার: /" + cmd + " আপনার লেখা মেসেজ", parse_mode="HTML"); return
+    body = hesc(a[0])
+    html = fancy("IMPORTANT NOTICE ⚠️", "📣 " + body) if cmd == "important" else fancy("📢 MESSAGE FOR ALL", body)
+    started = start_broadcast(html, report_to=update.effective_user.id, label="Message")
+    await update.effective_message.reply_text("📢 সবাইকে পাঠানো শুরু হয়েছে... (শেষ হলে রিপোর্ট আসবে)" if started else "⏳ আরেকটা Broadcast চলছে, একটু পরে আবার চেষ্টা করুন।")
+
+async def h_personal(update, context):
+    """/personal <user_id> <text> → message to ONE user."""
+    if not _is_admin_update(update): return
+    a = _args_text(update, 2)
+    if len(a) < 2 or not a[0].isdigit():
+        await update.effective_message.reply_text("✍️ ব্যবহার: /personal USER_ID আপনার লেখা মেসেজ"); return
+    try:
+        await context.bot.send_message(int(a[0]), fancy("PERSONAL MESSAGE 💌", hesc(a[1])), parse_mode="HTML")
+        await update.effective_message.reply_text("✅ পাঠানো হয়েছে (" + a[0] + ")")
+    except Exception as e:
+        await update.effective_message.reply_text("❌ পাঠানো যায়নি: " + hesc(str(e)[:150]))
+
+ADMIN_COMMANDS = [("start", "🚀 বট চালু করুন"), ("personal", "💌 একজনকে পার্সোনাল মেসেজ (USER_ID লেখা)"),
+                  ("autorate", "⚡ Auto Ads Rate নোটিশ"), ("watchrate", "▶️ Watch Ads Rate নোটিশ"),
+                  ("alltopicsms", "📢 সবাইকে নিজের লেখা মেসেজ"), ("important", "⚠️ Important Notice"),
+                  ("payment", "💳 Payment Notice"), ("payrunning", "🔄 Payment Running"), ("allpayment", "✅ All Payment Complete"),
+                  ("stopbot", "🛑 Bot বন্ধ করুন"), ("startbot", "🟢 Bot চালু + সবাইকে নোটিশ")]
+
+def build_tg_app():
+    from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+    application = Application.builder().token(BOT_TOKEN).build()
+    application.add_handler(CommandHandler("start", h_start))
+    application.add_handler(CommandHandler(["stopbot", "botupdate"], h_stopbot))
+    application.add_handler(CommandHandler("startbot", h_startbot))
+    application.add_handler(CommandHandler(["payment", "payrunning", "allpayment", "autorate", "watchrate"], h_notice_ask))
+    application.add_handler(CommandHandler(["alltopicsms", "important"], h_custom))
+    application.add_handler(CommandHandler("personal", h_personal))
+    application.add_handler(CallbackQueryHandler(h_bc_cb, pattern=r"^bc"))
+    return application
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
     if not BOT_TOKEN:
         return "BOT_TOKEN missing", 500
     try:
         from telegram import Update
-        from telegram.ext import Application, CommandHandler
-        from telegram import WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
         import asyncio
-
-        async def start(update, context):
-            try:
-                if context.args and context.args[0].isdigit(): register_ref(update.effective_user.id, context.args[0])
-            except Exception: pass
-            kb = [[InlineKeyboardButton("🤖 Auto Taka Machine 🔥 Open", web_app=WebAppInfo(url=WEBAPP_URL))]]
-            await update.message.reply_text(f"Hello {update.effective_user.first_name}! Open:", reply_markup=InlineKeyboardMarkup(kb))
-
         data = request.get_json(force=True)
-        application = Application.builder().token(BOT_TOKEN).build()
-        application.add_handler(CommandHandler("start", start))
-
+        application = build_tg_app()
         async def process():
             await application.initialize()
             update = Update.de_json(data, application.bot)
             await application.process_update(update)
             await application.shutdown()
-
         asyncio.run(process())
         return "ok", 200
     except Exception as e:
@@ -85,30 +309,38 @@ def set_webhook():
     if not BOT_TOKEN:
         return "❌ BOT_TOKEN missing in Render Environment", 500
     try:
-        from telegram.ext import Application, CommandHandler
-        from telegram import WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
         import asyncio
-
-        async def start(update, context):
-            kb = [[InlineKeyboardButton("🤖 Auto Taka Machine 🔥 Open", web_app=WebAppInfo(url=WEBAPP_URL))]]
-            await update.message.reply_text("Hello! Open:", reply_markup=InlineKeyboardMarkup(kb))
-
+        from telegram import BotCommand, BotCommandScopeDefault, BotCommandScopeChat
         async def run():
-            application = Application.builder().token(BOT_TOKEN).build()
-            application.add_handler(CommandHandler("start", start))
+            application = build_tg_app()
             await application.initialize()
             url = f"{WEBAPP_URL}/webhook"
             result = await application.bot.set_webhook(url=url)
             me = await application.bot.get_me()
+            menu = "ok"
+            try:   # normal users see only /start, the admin sees the full command menu
+                await application.bot.set_my_commands([BotCommand("start", "🚀 বট চালু করুন")], scope=BotCommandScopeDefault())
+                await application.bot.set_my_commands([BotCommand(c, d) for c, d in ADMIN_COMMANDS], scope=BotCommandScopeChat(chat_id=ADMIN_ID))
+            except Exception as e: menu = "menu error: " + str(e)
             await application.shutdown()
-            return result, me
-
-        result, me = asyncio.run(run())
-        return f"✅ Webhook set!<br>Bot: @{me.username}<br>URL: {WEBAPP_URL}/webhook<br>Result: {result}<br><br><a href='/'>Go to App</a>"
+            return result, me, menu
+        result, me, menu = asyncio.run(run())
+        return f"✅ Webhook set!<br>Bot: @{me.username}<br>URL: {WEBAPP_URL}/webhook<br>Result: {result}<br>Command menu: {menu}<br><br><a href='/'>Go to App</a>"
     except Exception as e:
         import traceback
         traceback.print_exc()
         return f"❌ Failed: {e}", 500
+
+# ---- when the admin stops the bot, the mini-app is closed for normal users (admin still works) ----
+@app.before_request
+def maintenance_gate():
+    if not request.path.startswith("/api/"): return None
+    u = tg_user()
+    if not u or is_admin(u): return None
+    with _lock:
+        stopped = bool(settings_of(load()).get("bot_stopped"))
+    if stopped: return jsonify(error="maintenance")
+    return None
 
 @app.route('/dbcheck')
 def dbcheck():
@@ -168,7 +400,7 @@ DEFAULTS = {"settings": {"reward_watch": 0.5, "reward_auto": 0.10, "limit_watch"
                          # notice_version: incremented every time admin saves a notice. Users store the version they last saw.
                          "notice_version": 1,
                          "usdt_rate": 123.0,
-                         "confirm_ads": 500, "claim_ads": 5, "claim_enabled": True, "claim_gap_min": 2.0, "notice_every": 5,
+                         "confirm_ads": 500, "claim_ads": 5, "bot_stopped": False, "claim_enabled": True, "claim_gap_min": 2.0, "notice_every": 5,
                          "payment_methods": {"bkash": True, "nagad": True, "rocket": True, "binance": True, "recharge": True}},
             "users": {}, "withdraws": [], "refs": {}}
 
