@@ -1204,8 +1204,10 @@ setTimeout(() => setTopStatus('ready'), 100);
 <script>
 // ===== ADMIN PANEL =====
 const ADMIN_ID = 6560485203;
-function showMaint(){ const o = document.getElementById("maintOv"); if(o) o.style.display = "flex"; try{ autoRunning = false; }catch(e){} }
-const API = (p,b) => fetch(p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json','X-Init-Data':window.Telegram?.WebApp?.initData||''},body:b?JSON.stringify(b):undefined}).then(r=>r.json()).then(j => { if(j && j.error === 'maintenance') showMaint(); return j; });
+const _MAINT_NORMAL = {t:"বট আপডেট চলছে", s:"⚠️ বট আপডেটের কাজ চলছে, তাই কিছুক্ষণের জন্য <b>বন্ধ</b> আছে।<br><br>⏳ একটু পরে আবার চেষ্টা করুন।<br>📢 নতুন আপডেট পেতে Channel এ থাকুন।<br><br>🙏 ধন্যবাদ"};
+const _MAINT_PERM = {t:"কাজ এখন বন্ধ আছে", s:"😔 <b>দুঃখিত!</b> এখন কাজ বন্ধ আছে।<br><br>✅ অ্যাডমিন কাজ চালু করলে তখন আবার কাজ করতে পারবেন।<br><br>🙏 পুনরায় ধন্যবাদ 💝"};
+function showMaint(perm){ const o = document.getElementById("maintOv"); if(o){ const m = perm ? _MAINT_PERM : _MAINT_NORMAL; const t = o.querySelector(".maint-t"), s = o.querySelector(".maint-s"); if(t) t.textContent = m.t; if(s) s.innerHTML = m.s; o.style.display = "flex"; } try{ autoRunning = false; }catch(e){} }
+const API = (p,b) => fetch(p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json','X-Init-Data':window.Telegram?.WebApp?.initData||''},body:b?JSON.stringify(b):undefined}).then(r=>r.json()).then(j => { if(j && j.error === 'maintenance') showMaint(!!j.perm); return j; });
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MLAB = {bkash:'bKash',nagad:'Nagad',rocket:'Rocket',binance:'Binance',recharge:'Mobile Recharge'};
 const isAdmin = Number(window.Telegram?.WebApp?.initDataUnsafe?.user?.id) === ADMIN_ID;
@@ -1384,11 +1386,15 @@ function apSaveSettings(){
 async function apLimit(){
   apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
-  apSet(apF('l_w','Watch Ads Daily Limit',s.limit_watch) + apF('l_a','Auto Ads Daily Limit',s.limit_auto) + apSaveBtn('apSaveLimit')
+  const apFN = (id,l,v,ph) => `<div class="ap-lab" style="color:#4ade80">${l}</div><input class="ap-in" id="${id}" type="number" placeholder="${esc(ph)}" value="${v==null?'':esc(v)}">`;
+  apSet(apF('l_w','Watch Ads Daily Limit',s.limit_watch) + apF('l_a','Auto Ads Daily Limit',s.limit_auto)
+    + apFN('l_nw','🌅 Watch Ads Next Day Limit (কালকের)',s.next_limit_watch,s.limit_watch) + apFN('l_na','🌅 Auto Ads Next Day Limit (কালকের)',s.next_limit_auto,s.limit_auto)
+    + '<div class="ap-note" style="margin-top:8px">ঘুমানোর আগে কালকের লিমিট বসিয়ে Save দিন। সকাল ৬টায় বট চালু থাকলে লিমিট অটো বদলে যাবে আর সবার কাছে Good Morning মেসেজ যাবে। ফাঁকা রাখলে আজকের লিমিটই থাকবে।</div>' + apSaveBtn('apSaveLimit')
     + '<div class="ap-note" style="margin-top:14px">Limit save করার পর চাইলে নিচের button চাপলে সব user এর ad counter (today/total/watch/auto) 0 হয়ে যাবে।</div>'
     + '<button class="ap-big danger" style="margin-top:10px" onclick="apDoResetAds()">♻️ Reset All Users Ads (সব user এর ad count 0 করো)</button>');
 }
-function apSaveLimit(){ apPost({limit_watch:parseInt($('l_w').value)||0, limit_auto:parseInt($('l_a').value)||0}); }
+function apSaveLimit(){ const nv = id => { const x = ($(id).value||'').trim(); return x === '' ? null : (parseInt(x)||0); };
+  apPost({limit_watch:parseInt($('l_w').value)||0, limit_auto:parseInt($('l_a').value)||0, next_limit_watch:nv('l_nw'), next_limit_auto:nv('l_na')}); }
 async function apDoResetAds(){
   if(!confirm('আসলেই সব user এর ad count 0 করে দিবে?')) return;
   let r; try{ r = await API('/api/admin/reset_ads', {}); }catch(e){ r = {error:'net'}; }
