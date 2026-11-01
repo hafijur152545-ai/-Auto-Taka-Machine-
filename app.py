@@ -168,7 +168,7 @@ DEFAULTS = {"settings": {"reward_watch": 0.5, "reward_auto": 0.10, "limit_watch"
                          # notice_version: incremented every time admin saves a notice. Users store the version they last saw.
                          "notice_version": 1,
                          "usdt_rate": 123.0,
-                         "confirm_ads": 500, "notice_every": 5,
+                         "confirm_ads": 500, "claim_ads": 5, "notice_every": 5,
                          "payment_methods": {"bkash": True, "nagad": True, "rocket": True, "binance": True, "recharge": True}},
             "users": {}, "withdraws": [], "refs": {}}
 
@@ -302,7 +302,9 @@ def new_bal():
             # Lifetime counters — never reset by admin "Reset Ads". Used by profile page.
             "lifetime_earned": 0.0, "lifetime_ads": 0,
             # Lifetime WATCH-ad counter — used to detect every 5th watch ad (5, 10, 15...) for the special popup.
-            "lifetime_watch_ads": 0}
+            "lifetime_watch_ads": 0,
+            # Confirm-Pending system: cfill = ads counted toward the yellow bar, cclaim = confirm-ads already watched in the unlock stage
+            "cfill": 0, "cclaim": 0}
 
 def roll(rec):
     b = rec["bal"]
@@ -314,10 +316,13 @@ def state(rec):
     if "lifetime_earned" not in b: b["lifetime_earned"] = round(float(b.get("main", 0)) + float(b.get("pending", 0)), 4)
     if "lifetime_ads" not in b: b["lifetime_ads"] = int(b.get("total_ads", 0))
     if "lifetime_watch_ads" not in b: b["lifetime_watch_ads"] = int(b.get("watch_today", 0))
+    if "cfill" not in b: b["cfill"] = int(b.get("total_ads", 0))   # old accounts keep their current bar progress
+    if "cclaim" not in b: b["cclaim"] = 0
     return {"main": round(b["main"], 2), "pending": round(b["pending"], 2), "today_ads": b["today_ads"], "total_ads": b["total_ads"],
             "watch_today": b["watch_today"], "auto_today": b["auto_today"],
             "lifetime_earned": round(b.get("lifetime_earned", 0), 2), "lifetime_ads": int(b.get("lifetime_ads", 0)),
             "lifetime_watch_ads": int(b.get("lifetime_watch_ads", 0)),
+            "cfill": int(b.get("cfill", 0)), "cclaim": int(b.get("cclaim", 0)),
             "joined": int(rec.get("joined", 0))}
 
 def ensure_user(d, u):
@@ -637,6 +642,7 @@ def api_settings():
                         if mk in s["payment_methods"]:
                             cur["payment_methods"][mk] = bool(s["payment_methods"][mk])
                 if "confirm_ads" in s: cur["confirm_ads"] = max(1, int(float(s["confirm_ads"])))
+                if "claim_ads" in s: cur["claim_ads"] = max(1, int(float(s["claim_ads"])))
                 if "notice_every" in s: cur["notice_every"] = max(1, int(float(s["notice_every"])))
                 if "ref_bonus" in s: cur["ref_bonus"] = min(100.0, max(0.0, float(s["ref_bonus"])))
                 for k in ("limit_watch", "limit_auto"):
@@ -720,7 +726,7 @@ def api_ad_start():
     body = request.get_json(silent=True) or {}
     t = body.get("type")
     phone_tz = str(body.get("phone_tz") or "").strip()
-    if t not in ("watch", "auto"): return jsonify(error="bad data"), 400
+    if t not in ("watch", "auto", "confirm"): return jsonify(error="bad data"), 400
     with _lock:
         d = load(); s = settings_of(d); rec = ensure_user(d, u)
         if rec.get("banned"): return jsonify(error="banned")
@@ -736,6 +742,14 @@ def api_ad_start():
         if not c_ok or not t_ok:
             return loc_block_response(s, code, name, ip, phone_tz)
         roll(rec); b = rec["bal"]
+        if t == "confirm":
+            # Confirm-Pending ads: only when the yellow bar is 100% full AND there is pending balance to move
+            if b.get("cfill", 0) < int(s.get("confirm_ads", 500)): return jsonify(error="locked", need=int(s.get("confirm_ads", 500)) - int(b.get("cfill", 0)))
+            if b["pending"] <= 0: return jsonify(error="nopending")
+            rec["ad"] = {"type": "confirm", "t": time.time(), "special": False}
+            if phone_tz: rec["phone_tz"] = phone_tz[:60]
+            save(d)
+            return jsonify(ok=True, special=False)
         lim = s["limit_watch"] if t == "watch" else s["limit_auto"]
         if b[t + "_today"] >= lim: return jsonify(error="limit", type=t, limit=lim)
         # Detect every 5th WATCH ad (5, 10, 15...) for the special popup + 25s wait
@@ -765,6 +779,21 @@ def api_ad_claim():
         wait = min_seconds - (time.time() - ad["t"])
         if wait > 0: return jsonify(error="early", wait=round(wait, 1))
         roll(rec); b = rec["bal"]; t = ad["type"]
+        if "cfill" not in b: b["cfill"] = int(b.get("total_ads", 0))
+        if "cclaim" not in b: b["cclaim"] = 0
+        if t == "confirm":
+            rec.pop("ad", None)
+            need = int(s.get("confirm_ads", 500)); steps = max(1, int(s.get("claim_ads", 5)))
+            if b["cfill"] < need: save(d); return jsonify(error="locked", need=need - int(b["cfill"]))
+            if b["pending"] <= 0: save(d); return jsonify(error="nopending")
+            b["cclaim"] = int(b.get("cclaim", 0)) + 1
+            done = b["cclaim"] >= steps
+            if done:
+                # all confirm-ads watched → pending moves to MAIN, bar empties, everything starts again
+                b["main"] = round(b["main"] + b["pending"], 4); b["pending"] = 0.0
+                b["cclaim"] = 0; b["cfill"] = max(0, int(b["cfill"]) - need)
+            save(d)
+            return jsonify(ok=True, state=state(rec), reward=0, to_main=False, special=False, confirm_done=done, claim_step=(steps if done else b["cclaim"]), claim_total=steps)
         lim = s["limit_watch"] if t == "watch" else s["limit_auto"]
         rec.pop("ad", None)
         if b[t + "_today"] >= lim:
@@ -778,6 +807,7 @@ def api_ad_claim():
         else:
             b["pending"] = round(b["pending"] + reward, 4)
         b["today_ads"] += 1; b["total_ads"] += 1; b[t + "_today"] += 1
+        b["cfill"] = int(b.get("cfill", 0)) + 1   # one more ad toward the yellow Confirm bar
         # Lifetime counters — these NEVER reset (even when admin clicks "Reset All Users Ads")
         b["lifetime_earned"] = round(float(b.get("lifetime_earned", 0)) + reward, 4)
         b["lifetime_ads"] = int(b.get("lifetime_ads", 0)) + 1
@@ -797,12 +827,8 @@ def api_confirm():
     with _lock:
         d = load(); rec = ensure_user(d, u)
         if rec.get("banned"): return jsonify(error="banned")
-        roll(rec); b = rec["bal"]
-        if b["pending"] <= 0: return jsonify(error="nopending")
-        if b["total_ads"] < 1: return jsonify(error="noads")
-        b["main"] = round(b["main"] + b["pending"], 4); b["pending"] = 0.0
-        save(d)
-        return jsonify(ok=True, state=state(rec))
+        # Direct confirm is disabled: balance can only move to MAIN through the confirm-ads flow (/api/ad/start + /api/ad/claim, type="confirm")
+        return jsonify(error="useads")
 
 @app.route('/api/withdraw', methods=['POST'])
 def api_withdraw():
