@@ -1415,3 +1415,8 @@ div:has(> .sup-label) > div{background:linear-gradient(90deg,transparent,#e9c46a
 
 /* Bell moved up (to the marked spot) */
 .bell-icon{position:relative;top:-20px;left:-18px}
+
+/* Confirm Pending: locked while bar is filling, glowing when full */
+#homePage #confirmBtn.cf-locked{filter:saturate(.85)}
+#homePage #confirmBtn.cf-ready{box-shadow:0 0 0 2px #facc15,0 6px 22px rgba(250,204,21,.55) !important;animation:cfPulse 1.6s ease-in-out infinite}
+@keyframes cfPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.015)}}
