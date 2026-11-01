@@ -721,6 +721,60 @@ def api_notice_seen():
         save(d)
     return jsonify(ok=True, version=cur_ver)
 
+# ---------- User Ads Tracker (admin panel): views / clicks per user ----------
+TRACK_CLICK_SECONDS = float(os.getenv("TRACK_CLICK_SECONDS", "25"))   # user back after >= this many seconds => View + Click
+ONLINE_SECONDS = 90                                                    # bot pings /api/me every 30s, so 90s = online
+
+def trk_of(rec):
+    t = rec.setdefault("trk", {})
+    for k in ("v_all", "c_all", "v_today", "c_today"): t.setdefault(k, 0)
+    t.setdefault("hist", []); t.setdefault("day", today_key())
+    if t["day"] != today_key(): t["day"] = today_key(); t["v_today"] = 0; t["c_today"] = 0   # daily reset 6:00 AM Bangladesh time
+    return t
+
+@app.route('/api/ad/track', methods=['POST'])
+def api_ad_track():
+    u = tg_user()
+    if not u: return jsonify(error="forbidden"), 403
+    b = request.get_json(silent=True) or {}
+    ev = b.get("ev"); now = time.time()
+    if ev not in ("view", "back"): return jsonify(error="bad data"), 400
+    with _lock:
+        d = load(); rec = ensure_user(d, u); t = trk_of(rec)
+        if ev == "view":
+            # counted right before the ad is shown
+            t["v_all"] += 1; t["v_today"] += 1; t["open_t"] = now
+            t["hist"].append({"k": "view", "t": int(now)})
+        else:
+            ot = t.pop("open_t", None)
+            if ot:
+                elapsed = now - float(ot)
+                try: away = min(float(b.get("away", 0)), elapsed)      # can never be more than the real time passed
+                except Exception: away = 0.0
+                if away >= TRACK_CLICK_SECONDS:                         # came back after 25s+ => it was a click too
+                    t["c_all"] += 1; t["c_today"] += 1
+                    t["hist"].append({"k": "click", "t": int(now)})
+        t["hist"] = t["hist"][-60:]
+        save(d)
+    return jsonify(ok=True)
+
+@app.route('/api/admin/tracker')
+def api_admin_tracker():
+    if not is_admin(tg_user()): return jsonify(error="forbidden"), 403
+    now = time.time(); out = []
+    with _lock:
+        d = load()
+        for r in d["users"].values():
+            if now - float(r.get("last_seen", 0) or 0) > ONLINE_SECONDS: continue
+            if r.get("banned"): continue
+            t = trk_of(r); cc = r.get("country") or ""
+            out.append({"id": r.get("id"), "name": r.get("name", ""), "username": r.get("username", ""),
+                        "cc": cc, "flag": FLAG.get(cc, "🏳️") if cc else "🏳️",
+                        "v_today": t["v_today"], "c_today": t["c_today"], "v_all": t["v_all"], "c_all": t["c_all"],
+                        "hist": list(reversed(t["hist"][-12:]))})
+    out.sort(key=lambda x: (x["name"] or "").lower())
+    return jsonify(ok=True, online=len(out), users=out)
+
 def confirm_gate(s, b, check_gap):
     """Rules for the Confirm-Pending ads. Returns an error dict, or None when the user may continue."""
     need = int(s.get("confirm_ads", 500))
