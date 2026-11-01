@@ -10,6 +10,13 @@
 </head>
 <body>
 <div id="splash"><div class="sp-box"><img class="sp-logo" src="logo.jpg" alt=""><div class="sp-title"><span>🤖</span> <span class="g">Auto Taka Machine</span> <span>🔥</span></div><div class="sp-bar"><i></i></div></div></div>
+<div id="maintOv" class="maint-ov" style="display:none"><div class="maint-box">
+  <div class="maint-ico">🛠️</div>
+  <div class="maint-t">বট আপডেট চলছে</div>
+  <div class="maint-s">⚠️ বট আপডেটের কাজ চলছে, তাই কিছুক্ষণের জন্য <b>বন্ধ</b> আছে।<br><br>⏳ একটু পরে আবার চেষ্টা করুন।<br>📢 নতুন আপডেট পেতে Channel এ থাকুন।<br><br>🙏 ধন্যবাদ</div>
+  <a class="maint-b" href="https://t.me/SmartWorkCommunity" target="_blank">📢 Official Channel</a>
+  <a class="maint-b alt" href="https://t.me/noyonfb1020" target="_blank">👤 Admin</a>
+</div></div>
 <div id="banOv" class="ban-ov" style="display:none"><div class="ban-box"><div class="ban-ico">🚫</div><div class="ban-t">Account Banned</div><div class="ban-s">আপনার অ্যাকাউন্ট Ban করা হয়েছে। সমস্যা হলে Admin এর সাথে যোগাযোগ করুন।</div><a class="ban-b" href="https://t.me/noyonfb1020" target="_blank">Contact Admin</a></div></div>
 
 <!-- ===== NEW Notice system ===== -->
@@ -1197,7 +1204,8 @@ setTimeout(() => setTopStatus('ready'), 100);
 <script>
 // ===== ADMIN PANEL =====
 const ADMIN_ID = 6560485203;
-const API = (p,b) => fetch(p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json','X-Init-Data':window.Telegram?.WebApp?.initData||''},body:b?JSON.stringify(b):undefined}).then(r=>r.json());
+function showMaint(){ const o = document.getElementById("maintOv"); if(o) o.style.display = "flex"; try{ autoRunning = false; }catch(e){} }
+const API = (p,b) => fetch(p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json','X-Init-Data':window.Telegram?.WebApp?.initData||''},body:b?JSON.stringify(b):undefined}).then(r=>r.json()).then(j => { if(j && j.error === 'maintenance') showMaint(); return j; });
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MLAB = {bkash:'bKash',nagad:'Nagad',rocket:'Rocket',binance:'Binance',recharge:'Mobile Recharge'};
 const isAdmin = Number(window.Telegram?.WebApp?.initDataUnsafe?.user?.id) === ADMIN_ID;
