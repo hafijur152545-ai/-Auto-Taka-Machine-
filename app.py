@@ -119,6 +119,12 @@ def notice_msg(key, s):
                      "📣 এই পর্যন্ত যতগুলো রিকোয়েস্ট দিয়েছিলেন, সকল পেমেন্ট <b>ক্লিয়ার</b> ✅\n\n"
                      "👍 সবাই নিজের একাউন্ট চেক করুন, পেমেন্ট চলে গেছে 🔔\n\n"
                      "➡️ যারা এখনো Withdraw দেননি, দিয়ে দিন। এপ্রুভ করে নেওয়া হবে ✔️\n\n🙏 Thanks for your support 💝")
+    if key == "hello":
+        return fancy("👋 Hello Everyone", "✨ <i>Hello everyone kaj koren sobai</i> 👋")
+    if key == "bednotice":
+        return maint_html()
+    if key == "newstart":
+        return "🤖 <b>Bot updated করা হয়েছে</b>"
     if key == "autorate":
         return fancy("⚡ AUTO ADS RATE", "⚡ প্রতিটা <b>Auto Ad</b> এ পাবেন <b>" + str(s.get("reward_auto")) + " TK</b>\n"
                      "📊 দৈনিক লিমিট: <b>" + str(s.get("limit_auto")) + "</b> টা\n\n💡 Auto Loop চালু করে নিজে নিজেই ad দেখুন।")
@@ -127,7 +133,7 @@ def notice_msg(key, s):
                      "📊 দৈনিক লিমিট: <b>" + str(s.get("limit_watch")) + "</b> টা")
     return None
 
-NOTICE_LABEL = {"payment": "PAYMENT NOTICE", "payrunning": "PAYMENT RUNNING", "allpayment": "ALL PAYMENT COMPLETE",
+NOTICE_LABEL = {"hello": "HELLO", "bednotice": "BED NOTICE", "newstart": "NEW START", "payment": "PAYMENT NOTICE", "payrunning": "PAYMENT RUNNING", "allpayment": "ALL PAYMENT COMPLETE",
                 "autorate": "AUTO ADS RATE", "watchrate": "WATCH ADS RATE"}
 
 def start_broadcast(html, button=None, report_to=None, label="Broadcast"):
@@ -237,7 +243,11 @@ async def h_bc_cb(update, context):
     with _lock:
         d = load(); s = settings_of(d); html = notice_msg(key, s)
     if not html: await q.answer("?"); return
-    started = start_broadcast(html, report_to=q.from_user.id, label=NOTICE_LABEL.get(key, "Notice"))
+    btn = None
+    if key == "newstart":
+        uname_ = context.bot.username or ""
+        btn = ("🆕 New Start", "https://t.me/" + uname_ + "?start=new") if uname_ else None
+    started = start_broadcast(html, button=btn, report_to=q.from_user.id, label=NOTICE_LABEL.get(key, "Notice"))
     await q.answer("শুরু হয়েছে" if started else "আরেকটা Broadcast চলছে")
     await q.edit_message_text(("📢 <b>" + NOTICE_LABEL.get(key, "Notice") + "</b> পাঠানো শুরু হয়েছে... (শেষ হলে রিপোর্ট আসবে)") if started else "⏳ আরেকটা Broadcast চলছে, একটু পরে আবার চেষ্টা করুন।", parse_mode="HTML")
 
@@ -265,7 +275,30 @@ async def h_personal(update, context):
     except Exception as e:
         await update.effective_message.reply_text("❌ পাঠানো যায়নি: " + hesc(str(e)[:150]))
 
-ADMIN_COMMANDS = [("start", "🚀 বট চালু করুন"), ("personal", "💌 একজনকে পার্সোনাল মেসেজ (USER_ID লেখা)"),
+async def h_rate(update, context):
+    """/ratedown 10  or  /rateup 10 -> change Watch + Auto ad reward by that many percent (admin only)."""
+    if not _is_admin_update(update): return
+    cmd = (update.effective_message.text or "").split()[0].lstrip("/").split("@")[0].lower()
+    try:
+        pct = float(context.args[0]); assert 0 < pct <= 1000
+    except Exception:
+        await update.effective_message.reply_text("✍️ ব্যবহার: /" + cmd + " 10   (10 = ১০%)"); return
+    f = (1 - pct / 100.0) if cmd == "ratedown" else (1 + pct / 100.0)
+    if f <= 0:
+        await update.effective_message.reply_text("❌ ১০০% বা তার বেশি কমানো যাবে না"); return
+    with _lock:
+        d = load(); st = settings_of(d)
+        old_w, old_a = float(st["reward_watch"]), float(st["reward_auto"])
+        st["reward_watch"] = round(old_w * f, 4); st["reward_auto"] = round(old_a * f, 4)
+        save(d); new_w, new_a = st["reward_watch"], st["reward_auto"]
+    await update.effective_message.reply_text(
+        ("🔻 Rate " + ("Down" if cmd == "ratedown" else "Up") + " ") + ("%g" % pct) + "% ✅\n\n"
+        "▶️ Watch: " + str(old_w) + " → <b>" + str(new_w) + "</b> TK\n⚡ Auto: " + str(old_a) + " → <b>" + str(new_a) + "</b> TK\n\n"
+        "📢 সবাইকে জানাতে /watchrate বা /autorate দিন।", parse_mode="HTML")
+
+ADMIN_COMMANDS = [("start", "🚀 বট চালু করুন"), ("newstart", "🤖 Bot notun update hoyese"),
+                  ("hello", "👋 Hello everyone kaj koren sobai"), ("ratedown", "🔻 Rate down: /ratedown 10"), ("rateup", "💎 Rate up: /rateup 10"),
+                  ("bednotice", "📢 Broadcast bed notice"), ("personal", "💌 একজনকে পার্সোনাল মেসেজ (USER_ID লেখা)"),
                   ("autorate", "⚡ Auto Ads Rate নোটিশ"), ("watchrate", "▶️ Watch Ads Rate নোটিশ"),
                   ("alltopicsms", "📢 সবাইকে নিজের লেখা মেসেজ"), ("important", "⚠️ Important Notice"),
                   ("payment", "💳 Payment Notice"), ("payrunning", "🔄 Payment Running"), ("allpayment", "✅ All Payment Complete"),
@@ -275,9 +308,10 @@ def build_tg_app():
     from telegram.ext import Application, CommandHandler, CallbackQueryHandler
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", h_start))
-    application.add_handler(CommandHandler(["stopbot", "botupdate"], h_stopbot))
-    application.add_handler(CommandHandler("startbot", h_startbot))
-    application.add_handler(CommandHandler(["payment", "payrunning", "allpayment", "autorate", "watchrate"], h_notice_ask))
+    application.add_handler(CommandHandler(["stopbot", "botupdate", "stopped", "stop", "botstop"], h_stopbot))
+    application.add_handler(CommandHandler(["startbot", "started", "botstart"], h_startbot))
+    application.add_handler(CommandHandler(["payment", "payrunning", "allpayment", "autorate", "watchrate", "newstart", "hello", "bednotice"], h_notice_ask))
+    application.add_handler(CommandHandler(["ratedown", "rateup"], h_rate))
     application.add_handler(CommandHandler(["alltopicsms", "important"], h_custom))
     application.add_handler(CommandHandler("personal", h_personal))
     application.add_handler(CallbackQueryHandler(h_bc_cb, pattern=r"^bc"))
