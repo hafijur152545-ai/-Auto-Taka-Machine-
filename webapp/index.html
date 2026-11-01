@@ -465,6 +465,8 @@ function applyState(st){
   if(!st) return;
   if(!window._stLoaded){ window._stLoaded = true; _prevMain = Number(st.main); }  // no glow/sound for the first load
   mainBal = st.main; pendingBal = st.pending; todayAds = st.today_ads; totalAds = st.total_ads; watchToday = st.watch_today; autoToday = st.auto_today;
+  if(typeof st.cfill === "number") cFill = st.cfill;
+  if(typeof st.cclaim === "number") cClaim = st.cclaim;
   if(typeof st.lifetime_earned === "number") lifetimeEarned = st.lifetime_earned;
   if(typeof st.lifetime_ads === "number") lifetimeAds = st.lifetime_ads;
   if(st.joined){
@@ -496,7 +498,7 @@ let _prevMain = null;          // for the main-balance glow + sound
 let minWithdrawLimits = JSON.parse(localStorage.getItem("minWithdrawLimits") || '{"bkash":0,"nagad":0,"rocket":0,"binance":0,"recharge":0}');
 let usdtRate = 123;             // 1 USDT = X TK (set by admin, used to show USDT min in TK)
 let paymentMethods = {bkash:true,nagad:true,rocket:true,binance:true,recharge:true};
-let confirmAds = 500, noticeEvery = 5;   // admin: ads needed for Confirm Pending Balance / notice popup interval
+let confirmAds = 500, claimAds = 5, noticeEvery = 5; let cFill = 0, cClaim = 0, confirmBusy = false;   // admin: ads needed for Confirm Pending Balance / notice popup interval
 let refBonusPct = 10;            // live refer bonus percentage (kept in sync with settings)
 let botGuidelines = "";          // profile page guidelines text (admin editable)
 function updateMinWithdrawUI(){
@@ -587,7 +589,11 @@ function upd() {
     g("todayProgress").style.width = pct + "%";
     g("todayProgress").style.background = "linear-gradient(90deg,#f87171,#dc2626)";  // always red, grows as ads are watched
   }
-  if(g("confirmText")) g("confirmText").innerText = totalAds + "/" + confirmAds + " ads • +" + refBonusPct + "% ref bonus";
+  if(g("confirmText")){
+    if(confirmBusy) { /* text is controlled by the running confirm-ad flow */ }
+    else if(cFill < confirmAds) g("confirmText").innerText = "🔒 " + Math.min(cFill, confirmAds) + "/" + confirmAds + " ads • +" + refBonusPct + "% ref bonus";
+    else g("confirmText").innerText = "✅ Unlocked • Tap & watch " + (claimAds - cClaim) + " ad" + ((claimAds - cClaim) === 1 ? "" : "s") + " (" + cClaim + "/" + claimAds + ")";
+  }
   if(g("wBal")) g("wBal").innerText = mainBal.toFixed(2) + " TK";
   // Auto OFF box: small "per ad X TK" text under the count
   if(g("autoPerAd")) g("autoPerAd").innerText = "+" + fmtPrice(rewardAuto) + " TK / AD";
@@ -686,6 +692,8 @@ function adError(r){
   if(e === 'banned') return showBan();
   if(e === 'country') return showLocModal(r);
   if(e === 'limit') return showCenterModal("Limit Reached", (r.type === 'auto' ? "আজকের Auto Ads" : "আজকের Watch Ads") + " লিমিট শেষ (" + r.limit + ")");
+  if(e === 'locked') return showCenterModal("Locked 🔒", "আরও " + (r.need || "") + "টা ad দেখলে বার ফুল হবে, তারপর Confirm করা যাবে");
+  if(e === 'nopending') return showCenterModal("No Balance","❌ No pending balance!");
   if(e === 'forbidden') return showCenterModal("Open from Telegram","Telegram থেকে বট ওপেন করো");
   showCenterModal("Error","কিছু সমস্যা হয়েছে, আবার চেষ্টা করো");
 }
@@ -862,12 +870,35 @@ document.getElementById("stopBtn").onclick = () => {
   setButtonActive(null);
 };
 document.getElementById("confirmBtn").onclick = async () => {
-  if (pendingBal <= 0) return showCenterModal("No Balance","❌ No pending balance!");
-  if (totalAds < 1) return showCenterModal("Watch Ad","Watch at least 1 ad!");
-  let r; try{ r = await API('/api/confirm',{}); }catch(e){ r = {error:'net'}; }
-  if(r.ok){ applyState(r.state); showCenterModal("Confirmed","✅ Added to Main Balance"); }
-  else if(r.error === 'banned') showBan();
-  else showCenterModal("Error","আবার চেষ্টা করো");
+  if(confirmBusy) return;
+  if(autoRunning) return showCenterModal("Auto Running","Auto Loop চলছে, আগে Stop করো");
+  // LOCKED until the yellow bar is 100% full
+  if(cFill < confirmAds) return showCenterModal("Locked 🔒", "আরও " + (confirmAds - cFill) + "টা ad দেখলে বার ফুল হবে, তারপর Confirm করা যাবে");
+  if(pendingBal <= 0) return showCenterModal("No Balance","❌ No pending balance!");
+  confirmBusy = true;
+  const btn = document.getElementById("confirmBtn"), txt = document.getElementById("confirmText"), status = document.getElementById("autoStatus");
+  try{
+    const startResp = await srvAdStart("confirm");
+    if(!startResp) return;
+    if(txt) txt.innerText = "⏳ Loading ad " + (cClaim + 1) + "/" + claimAds + "…";
+    setTopStatus("manual_loading");
+    await new Promise(r => setTimeout(r, 2000));
+    if(txt) txt.innerText = "▶ Ad playing " + (cClaim + 1) + "/" + claimAds + "…";
+    setTopStatus("confirming");
+    await runAdWith16s("AD", AD_WAIT_MS);
+    if(txt) txt.innerText = "Confirming…";
+    await new Promise(r => setTimeout(r, 2000));
+    confirmBusy = false;                       // let upd() write the new text
+    const claimResp = await srvAdClaim();      // applyState → bar drains by 1/claimAds
+    setTopStatus(claimResp ? "completed" : "ready");
+    if(status) status.innerText = "IDLE";
+    if(claimResp && claimResp.confirm_done){
+      showCenterModal("Confirmed ✅","Pending balance Main Balance এ যোগ হয়েছে");
+    }
+  } finally {
+    confirmBusy = false;
+    try{ upd(); }catch(e){}
+  }
 };
 
 // Centered Popup
@@ -1059,7 +1090,11 @@ function tonkSound(){
 function updPremium(){
   try{
     const cb = document.getElementById('confirmBtn');
-    if(cb) cb.style.setProperty('--fill', (15 + 85 * Math.min(totalAds / Math.max(1, confirmAds), 1)).toFixed(1) + '%');
+    if(cb){
+      const _ratio = (cFill >= confirmAds) ? (1 - Math.min(cClaim / Math.max(1, claimAds), 1)) : Math.min(cFill / Math.max(1, confirmAds), 1);
+      cb.style.setProperty('--fill', (15 + 85 * _ratio).toFixed(1) + '%');
+      cb.classList.toggle('cf-locked', cFill < confirmAds); cb.classList.toggle('cf-ready', cFill >= confirmAds);
+    }
     if(pendingBal > _prevPending){ pendingPulse(); kutungSound(); }
     if(_prevMain !== null && mainBal > _prevMain && pendingBal >= _prevPending){ mainPulse(); tonkSound(); }  // reward landed in MAIN balance
     _prevMain = mainBal;
@@ -1131,6 +1166,7 @@ function applySettings(s){
   if(typeof s.ref_bonus === "number") refBonusPct = s.ref_bonus;       // keep live ref bonus in sync
   if(typeof s.usdt_rate === "number") usdtRate = s.usdt_rate;
   if(Number(s.confirm_ads) > 0) confirmAds = Number(s.confirm_ads);
+  if(Number(s.claim_ads) > 0) claimAds = Number(s.claim_ads);
   if(Number(s.notice_every) > 0) noticeEvery = Number(s.notice_every);
   try{ upd(); }catch(e){}   // refresh today bar / confirm bar with the new limits
   if(s.payment_methods && typeof s.payment_methods === "object") paymentMethods = Object.assign({bkash:true,nagad:true,rocket:true,binance:true,recharge:true}, s.payment_methods);
@@ -1223,13 +1259,14 @@ async function apConfirm(){
   apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
   apSet(apF('s_ca','Confirm Pending Balance - koita ad dekhle bar full hobe (e.g. 200 / 300 / 1000)', s.confirm_ads || 500)
+    + apF('s_cl','Confirm korar jonno koita ad dekhte hobe bar full hole (e.g. 5)', s.claim_ads || 5)
     + apF('s_ne','Notice ad - koita ad por por notice ad asbe (e.g. 5)', s.notice_every || 5)
     + '<div class="ap-note">Confirm Pending Balance bar ei number porjonto ad dekhle puro holud hobe. Notice ad ei number por por ashbe.</div>'
     + apSaveBtn('apConfirmSave'));
 }
 function apConfirmSave(){
-  const ca = Math.max(1, Math.floor(Number($('s_ca').value) || 0)), ne = Math.max(1, Math.floor(Number($('s_ne').value) || 0));
-  apPost({confirm_ads: ca, notice_every: ne});
+  const ca = Math.max(1, Math.floor(Number($('s_ca').value) || 0)), ne = Math.max(1, Math.floor(Number($('s_ne').value) || 0)), cl = Math.max(1, Math.floor(Number($('s_cl').value) || 0));
+  apPost({confirm_ads: ca, claim_ads: cl, notice_every: ne});
 }
 window.apConfirmSave = apConfirmSave;
 async function apSettings(){
