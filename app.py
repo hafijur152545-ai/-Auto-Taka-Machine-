@@ -169,6 +169,12 @@ DEFAULTS = {"settings": {"reward_watch": 0.5, "reward_auto": 0.10, "limit_watch"
                          "notice_version": 1,
                          "usdt_rate": 123.0,
                          "confirm_ads": 500, "notice_every": 5,
+                         # Confirm Pending Balance claim controls (admin panel)
+                         "claim_enabled": True,      # admin on/off switch for claiming
+                         "claim_cooldown": 0,        # seconds a user must wait after a claim before claiming again
+                         "claim_unit": 100,          # claim is done in blocks of this many auto ads (also the minimum)
+                         "notice_wait": 25,          # seconds the notice ad must be watched
+
                          "payment_methods": {"bkash": True, "nagad": True, "rocket": True, "binance": True, "recharge": True}},
             "users": {}, "withdraws": [], "refs": {}}
 
@@ -302,7 +308,9 @@ def new_bal():
             # Lifetime counters — never reset by admin "Reset Ads". Used by profile page.
             "lifetime_earned": 0.0, "lifetime_ads": 0,
             # Lifetime WATCH-ad counter — used to detect every 5th watch ad (5, 10, 15...) for the special popup.
-            "lifetime_watch_ads": 0}
+            "lifetime_watch_ads": 0,
+            # Confirm Pending Balance: auto ads counted since the last claim, last claim time, lifetime auto ads (notice ad counter)
+            "conf_ads": 0, "last_claim": 0, "lifetime_auto_ads": 0}
 
 def roll(rec):
     b = rec["bal"]
@@ -318,6 +326,7 @@ def state(rec):
             "watch_today": b["watch_today"], "auto_today": b["auto_today"],
             "lifetime_earned": round(b.get("lifetime_earned", 0), 2), "lifetime_ads": int(b.get("lifetime_ads", 0)),
             "lifetime_watch_ads": int(b.get("lifetime_watch_ads", 0)),
+            "conf_ads": int(b.get("conf_ads", 0)), "last_claim": int(b.get("last_claim", 0)), "server_time": int(time.time()),
             "joined": int(rec.get("joined", 0))}
 
 def ensure_user(d, u):
@@ -638,6 +647,10 @@ def api_settings():
                             cur["payment_methods"][mk] = bool(s["payment_methods"][mk])
                 if "confirm_ads" in s: cur["confirm_ads"] = max(1, int(float(s["confirm_ads"])))
                 if "notice_every" in s: cur["notice_every"] = max(1, int(float(s["notice_every"])))
+                if "claim_enabled" in s: cur["claim_enabled"] = bool(s["claim_enabled"])
+                if "claim_cooldown" in s: cur["claim_cooldown"] = min(86400 * 7, max(0, int(float(s["claim_cooldown"]))))
+                if "claim_unit" in s: cur["claim_unit"] = max(1, int(float(s["claim_unit"])))
+                if "notice_wait" in s: cur["notice_wait"] = min(120, max(5, int(float(s["notice_wait"]))))
                 if "ref_bonus" in s: cur["ref_bonus"] = min(100.0, max(0.0, float(s["ref_bonus"])))
                 for k in ("limit_watch", "limit_auto"):
                     if k in s: cur[k] = max(0, int(float(s[k])))
@@ -738,12 +751,13 @@ def api_ad_start():
         roll(rec); b = rec["bal"]
         lim = s["limit_watch"] if t == "watch" else s["limit_auto"]
         if b[t + "_today"] >= lim: return jsonify(error="limit", type=t, limit=lim)
-        # Detect every 5th WATCH ad (5, 10, 15...) for the special popup + 25s wait
+        # Auto ads fill the Confirm Pending Balance bar. When the bar is full the user must claim first.
+        if t == "auto" and s.get("claim_enabled", True) and int(b.get("conf_ads", 0)) >= int(s.get("confirm_ads", 500)):
+            return jsonify(error="claimfirst")
+        # NOTICE ad: every Nth AUTO ad (admin: notice_every). Watch ads never get a notice ad.
         is_special = False
-        if t == "watch":
-            cur_watch = int(b.get("lifetime_watch_ads", 0))
-            # (cur_watch + 1) is the ad number we are ABOUT to serve. If divisible by 5 → special.
-            if (cur_watch + 1) % max(1, int(s.get("notice_every", 5) or 5)) == 0:
+        if t == "auto":
+            if (int(b.get("lifetime_auto_ads", 0)) + 1) % max(1, int(s.get("notice_every", 5) or 5)) == 0:
                 is_special = True
         rec["ad"] = {"type": t, "t": time.time(), "special": is_special}
         if phone_tz: rec["phone_tz"] = phone_tz[:60]
@@ -761,7 +775,7 @@ def api_ad_claim():
         if not ad: return jsonify(error="noad")
         # Special 5th watch ad requires 25s wait; normal ads use AD_MIN_SECONDS (15s)
         is_special = bool(ad.get("special"))
-        min_seconds = 25.0 if is_special else AD_MIN_SECONDS
+        min_seconds = float(s.get("notice_wait", 25)) if is_special else AD_MIN_SECONDS
         wait = min_seconds - (time.time() - ad["t"])
         if wait > 0: return jsonify(error="early", wait=round(wait, 1))
         roll(rec); b = rec["bal"]; t = ad["type"]
@@ -777,6 +791,8 @@ def api_ad_claim():
             b["lifetime_watch_ads"] = int(b.get("lifetime_watch_ads", 0)) + 1
         else:
             b["pending"] = round(b["pending"] + reward, 4)
+            b["conf_ads"] = int(b.get("conf_ads", 0)) + 1          # counts toward Confirm Pending Balance
+            b["lifetime_auto_ads"] = int(b.get("lifetime_auto_ads", 0)) + 1
         b["today_ads"] += 1; b["total_ads"] += 1; b[t + "_today"] += 1
         # Lifetime counters — these NEVER reset (even when admin clicks "Reset All Users Ads")
         b["lifetime_earned"] = round(float(b.get("lifetime_earned", 0)) + reward, 4)
@@ -792,17 +808,32 @@ def api_ad_claim():
 
 @app.route('/api/confirm', methods=['POST'])
 def api_confirm():
+    """Claim: move a share of PENDING to MAIN. Only auto ads count. Claimed in blocks of `claim_unit` ads
+    (rounded to the nearest block, min 1 block). Share = claimed_ads / conf_ads of the pending balance."""
     u = tg_user()
     if not u: return jsonify(error="forbidden"), 403
     with _lock:
-        d = load(); rec = ensure_user(d, u)
+        d = load(); s = settings_of(d); rec = ensure_user(d, u)
         if rec.get("banned"): return jsonify(error="banned")
         roll(rec); b = rec["bal"]
-        if b["pending"] <= 0: return jsonify(error="nopending")
-        if b["total_ads"] < 1: return jsonify(error="noads")
-        b["main"] = round(b["main"] + b["pending"], 4); b["pending"] = 0.0
+        if not s.get("claim_enabled", True): return jsonify(error="claimoff")
+        conf = int(b.get("conf_ads", 0))
+        unit = max(1, min(int(s.get("claim_unit", 100)), int(s.get("confirm_ads", 500))))
+        if b["pending"] <= 0 or conf <= 0: return jsonify(error="nopending")
+        if conf < unit: return jsonify(error="minads", have=conf, need=unit)
+        cd = int(s.get("claim_cooldown", 0) or 0)
+        wait = int(b.get("last_claim", 0)) + cd - int(time.time())
+        if cd > 0 and wait > 0: return jsonify(error="cooldown", wait=wait)
+        parts = int(conf / unit + 0.5)                 # 330 -> 3, 370 -> 4, 1200 -> 12
+        claimed = min(conf, max(1, parts) * unit)
+        amount = b["pending"] if claimed >= conf else round(b["pending"] * claimed / conf, 4)
+        amount = min(amount, b["pending"])
+        b["main"] = round(b["main"] + amount, 4)
+        b["pending"] = round(b["pending"] - amount, 4) if claimed < conf else 0.0
+        b["conf_ads"] = conf - claimed
+        b["last_claim"] = int(time.time())
         save(d)
-        return jsonify(ok=True, state=state(rec))
+        return jsonify(ok=True, state=state(rec), amount=round(amount, 2), claimed_ads=claimed)
 
 @app.route('/api/withdraw', methods=['POST'])
 def api_withdraw():
