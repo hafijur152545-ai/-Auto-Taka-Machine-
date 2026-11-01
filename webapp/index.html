@@ -392,6 +392,7 @@ setTimeout(function(){
       <button data-t="confirm" onclick="apTab('confirm')">Confirm Pending Balance</button>
       <button data-t="payment" onclick="apTab('payment')">Payment System</button>
       <button data-t="dataclear" onclick="apTab('dataclear')">Data Clear</button>
+      <button data-t="tracker" onclick="apTab('tracker')">📊 User Ads Tracker</button>
     </div>
     <div class="ap-body" id="apBody"></div>
     <div class="ap-foot"><button onclick="apClose()">Close Panel</button></div>
@@ -676,6 +677,11 @@ async function runAdWith16s(statusLabel, customWaitMs) {
   const tg = window.Telegram?.WebApp;
   const userId = tg?.initDataUnsafe?.user?.id || 0;
   const t0 = Date.now();
+  // ===== User Ads Tracker: VIEW is counted right before the ad shows; CLICK if the user comes back after 25s+ =====
+  let hiddenSeen = false, visAt = 0, resolvedAt = 0;
+  const onVis = () => { if(document.hidden) hiddenSeen = true; else if(hiddenSeen) visAt = Date.now(); };
+  document.addEventListener("visibilitychange", onVis);
+  try{ API('/api/ad/track', {ev:'view'}).catch(()=>{}); }catch(e){}
   const tick = setInterval(() => {
     const left = Math.max(0, Math.ceil((waitMs - (Date.now() - t0)) / 1000));
     if(autoStatus) autoStatus.innerText = statusLabel + " " + left + "s";
@@ -685,11 +691,14 @@ async function runAdWith16s(statusLabel, customWaitMs) {
       if (typeof showAdspark === 'function') await showAdspark({ ymid: userId });
       else if (typeof showAdsparkPopup === 'function') await showAdsparkPopup({ ymid: userId });
     } catch(e){}
+    resolvedAt = Date.now();
   })();
   const waitP = new Promise(r => setTimeout(r, waitMs));
   const cap = new Promise(r => setTimeout(r, Math.max(45000, waitMs + 5000))); // safety if the ad never reports closing
   await Promise.all([Promise.race([ad, cap]), waitP]);
   clearInterval(tick);
+  document.removeEventListener("visibilitychange", onVis);
+  try{ API('/api/ad/track', {ev:'back', away: ((visAt || resolvedAt || Date.now()) - t0) / 1000}).catch(()=>{}); }catch(e){}
 }
 
 async function srvAdStart(type){
@@ -1280,7 +1289,7 @@ function apOpen(){ $("adminPanel").style.display = "flex"; apTab('settings'); }
 function apClose(){ $("adminPanel").style.display = "none"; }
 function apTab(t){
   document.querySelectorAll('#apTabs button[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
-  ({settings:apSettings, withdraw:apWithdraws, users:apUsers, limit:apLimit, notice:apNotice, refer:apRefer, confirm:apConfirm, payment:apPayment, dataclear:apDataClear})[t]();
+  ({settings:apSettings, withdraw:apWithdraws, users:apUsers, limit:apLimit, notice:apNotice, refer:apRefer, confirm:apConfirm, payment:apPayment, dataclear:apDataClear, tracker:apTracker})[t]();
 }
 const apSet = html => { $("apBody").innerHTML = html; };
 
@@ -1293,6 +1302,40 @@ async function apPost(payload){
     applySettings(r); showCenterModal('Saved','Updated successfully');
   }catch(e){ showCenterModal('Error','Save failed'); }
 }
+let _trkTimer = null;
+function trkTime(ts){ const d = new Date(ts*1000); let h = d.getHours(); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12; const p = n => String(n).padStart(2,"0"); return h + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds()) + " " + ap; }
+function trkCard(u){
+  const un = u.username ? "@" + u.username : (u.name || "User");
+  const hist = (u.hist || []).map(h => `<span class="trk-chip">${h.k === 'click' ? '🖱️ Click' : '👁️ View'} · ${trkTime(h.t)}</span>`).join("") || '<span class="trk-none">No activity yet</span>';
+  return `<div class="trk-user">
+    <div class="trk-top"><span class="trk-dot"></span><div class="trk-id"><b>${esc(un)}</b><small>UID: ${esc(u.id)} · ${u.flag || ''} ${esc(u.cc || '')}</small></div><span class="trk-on">ONLINE</span></div>
+    <div class="trk-grid">
+      <div class="trk-box"><small>TODAY · AD VIEWS</small><b class="v">${u.v_today}</b></div>
+      <div class="trk-box"><small>TODAY · AD CLICKS</small><b class="c">${u.c_today}</b></div>
+      <div class="trk-box"><small>ALL-TIME VIEWS</small><b>${u.v_all}</b></div>
+      <div class="trk-box"><small>ALL-TIME CLICKS</small><b>${u.c_all}</b></div>
+    </div>
+    <div class="trk-h">RECENT ACTIVITY HISTORY</div><div class="trk-hist">${hist}</div>
+  </div>`;
+}
+async function apTrackerLoad(){
+  const box = $("trkList"), cnt = $("trkCount"); if(!box) return;
+  let r; try{ r = await API('/api/admin/tracker'); }catch(e){ r = {error:'net'}; }
+  if(!$("trkList")) return;   // admin switched tab meanwhile
+  if(!r || !r.ok){ box.innerHTML = '<div class="ap-empty">Load failed</div>'; return; }
+  if(cnt) cnt.innerText = r.online + " online";
+  box.innerHTML = r.users.length ? r.users.map(trkCard).join("") : '<div class="ap-empty">এখন কেউ অনলাইনে নেই</div>';
+}
+function apTracker(){
+  apSet('<div class="trk-wrap"><div class="trk-head"><h3>📊 User Ads Tracker</h3><span class="trk-count" id="trkCount">… online</span></div>'
+    + '<div class="ap-note">Live online users only · Daily reset 6:00 AM Bangladesh time · History starts from tracker launch</div>'
+    + '<button class="ap-big" onclick="apTrackerLoad()">🔄 Refresh Live Tracker</button>'
+    + '<div id="trkList"><div class="ap-empty">Loading live users...</div></div></div>');
+  apTrackerLoad();
+  if(_trkTimer) clearInterval(_trkTimer);
+  _trkTimer = setInterval(() => { if($("trkList")) apTrackerLoad(); else { clearInterval(_trkTimer); _trkTimer = null; } }, 15000);   // auto refresh while the tab is open
+}
+window.apTrackerLoad = apTrackerLoad;
 async function apConfirm(){
   apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
