@@ -465,6 +465,7 @@ function applyState(st){
   if(!st) return;
   if(!window._stLoaded){ window._stLoaded = true; _prevMain = Number(st.main); }  // no glow/sound for the first load
   mainBal = st.main; pendingBal = st.pending; todayAds = st.today_ads; totalAds = st.total_ads; watchToday = st.watch_today; autoToday = st.auto_today;
+  confAds = Number(st.conf_ads||0); lastClaim = Number(st.last_claim||0); if(st.server_time) srvSkew = st.server_time - Math.floor(Date.now()/1000);
   if(typeof st.lifetime_earned === "number") lifetimeEarned = st.lifetime_earned;
   if(typeof st.lifetime_ads === "number") lifetimeAds = st.lifetime_ads;
   if(st.joined){
@@ -496,7 +497,8 @@ let _prevMain = null;          // for the main-balance glow + sound
 let minWithdrawLimits = JSON.parse(localStorage.getItem("minWithdrawLimits") || '{"bkash":0,"nagad":0,"rocket":0,"binance":0,"recharge":0}');
 let usdtRate = 123;             // 1 USDT = X TK (set by admin, used to show USDT min in TK)
 let paymentMethods = {bkash:true,nagad:true,rocket:true,binance:true,recharge:true};
-let confirmAds = 500, noticeEvery = 5;   // admin: ads needed for Confirm Pending Balance / notice popup interval
+let confirmAds = 500, noticeEvery = 5, claimEnabled = true, claimCooldown = 0, claimUnit = 100, noticeWait = 25;
+let confAds = 0, lastClaim = 0, srvSkew = 0;   // admin: ads needed for Confirm Pending Balance / notice popup interval
 let refBonusPct = 10;            // live refer bonus percentage (kept in sync with settings)
 let botGuidelines = "";          // profile page guidelines text (admin editable)
 function updateMinWithdrawUI(){
@@ -587,7 +589,12 @@ function upd() {
     g("todayProgress").style.width = pct + "%";
     g("todayProgress").style.background = "linear-gradient(90deg,#f87171,#dc2626)";  // always red, grows as ads are watched
   }
-  if(g("confirmText")) g("confirmText").innerText = totalAds + "/" + confirmAds + " ads • +" + refBonusPct + "% ref bonus";
+  if(g("confirmText")){
+    const cl = claimLeft();
+    g("confirmText").innerText = !claimEnabled ? "Claim OFF • " + confAds + "/" + confirmAds + " ads"
+      : cl > 0 ? "Wait " + fmtWait(cl) + " • " + confAds + "/" + confirmAds + " ads"
+      : confAds + "/" + confirmAds + " ads • +" + refBonusPct + "% ref bonus";
+  }
   if(g("wBal")) g("wBal").innerText = mainBal.toFixed(2) + " TK";
   // Auto OFF box: small "per ad X TK" text under the count
   if(g("autoPerAd")) g("autoPerAd").innerText = "+" + fmtPrice(rewardAuto) + " TK / AD";
@@ -686,6 +693,7 @@ function adError(r){
   if(e === 'banned') return showBan();
   if(e === 'country') return showLocModal(r);
   if(e === 'limit') return showCenterModal("Limit Reached", (r.type === 'auto' ? "আজকের Auto Ads" : "আজকের Watch Ads") + " লিমিট শেষ (" + r.limit + ")");
+  if(e === 'claimfirst') return showCenterModal("Claim First","Confirm Pending Balance বার পূর্ণ! আগে Claim করুন, তারপর Auto Ads চলবে।");
   if(e === 'forbidden') return showCenterModal("Open from Telegram","Telegram থেকে বট ওপেন করো");
   showCenterModal("Error","কিছু সমস্যা হয়েছে, আবার চেষ্টা করো");
 }
@@ -710,20 +718,8 @@ async function watchAdFlow() {
     return;
   }
 
-  // If this is a 5th watch ad → show special countdown popup. User must click or ad is cancelled.
-  const isSpecial = !!startResp.special;
-  if(isSpecial){
-    const proceeded = await showSpecialAdPopup();
-    if(!proceeded){
-      // Countdown expired — user didn't click in time. Don't claim the ad.
-      if(autoBtn) autoBtn.classList.remove("btn-dimmed");
-      setTopStatus("ready");
-      return;
-    }
-  }
-
-  // Ad wait time: 25s for special 5th ad, 16s for normal ads
-  const adWaitMs = isSpecial ? 25000 : AD_WAIT_MS;
+  const isSpecial = false;   // notice ads now belong to Auto Loop only
+  const adWaitMs = AD_WAIT_MS;
 
   // Phase 1: READY (red) -> Loading (grow, glow) for 2s
   if(watchBtn){ watchBtn.classList.add("ad-preparing"); watchBtn.innerHTML = '<span class="ad-prep-text">PREPARING AD…</span><span class="ad-spinner"></span>'; }
@@ -774,7 +770,7 @@ function showSpecialAdPopup(){
         ov.style.display = "none";
         numEl.style.color = "";
         // Countdown expired — show message
-        showCenterModal("সময় শেষ", "সময়ের মধ্যে ক্লিক করেন না। আবার Watch Ad বাটনে চাপ দিন।");
+        showCenterModal("সময় শেষ", "সময়ের মধ্যে ক্লিক করেন না। আবার Ad শুরু করুন।");
         resolve(false);
       }
     }, 1000);
@@ -806,8 +802,15 @@ async function autoLoopFlow() {
     // Disable Watch button while Auto is running (mutual exclusion)
     if(watchBtn) watchBtn.classList.add("btn-dimmed");
 
-    if(!(await srvAdStart("auto"))){ document.getElementById("stopBtn").onclick(); break; }
+    const startResp = await srvAdStart("auto");
+    if(!startResp){ document.getElementById("stopBtn").onclick(); break; }
     if(!autoRunning) break;
+    // NOTICE ad (every Nth auto ad): user must click the popup, then watch for notice_wait seconds
+    const isSpecial = !!startResp.special;
+    if(isSpecial){
+      const proceeded = await showSpecialAdPopup();
+      if(!proceeded){ document.getElementById("stopBtn").onclick(); break; }
+    }
 
     // Phase 1: 2s preparing
     if(autoBtn){ autoBtn.classList.add("ad-preparing"); }
@@ -819,7 +822,7 @@ async function autoLoopFlow() {
     // Phase 2: Ad plays
     if(autoBtn){ autoBtn.classList.remove("ad-preparing"); autoBtn.classList.add("ad-playing"); }
     setTopStatus("confirming");
-    await runAdWith16s("AUTO AD");
+    await runAdWith16s("AUTO AD", isSpecial ? noticeWait * 1000 : 0);
     if(!autoRunning) break;
 
     // Phase 3: 2s confirm loading
@@ -861,12 +864,24 @@ document.getElementById("stopBtn").onclick = () => {
   setTopStatus("ready");
   setButtonActive(null);
 };
+function claimLeft(){ if(!claimCooldown || !lastClaim) return 0; return Math.max(0, lastClaim + claimCooldown - (Math.floor(Date.now()/1000) + srvSkew)); }
+function fmtWait(n){ n = Math.ceil(n); if(n >= 3600) return Math.floor(n/3600) + "h " + Math.floor(n%3600/60) + "m"; if(n >= 60) return Math.floor(n/60) + "m " + (n%60) + "s"; return n + "s"; }
+setInterval(() => { try{ if(claimLeft() > 0 || window._hadWait){ window._hadWait = claimLeft() > 0; upd(); } }catch(e){} }, 1000);
 document.getElementById("confirmBtn").onclick = async () => {
-  if (pendingBal <= 0) return showCenterModal("No Balance","❌ No pending balance!");
-  if (totalAds < 1) return showCenterModal("Watch Ad","Watch at least 1 ad!");
-  let r; try{ r = await API('/api/confirm',{}); }catch(e){ r = {error:'net'}; }
-  if(r.ok){ applyState(r.state); showCenterModal("Confirmed","✅ Added to Main Balance"); }
+  if(!claimEnabled) return showCenterModal("Claim Off","এখন Claim বন্ধ আছে। Admin চালু করলে আবার Claim করতে পারবেন।");
+  const unit = Math.min(claimUnit, confirmAds);
+  if(pendingBal <= 0 || confAds < 1) return showCenterModal("No Balance","❌ No pending balance! Auto Loop এ ad দেখুন।");
+  if(confAds < unit) return showCenterModal("Min " + unit + " Ads","Claim করতে কমপক্ষে " + unit + " টা Auto Ad লাগবে। এখন: " + confAds + "/" + unit);
+  const cl = claimLeft();
+  if(cl > 0) return showCenterModal("Please Wait","আবার Claim করতে " + fmtWait(cl) + " অপেক্ষা করুন।");
+  if(window._claiming) return; window._claiming = true;
+  let r; try{ r = await API('/api/confirm',{}); }catch(e){ r = {error:'net'}; } finally { window._claiming = false; }
+  if(r.ok){ applyState(r.state); showCenterModal("Claimed ✅", "+" + r.amount.toFixed(2) + " TK Main Balance এ যোগ হয়েছে (" + r.claimed_ads + " ads)"); }
   else if(r.error === 'banned') showBan();
+  else if(r.error === 'claimoff') showCenterModal("Claim Off","এখন Claim বন্ধ আছে।");
+  else if(r.error === 'minads') showCenterModal("Min " + r.need + " Ads","Claim করতে কমপক্ষে " + r.need + " টা Auto Ad লাগবে। এখন: " + r.have);
+  else if(r.error === 'cooldown'){ lastClaim = Math.floor(Date.now()/1000) + srvSkew + r.wait - claimCooldown; showCenterModal("Please Wait","আবার Claim করতে " + fmtWait(r.wait) + " অপেক্ষা করুন।"); }
+  else if(r.error === 'nopending') showCenterModal("No Balance","❌ No pending balance!");
   else showCenterModal("Error","আবার চেষ্টা করো");
 };
 
@@ -1059,7 +1074,7 @@ function tonkSound(){
 function updPremium(){
   try{
     const cb = document.getElementById('confirmBtn');
-    if(cb) cb.style.setProperty('--fill', (15 + 85 * Math.min(totalAds / Math.max(1, confirmAds), 1)).toFixed(1) + '%');
+    if(cb) cb.style.setProperty('--fill', (15 + 85 * Math.min(confAds / Math.max(1, confirmAds), 1)).toFixed(1) + '%');
     if(pendingBal > _prevPending){ pendingPulse(); kutungSound(); }
     if(_prevMain !== null && mainBal > _prevMain && pendingBal >= _prevPending){ mainPulse(); tonkSound(); }  // reward landed in MAIN balance
     _prevMain = mainBal;
@@ -1132,6 +1147,10 @@ function applySettings(s){
   if(typeof s.usdt_rate === "number") usdtRate = s.usdt_rate;
   if(Number(s.confirm_ads) > 0) confirmAds = Number(s.confirm_ads);
   if(Number(s.notice_every) > 0) noticeEvery = Number(s.notice_every);
+  if(typeof s.claim_enabled === "boolean") claimEnabled = s.claim_enabled;
+  if(s.claim_cooldown != null) claimCooldown = Number(s.claim_cooldown) || 0;
+  if(Number(s.claim_unit) > 0) claimUnit = Number(s.claim_unit);
+  if(Number(s.notice_wait) > 0) noticeWait = Number(s.notice_wait);
   try{ upd(); }catch(e){}   // refresh today bar / confirm bar with the new limits
   if(s.payment_methods && typeof s.payment_methods === "object") paymentMethods = Object.assign({bkash:true,nagad:true,rocket:true,binance:true,recharge:true}, s.payment_methods);
   if(typeof s.bot_guidelines === "string"){
@@ -1222,14 +1241,23 @@ async function apPost(payload){
 async function apConfirm(){
   apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
+  const cd = Number(s.claim_cooldown || 0), useMin = cd >= 60 && cd % 60 === 0;
   apSet(apF('s_ca','Confirm Pending Balance - koita ad dekhle bar full hobe (e.g. 200 / 300 / 1000)', s.confirm_ads || 500)
-    + apF('s_ne','Notice ad - koita ad por por notice ad asbe (e.g. 5)', s.notice_every || 5)
-    + '<div class="ap-note">Confirm Pending Balance bar ei number porjonto ad dekhle puro holud hobe. Notice ad ei number por por ashbe.</div>'
+    + apF('s_ne','Notice ad - koita Auto ad por por notice ad asbe (e.g. 5)', s.notice_every || 5)
+    + apF('s_nw','Notice ad koto second dekhte hobe (5-120)', s.notice_wait || 25)
+    + apF('s_cu','Claim block (minimum + koto ad por por ek vag, e.g. 100)', s.claim_unit || 100)
+    + '<div class="ap-lab">Claim er por abar claim korte koto wait korte hobe (0 = wait nai)</div>'
+    + '<div style="display:flex;gap:8px"><input class="ap-in" id="s_cd" type="number" min="0" value="'+(useMin ? cd/60 : cd)+'" style="flex:1">'
+    + '<select class="ap-in" id="s_cdu" style="flex:0 0 110px"><option value="1"'+(useMin?'':' selected')+'>Second</option><option value="60"'+(useMin?' selected':'')+'>Minute</option></select></div>'
+    + '<div class="ap-lab" style="margin-top:12px">Confirm Pending Balance Claim</div>'
+    + '<select class="ap-in" id="s_ce"><option value="1"'+(s.claim_enabled === false ? '' : ' selected')+'>ON (Claim cholbe)</option><option value="0"'+(s.claim_enabled === false ? ' selected' : '')+'>OFF (Claim bondho)</option></select>'
+    + '<div class="ap-note">Sudhu Auto ad ei bar fill kore, Watch ad na. Bar full hole Claim na kora porjonto Auto ads cholbe na. Claim e '+(s.claim_unit||100)+' ad er block hisabe pending theke vag hoye Main Balance e jabe (min '+(s.claim_unit||100)+' ad). Notice ad ei number por por Auto ad e ashbe.</div>'
     + apSaveBtn('apConfirmSave'));
 }
 function apConfirmSave(){
-  const ca = Math.max(1, Math.floor(Number($('s_ca').value) || 0)), ne = Math.max(1, Math.floor(Number($('s_ne').value) || 0));
-  apPost({confirm_ads: ca, notice_every: ne});
+  const n = (id, mn) => Math.max(mn, Math.floor(Number($(id).value) || 0));
+  apPost({confirm_ads: n('s_ca',1), notice_every: n('s_ne',1), notice_wait: n('s_nw',5), claim_unit: n('s_cu',1),
+          claim_cooldown: n('s_cd',0) * (Number($('s_cdu').value) || 1), claim_enabled: $('s_ce').value === '1'});
 }
 window.apConfirmSave = apConfirmSave;
 async function apSettings(){
