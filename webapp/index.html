@@ -51,6 +51,21 @@
   </div>
 </div>
 
+<!-- Confirm-Pending popup: shown before EVERY confirm ad. Ad opens only after the user presses the button -->
+<div id="confirmAdOv" class="special-ad-ov" style="display:none">
+  <div class="special-ad-box">
+    <div class="spad-icon-wrap"><div class="spad-icon">📢</div></div>
+    <div class="spad-title">গুরুত্বপূর্ণ নোটিশ</div>
+    <div class="spad-info">🎯 Confirm Ad <span class="spad-hl" id="cadStep">1/5</span><br>⏱️ <span class="spad-hl">১৫ সেকেন্ড</span> বিজ্ঞাপন দেখুন<br>তারপর বিজ্ঞাপনের উপর ক্লিক করুন</div>
+    <div class="spad-rules">
+      ⚠️ এই Ad এ যাওয়ার পরে ১৫ সেকেন্ড দেখে Ad এর উপরে ক্লিক করবেন। <b>অবশ্যই ক্লিক করতে হবে</b>, ক্লিক করে ১০ সেকেন্ড ওয়েট করবেন ✅<br>
+      🔔 নিয়ম না মেনে কাজ করলে ব্যান করা হবে 🚫
+    </div>
+    <button class="spad-go-btn" id="cadGoBtn" onclick="onConfirmAdGo(true)">▶ Start Ad</button>
+    <button onclick="onConfirmAdGo(false)" style="margin-top:10px;background:none;border:none;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer">বাতিল করুন</button>
+  </div>
+</div>
+
 <script>
 // ===== NEW notice system: welcome popup + thin banner + red bell indicator =====
 var NOTICE = {version:0, has_new:false, welcome_text:"", welcome_btn_text:"", welcome_btn_url:"", banner:""};
@@ -498,7 +513,7 @@ let _prevMain = null;          // for the main-balance glow + sound
 let minWithdrawLimits = JSON.parse(localStorage.getItem("minWithdrawLimits") || '{"bkash":0,"nagad":0,"rocket":0,"binance":0,"recharge":0}');
 let usdtRate = 123;             // 1 USDT = X TK (set by admin, used to show USDT min in TK)
 let paymentMethods = {bkash:true,nagad:true,rocket:true,binance:true,recharge:true};
-let confirmAds = 500, claimAds = 5, noticeEvery = 5; let cFill = 0, cClaim = 0, confirmBusy = false;   // admin: ads needed for Confirm Pending Balance / notice popup interval
+let confirmAds = 500, claimAds = 5, noticeEvery = 5; let cFill = 0, cClaim = 0, confirmBusy = false, claimEnabled = true, claimGapMin = 2;   // admin: ads needed for Confirm Pending Balance / notice popup interval
 let refBonusPct = 10;            // live refer bonus percentage (kept in sync with settings)
 let botGuidelines = "";          // profile page guidelines text (admin editable)
 function updateMinWithdrawUI(){
@@ -694,6 +709,9 @@ function adError(r){
   if(e === 'limit') return showCenterModal("Limit Reached", (r.type === 'auto' ? "আজকের Auto Ads" : "আজকের Watch Ads") + " লিমিট শেষ (" + r.limit + ")");
   if(e === 'locked') return showCenterModal("Locked 🔒", "আরও " + (r.need || "") + "টা ad দেখলে বার ফুল হবে, তারপর Confirm করা যাবে");
   if(e === 'nopending') return showCenterModal("No Balance","❌ No pending balance!");
+  if(e === 'claimoff') return showCenterModal("Claim বন্ধ 🔒","এখন Confirm Pending Balance বন্ধ আছে। Admin চালু করলে তখন Claim করতে পারবেন।");
+  if(e === 'cooldown'){ const g = (r.gap_min != null ? r.gap_min : claimGapMin), w = Number(r.wait) || 0, mm = Math.floor(w/60), ss = w % 60;
+    return showCenterModal("একটু অপেক্ষা করুন ⏳", "আপনি " + g + " মিনিট Watch Ads দেখুন অথবা রেস্ট করুন। " + g + " মিনিট পরে চেষ্টা করুন।\n\nবাকি: " + (mm > 0 ? mm + " মিনিট " : "") + ss + " সেকেন্ড"); }
   if(e === 'forbidden') return showCenterModal("Open from Telegram","Telegram থেকে বট ওপেন করো");
   showCenterModal("Error","কিছু সমস্যা হয়েছে, আবার চেষ্টা করো");
 }
@@ -869,32 +887,50 @@ document.getElementById("stopBtn").onclick = () => {
   setTopStatus("ready");
   setButtonActive(null);
 };
+function showConfirmAdPopup(step, total){
+  return new Promise(resolve => {
+    const ov = document.getElementById("confirmAdOv");
+    if(!ov){ resolve(true); return; }
+    const st = document.getElementById("cadStep"); if(st) st.innerText = step + "/" + total;
+    ov.style.display = "flex";
+    window._cadResolve = resolve;
+  });
+}
+function onConfirmAdGo(go){
+  const ov = document.getElementById("confirmAdOv"); if(ov) ov.style.display = "none";
+  if(window._cadResolve){ window._cadResolve(!!go); window._cadResolve = null; }
+}
 document.getElementById("confirmBtn").onclick = async () => {
   if(confirmBusy) return;
   if(autoRunning) return showCenterModal("Auto Running","Auto Loop চলছে, আগে Stop করো");
+  if(!claimEnabled) return adError({error:'claimoff'});
   // LOCKED until the yellow bar is 100% full
-  if(cFill < confirmAds) return showCenterModal("Locked 🔒", "আরও " + (confirmAds - cFill) + "টা ad দেখলে বার ফুল হবে, তারপর Confirm করা যাবে");
+  if(cFill < confirmAds) return showCenterModal("Locked 🔒", "আরও " + (confirmAds - cFill) + "টা Auto ad দেখলে বার ফুল হবে, তারপর Confirm করা যাবে");
   if(pendingBal <= 0) return showCenterModal("No Balance","❌ No pending balance!");
   confirmBusy = true;
-  const btn = document.getElementById("confirmBtn"), txt = document.getElementById("confirmText"), status = document.getElementById("autoStatus");
+  const txt = document.getElementById("confirmText"), status = document.getElementById("autoStatus");
   try{
+    // 1) server pre-check: claim ON? bar full? 2-minute rest between ads?
+    let chk; try{ chk = await API('/api/confirm_check', {}); }catch(e){ chk = {error:'net'}; }
+    if(!chk || !chk.ok) return adError(chk);
+    // 2) notice popup — ad opens only after the user presses Start
+    const go = await showConfirmAdPopup(chk.step, chk.total);
+    if(!go) return;
     const startResp = await srvAdStart("confirm");
     if(!startResp) return;
-    if(txt) txt.innerText = "⏳ Loading ad " + (cClaim + 1) + "/" + claimAds + "…";
+    if(txt) txt.innerText = "⏳ Loading ad " + chk.step + "/" + chk.total + "…";
     setTopStatus("manual_loading");
     await new Promise(r => setTimeout(r, 2000));
-    if(txt) txt.innerText = "▶ Ad playing " + (cClaim + 1) + "/" + claimAds + "…";
+    if(txt) txt.innerText = "▶ Ad playing " + chk.step + "/" + chk.total + "…";
     setTopStatus("confirming");
-    await runAdWith16s("AD", AD_WAIT_MS);
+    await runAdWith16s("AD", 25000);            // 15s watch + click + 10s wait = 25s
     if(txt) txt.innerText = "Confirming…";
     await new Promise(r => setTimeout(r, 2000));
-    confirmBusy = false;                       // let upd() write the new text
-    const claimResp = await srvAdClaim();      // applyState → bar drains by 1/claimAds
+    confirmBusy = false;
+    const claimResp = await srvAdClaim();       // bar drains by 1/claimAds
     setTopStatus(claimResp ? "completed" : "ready");
     if(status) status.innerText = "IDLE";
-    if(claimResp && claimResp.confirm_done){
-      showCenterModal("Confirmed ✅","Pending balance Main Balance এ যোগ হয়েছে");
-    }
+    if(claimResp && claimResp.confirm_done) showCenterModal("Confirmed ✅","Pending balance Main Balance এ যোগ হয়েছে");
   } finally {
     confirmBusy = false;
     try{ upd(); }catch(e){}
@@ -1167,6 +1203,8 @@ function applySettings(s){
   if(typeof s.usdt_rate === "number") usdtRate = s.usdt_rate;
   if(Number(s.confirm_ads) > 0) confirmAds = Number(s.confirm_ads);
   if(Number(s.claim_ads) > 0) claimAds = Number(s.claim_ads);
+  if(typeof s.claim_enabled === "boolean") claimEnabled = s.claim_enabled;
+  if(s.claim_gap_min != null && !isNaN(Number(s.claim_gap_min))) claimGapMin = Number(s.claim_gap_min);
   if(Number(s.notice_every) > 0) noticeEvery = Number(s.notice_every);
   try{ upd(); }catch(e){}   // refresh today bar / confirm bar with the new limits
   if(s.payment_methods && typeof s.payment_methods === "object") paymentMethods = Object.assign({bkash:true,nagad:true,rocket:true,binance:true,recharge:true}, s.payment_methods);
@@ -1258,16 +1296,24 @@ async function apPost(payload){
 async function apConfirm(){
   apSet('<div class="ap-empty">Loading...</div>');
   const s = await API('/api/settings');
-  apSet(apF('s_ca','Confirm Pending Balance - koita ad dekhle bar full hobe (e.g. 200 / 300 / 1000)', s.confirm_ads || 500)
-    + apF('s_cl','Confirm korar jonno koita ad dekhte hobe bar full hole (e.g. 5)', s.claim_ads || 5)
+  const on = s.claim_enabled !== false;
+  apSet('<div class="ap-lab">Claim (Confirm Pending Balance) ON / OFF</div>'
+    + '<div class="pm-row"><span class="pm-name">Claim</span><button class="pm-toggle ' + (on ? 'on' : 'off') + '" onclick="apClaimToggle(' + (on ? 'false' : 'true') + ')">' + (on ? 'ON' : 'OFF') + '</button></div>'
+    + '<div class="ap-note">OFF করলে user রা Auto ad দেখে বার ফুল করতে পারবে, কিন্তু Claim করতে পারবে না। আপনি যখন ON করবেন তখন Claim হবে।</div>'
+    + apF('s_ca','Bar fill - koita AUTO ad dekhle bar full hobe (e.g. 200 / 300 / 1000)', s.confirm_ads || 500)
+    + apF('s_cl','Bar full hole Confirm korar jonno koita ad dekhte hobe (e.g. 5)', s.claim_ads || 5)
+    + apF('s_gp','Ek ad dekhar por koto MINUTE por arekta ad dekhte parbe (e.g. 2)', (s.claim_gap_min != null ? s.claim_gap_min : 2))
     + apF('s_ne','Notice ad - koita ad por por notice ad asbe (e.g. 5)', s.notice_every || 5)
-    + '<div class="ap-note">Confirm Pending Balance bar ei number porjonto ad dekhle puro holud hobe. Notice ad ei number por por ashbe.</div>'
+    + '<div class="ap-note">শুধু Auto Loop ad বারে গোনা হয় (Watch ad সরাসরি Main Balance এ যায়)। Confirm এর ad গুলো দেখলে আলাদা কোনো টাকা পাবে না।</div>'
     + apSaveBtn('apConfirmSave'));
 }
 function apConfirmSave(){
   const ca = Math.max(1, Math.floor(Number($('s_ca').value) || 0)), ne = Math.max(1, Math.floor(Number($('s_ne').value) || 0)), cl = Math.max(1, Math.floor(Number($('s_cl').value) || 0));
-  apPost({confirm_ads: ca, claim_ads: cl, notice_every: ne});
+  const gp = Math.max(0, Number($('s_gp').value) || 0);
+  apPost({confirm_ads: ca, claim_ads: cl, claim_gap_min: gp, notice_every: ne});
 }
+async function apClaimToggle(v){ await apPost({claim_enabled: !!v}); apConfirm(); }
+window.apClaimToggle = apClaimToggle;
 window.apConfirmSave = apConfirmSave;
 async function apSettings(){
   apSet('<div class="ap-empty">Loading...</div>');
