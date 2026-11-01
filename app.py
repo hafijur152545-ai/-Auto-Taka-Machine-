@@ -76,9 +76,9 @@ def min_text(s):
 
 def welcome_html(name, s):
     lines = ["💎 <b>" + BRAND + "</b> 💰", "", "👋 Hello <b>" + hesc(name) + "</b>", "",
-             "✅ VPN দিয়ে কাজ করতে হবে (<b>🇦🇺 Australia</b>)",
-             "✅ মিনিমাম Withdraw <b>100.00 TK</b>",
-             "", "📢 <b>Bot Channel</b> এ অবশ্যই জয়েন থাকুন!", "আপডেট, পেমেন্ট নোটিশ আর প্রুফ সবার আগে ওখানেই পাবেন ✨",
+             "✅ VPN ব্যবহার করে কাজ করতে হবে — 🌍 কান্ট্রি হবে অ্যাডমিনের রুলস অনুযায়ী 🤝",
+             "✅ মিনিমাম Withdraw: <b>100.00 TK</b> 💸",
+             "", "📢 <b>Bot Channel</b>-এ অবশ্যই জয়েন থাকুন!", "আপডেট, পেমেন্ট নোটিশ আর প্রুফ সবার আগে ওখানেই পাবেন ✨",
              "", "👇 নিচের বাটনে ক্লিক করে বট ওপেন করুন:"]
     return "\n".join(lines)
 
@@ -263,57 +263,94 @@ async def h_bc_cb(update, context):
     await q.answer("শুরু হয়েছে" if started else "আরেকটা Broadcast চলছে")
     await q.edit_message_text(("📢 <b>" + NOTICE_LABEL.get(key, "Notice") + "</b> পাঠানো শুরু হয়েছে... (শেষ হলে রিপোর্ট আসবে)") if started else "⏳ আরেকটা Broadcast চলছে, একটু পরে আবার চেষ্টা করুন।", parse_mode="HTML")
 
-async def h_custom(update, context):
-    """/alltopicsms <text>  and  /important <text>  → broadcast your own text to every user."""
+def fancy2(title, body, e1="💎", e2="💰"):
+    return ("┏━━━━━━━━━━━━━━━━━━┓\n  " + e1 + " <b>" + title + "</b> " + e2 + "\n┗━━━━━━━━━━━━━━━━━━┛\n\n" + body +
+            "\n\n──────────────────\n🤖 <b>" + BRAND + "</b>")
+
+# keyword -> (words, emoji, closing line).  Works for Bangla and Banglish words.
+STYLE_CATS = [
+    (["problem", "somossa", "somosya", "সমস্যা", "error", "issue", "bug", "ঝামেলা", "jhamela"], "⚠️", "🙏 অসুবিধার জন্য দুঃখিত, দ্রুত সমাধানের চেষ্টা চলছে 🛠️"),
+    (["deri", "দেরি", "দেরী", "late", "delay", "wait", "অপেক্ষা", "opekkha", "soon", "শীঘ্রই"], "⏳", "🙏 একটু ধৈর্য ধরুন, দেরির জন্য আন্তরিকভাবে দুঃখিত 💝"),
+    (["running", "cholche", "cholse", "চলছে", "চলমান", "processing"], "🔄", "⏳ ধাপে ধাপে সবার পেমেন্ট দেওয়া হচ্ছে।"),
+    (["complete", "completed", "done", "sent", "pathano", "pathiye", "pathaisi", "পাঠানো", "পাঠিয়ে", "clear", "ক্লিয়ার", "সম্পন্ন", "paid", "হয়ে গেছে", "hoye gese", "hoye geche", "করা হয়েছে"], "✅", "🔔 সবাই নিজের একাউন্ট চেক করুন 💝"),
+    (["withdraw", "উইথড্র", "withdrawal", "request", "রিকোয়েস্ট"], "💸", "💸 Withdraw সংক্রান্ত আপডেটটা ভালোভাবে দেখে নিন।"),
+    (["update", "আপডেট", "notun", "নতুন"], "🆕", "📢 নতুন আপডেট পেতে Channel এ থাকুন।"),
+    (["sorry", "khoma", "ক্ষমা", "দুঃখিত", "dukkhito", "dukhito"], "🙏", "💝 আপনাদের সহযোগিতার জন্য ধন্যবাদ।"),
+    (["thanks", "thank", "dhonnobad", "ধন্যবাদ"], "🙏", "💝 Thanks for your support"),
+    (["bonus", "offer", "বোনাস", "অফার", "gift", "গিফট"], "🎁", "🎉 সুযোগটা কাজে লাগান!"),
+    (["rule", "rules", "নিয়ম", "রুলস", "warning", "সতর্ক", "ban", "ব্যান"], "📜", "👀 নিয়ম মেনে কাজ করুন, ধন্যবাদ।"),
+]
+STYLE_BASE = {"payment": ("PAYMENT NOTICE", "💳"), "important": ("IMPORTANT NOTICE", "⚠️"), "hello": ("HELLO EVERYONE", "👋")}
+
+def style_notice(kind, text):
+    """admin writes plain text -> stylish message, emoji chosen from what the text means."""
+    raw = (text or "").strip(); t = raw.lower()
+    hits = [(e, c) for words, e, c in STYLE_CATS if any(w in t for w in words)]
+    title, base_e = STYLE_BASE.get(kind, ("NOTICE", "📣"))
+    lead = hits[0][0] if hits else base_e
+    extra = " ".join(dict.fromkeys(e for e, _ in hits[1:3] if e != lead))
+    body = lead + " <b>" + hesc(raw) + "</b>" + ((" " + extra) if extra else "")
+    closings = list(dict.fromkeys(c for _, c in hits[:2]))
+    if closings: body += "\n\n" + "\n".join(closings)
+    return fancy2(title, body, base_e, "💎")
+
+async def h_styled(update, context):
+    """/payment <text>   /important <text>   /hello <text>  -> stylish broadcast. No text = old fixed notice (preview)."""
     if not _is_admin_update(update): return
     cmd = (update.effective_message.text or "").split()[0].lstrip("/").split("@")[0].lower()
     a = _args_text(update, 1)
     if not a:
-        await update.effective_message.reply_text("✍️ ব্যবহার: /" + cmd + " আপনার লেখা মেসেজ", parse_mode="HTML"); return
-    body = hesc(a[0])
-    html = fancy("IMPORTANT NOTICE ⚠️", "📣 " + body) if cmd == "important" else fancy("📢 MESSAGE FOR ALL", body)
-    started = start_broadcast(html, report_to=update.effective_user.id, label="Message")
+        if cmd == "important":
+            await update.effective_message.reply_text("✍️ ব্যবহার: /important আপনার লেখা (যেমন: /important আজ রাতে বট আপডেট হবে)"); return
+        return await h_notice_ask(update, context)
+    started = start_broadcast(style_notice(cmd, a[0]), report_to=update.effective_user.id, label=cmd.upper())
     await update.effective_message.reply_text("📢 সবাইকে পাঠানো শুরু হয়েছে... (শেষ হলে রিপোর্ট আসবে)" if started else "⏳ আরেকটা Broadcast চলছে, একটু পরে আবার চেষ্টা করুন।")
 
-async def h_personal(update, context):
-    """/personal <user_id> <text> → message to ONE user."""
+async def h_custom(update, context):
+    """/alltopicsms <text> -> your text goes to everybody exactly as written (no style, no header)."""
     if not _is_admin_update(update): return
-    a = _args_text(update, 2)
-    if len(a) < 2 or not a[0].isdigit():
-        await update.effective_message.reply_text("✍️ ব্যবহার: /personal USER_ID আপনার লেখা মেসেজ"); return
-    try:
-        await context.bot.send_message(int(a[0]), fancy("PERSONAL MESSAGE 💌", hesc(a[1])), parse_mode="HTML")
-        await update.effective_message.reply_text("✅ পাঠানো হয়েছে (" + a[0] + ")")
-    except Exception as e:
-        await update.effective_message.reply_text("❌ পাঠানো যায়নি: " + hesc(str(e)[:150]))
+    a = _args_text(update, 1)
+    if not a:
+        await update.effective_message.reply_text("✍️ ব্যবহার: /alltopicsms আপনার লেখা মেসেজ"); return
+    started = start_broadcast(hesc(a[0]), report_to=update.effective_user.id, label="Message")
+    await update.effective_message.reply_text("📢 সবাইকে পাঠানো শুরু হয়েছে... (শেষ হলে রিপোর্ট আসবে)" if started else "⏳ আরেকটা Broadcast চলছে, একটু পরে আবার চেষ্টা করুন।")
 
-async def h_rate(update, context):
-    """/ratedown 10  or  /rateup 10 -> change Watch + Auto ad reward by that many percent (admin only)."""
+def _fmt_rate(v):
+    v = round(float(v), 4)
+    return ("%.2f" % v) if abs(v * 100 - round(v * 100)) < 1e-9 else ("%g" % v)
+
+async def h_setrate(update, context):
+    """/watchrate 0.10   /autorate 0.05  -> sets that ad reward AND tells everybody (Rate Up / Rate Down style).
+       No number = old behaviour (preview of the current rate)."""
     if not _is_admin_update(update): return
     cmd = (update.effective_message.text or "").split()[0].lstrip("/").split("@")[0].lower()
+    if not context.args:
+        return await h_notice_ask(update, context)
     try:
-        pct = float(context.args[0]); assert 0 < pct <= 1000
+        new = float(context.args[0].replace(",", ".")); assert 0 < new <= 1000
     except Exception:
-        await update.effective_message.reply_text("✍️ ব্যবহার: /" + cmd + " 10   (10 = ১০%)"); return
-    f = (1 - pct / 100.0) if cmd == "ratedown" else (1 + pct / 100.0)
-    if f <= 0:
-        await update.effective_message.reply_text("❌ ১০০% বা তার বেশি কমানো যাবে না"); return
+        await update.effective_message.reply_text("✍️ ব্যবহার: /" + cmd + " 0.10"); return
+    key, name, icon = ("reward_watch", "Watch Ads", "▶️") if cmd == "watchrate" else ("reward_auto", "Auto Ads", "⚡")
     with _lock:
-        d = load(); st = settings_of(d)
-        old_w, old_a = float(st["reward_watch"]), float(st["reward_auto"])
-        st["reward_watch"] = round(old_w * f, 4); st["reward_auto"] = round(old_a * f, 4)
-        save(d); new_w, new_a = st["reward_watch"], st["reward_auto"]
-    await update.effective_message.reply_text(
-        ("🔻 Rate " + ("Down" if cmd == "ratedown" else "Up") + " ") + ("%g" % pct) + "% ✅\n\n"
-        "▶️ Watch: " + str(old_w) + " → <b>" + str(new_w) + "</b> TK\n⚡ Auto: " + str(old_a) + " → <b>" + str(new_a) + "</b> TK\n\n"
-        "📢 সবাইকে জানাতে /watchrate বা /autorate দিন।", parse_mode="HTML")
+        d = load(); st = settings_of(d); old = float(st.get(key, 0) or 0)
+        st[key] = round(new, 4); save(d)
+    n, o = _fmt_rate(new), _fmt_rate(old)
+    if new > old:
+        html = fancy2(name.upper() + " RATE UP", "🔺 <b>" + name + " রেট আপ করা হয়েছে!</b> 🎉\n\n" + icon + " এখন প্রতিটা " + name[:-4].strip() + " Ad-এ পাবেন: <b>" + n + " TK</b> 💰\n\n"
+                      "━━━━━━━━━━━━━━━━━━\n🔥 এখনই কাজ করুন, ⏳ রেট পরে কমে যেতে পারে!", "🔺", icon)
+    elif new < old:
+        html = fancy2(name.upper() + " RATE DOWN", "🔻 <b>" + name + " রেট ডাউন করা হয়েছে</b>\n\n" + icon + " এখন প্রতিটা " + name[:-4].strip() + " Ad-এ পাবেন: <b>" + n + " TK</b> 💰\n\n"
+                      "━━━━━━━━━━━━━━━━━━\n🙏 সবাই কাজ চালিয়ে যান, সহযোগিতার জন্য ধন্যবাদ 💝", "🔻", icon)
+    else:
+        html = fancy2(name.upper() + " RATE", icon + " " + name + " রেট এখন: <b>" + n + " TK</b> 💰", icon, "💰")
+    started = start_broadcast(html, report_to=update.effective_user.id, label=name + " Rate")
+    await update.effective_message.reply_text("✅ " + name + " রেট: " + o + " → <b>" + n + " TK</b>\n📢 " + ("সবাইকে পাঠানো শুরু হয়েছে..." if started else "আরেকটা Broadcast চলছে, নোটিশ যায়নি (রেট সেভ হয়েছে)।"), parse_mode="HTML")
 
 ADMIN_COMMANDS = [("start", "🚀 বট চালু করুন"), ("newstart", "🤖 Bot notun update hoyese"),
-                  ("hello", "👋 Hello everyone kaj koren sobai"), ("ratedown", "🔻 Rate down: /ratedown 10"), ("rateup", "💎 Rate up: /rateup 10"),
-                  ("bednotice", "📢 Broadcast bed notice"), ("personal", "💌 একজনকে পার্সোনাল মেসেজ (USER_ID লেখা)"),
-                  ("autorate", "⚡ Auto Ads Rate নোটিশ"), ("watchrate", "▶️ Watch Ads Rate নোটিশ"),
-                  ("alltopicsms", "📢 সবাইকে নিজের লেখা মেসেজ"), ("important", "⚠️ Important Notice"),
-                  ("payment", "💳 Payment Notice"), ("payrunning", "🔄 Payment Running"), ("allpayment", "✅ All Payment Complete"),
+                  ("hello", "👋 Hello everyone kaj koren sobai"), ("bednotice", "📢 Broadcast bed notice"),
+                  ("autorate", "⚡ Auto Ads Rate (/autorate 0.05)"), ("watchrate", "▶️ Watch Ads Rate (/watchrate 0.10)"),
+                  ("alltopicsms", "📝 সবাইকে সাধারণ মেসেজ (/alltopicsms লেখা)"), ("important", "⚠️ Important Notice (/important লেখা)"),
+                  ("payment", "💳 Payment Notice (/payment লেখা)"), ("payrunning", "🔄 Payment Running"), ("allpayment", "✅ All Payment Complete"),
                   ("stopbot", "🛑 Bot বন্ধ করুন"), ("startbot", "🟢 Bot চালু + সবাইকে নোটিশ")]
 
 def build_tg_app():
@@ -322,10 +359,10 @@ def build_tg_app():
     application.add_handler(CommandHandler("start", h_start))
     application.add_handler(CommandHandler(["stopbot", "botupdate", "stopped", "stop", "botstop"], h_stopbot))
     application.add_handler(CommandHandler(["startbot", "started", "botstart"], h_startbot))
-    application.add_handler(CommandHandler(["payment", "payrunning", "allpayment", "autorate", "watchrate", "newstart", "hello", "bednotice"], h_notice_ask))
-    application.add_handler(CommandHandler(["ratedown", "rateup"], h_rate))
-    application.add_handler(CommandHandler(["alltopicsms", "important"], h_custom))
-    application.add_handler(CommandHandler("personal", h_personal))
+    application.add_handler(CommandHandler(["payrunning", "allpayment", "newstart", "bednotice"], h_notice_ask))
+    application.add_handler(CommandHandler(["payment", "important", "hello"], h_styled))
+    application.add_handler(CommandHandler(["autorate", "watchrate"], h_setrate))
+    application.add_handler(CommandHandler("alltopicsms", h_custom))
     application.add_handler(CommandHandler("id", h_id))
     application.add_handler(CallbackQueryHandler(h_bc_cb, pattern=r"^bc"))
     return application
