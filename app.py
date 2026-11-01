@@ -56,13 +56,13 @@ BRAND = "AUTO TAKA MACHINE"
 _bc_lock = threading.Lock(); _bc_running = False
 
 def fancy(title, body):
-    return ("┏━━━━━━━━━━━━━━━━━━┓\n  💎 <b>" + title + "</b> 💰\n┗━━━━━━━━━━━━━━━━━━┛\n\n" + body +
-            "\n\n──────────────────\n🤖 <b>" + BRAND + "</b>")
+    return ("тФПтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФУ\n  ЁЯТО <b>" + title + "</b> ЁЯТ░\nтФЧтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФЫ\n\n" + body +
+            "\n\nтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА\nЁЯдЦ <b>" + BRAND + "</b>")
 
 def countries_text(s):
     out = []
     for c in parse_allowed(s.get("vpn_country", "")):
-        c = str(c).upper(); out.append(FLAG.get(c, "🏳️") + " " + CNAME.get(c, c))
+        c = str(c).upper(); out.append(FLAG.get(c, "ЁЯП│я╕П") + " " + CNAME.get(c, c))
     return ", ".join(out)
 
 def min_text(s):
@@ -75,20 +75,26 @@ def min_text(s):
     return ("%.2f" % min(vals)) if vals else ""
 
 def welcome_html(name, s):
-    lines = ["💎 <b>" + BRAND + "</b> 💰", "", "👋 Hello <b>" + hesc(name) + "</b>", "",
-             "✅ VPN ব্যবহার করে কাজ করতে হবে — 🌍 কান্ট্রি হবে অ্যাডমিনের রুলস অনুযায়ী 🤝",
-             "✅ মিনিমাম Withdraw: <b>100.00 TK</b> 💸",
-             "", "📢 <b>Bot Channel</b>-এ অবশ্যই জয়েন থাকুন!", "আপডেট, পেমেন্ট নোটিশ আর প্রুফ সবার আগে ওখানেই পাবেন ✨",
-             "", "👇 নিচের বাটনে ক্লিক করে বট ওপেন করুন:"]
+    lines = ["ЁЯТО <b>" + BRAND + "</b> ЁЯТ░", "", "ЁЯСЛ Hello <b>" + hesc(name) + "</b>", "",
+             "тЬЕ VPN ржмрзНржпржмрж╣рж╛рж░ ржХрж░рзЗ ржХрж╛ржЬ ржХрж░рждрзЗ рж╣ржмрзЗ тАФ ЁЯМН ржХрж╛ржирзНржЯрзНрж░рж┐ рж╣ржмрзЗ ржЕрзНржпрж╛ржбржорж┐ржирзЗрж░ рж░рзБрж▓рж╕ ржЕржирзБржпрж╛ржпрж╝рзА ЁЯдЭ",
+             "тЬЕ ржорж┐ржирж┐ржорж╛ржо Withdraw: <b>100.00 TK</b> ЁЯТ╕",
+             "", "ЁЯУв <b>Bot Channel</b>-ржП ржЕржмрж╢рзНржпржЗ ржЬржпрж╝рзЗржи ржерж╛ржХрзБржи!", "ржЖржкржбрзЗржЯ, ржкрзЗржорзЗржирзНржЯ ржирзЛржЯрж┐рж╢ ржЖрж░ ржкрзНрж░рзБржл рж╕ржмрж╛рж░ ржЖржЧрзЗ ржУржЦрж╛ржирзЗржЗ ржкрж╛ржмрзЗржи тЬи",
+             "", "ЁЯСЗ ржирж┐ржЪрзЗрж░ ржмрж╛ржЯржирзЗ ржХрзНрж▓рж┐ржХ ржХрж░рзЗ ржмржЯ ржУржкрзЗржи ржХрж░рзБржи:"]
     return "\n".join(lines)
 
 def maint_html():
-    return fancy("BOT UPDATE চলছে 🛠️",
-                 "⚠️ বট আপডেটের কাজ চলছে, তাই কিছুক্ষণের জন্য <b>বন্ধ</b> আছে।\n\n"
-                 "⏳ একটু পরে আবার চেষ্টা করুন।\n📢 নতুন আপডেট পেতে Channel এ থাকুন।\n\n🙏 ধন্যবাদ")
+    return fancy("BOT UPDATE ржЪрж▓ржЫрзЗ ЁЯЫая╕П",
+                 "тЪая╕П ржмржЯ ржЖржкржбрзЗржЯрзЗрж░ ржХрж╛ржЬ ржЪрж▓ржЫрзЗ, рждрж╛ржЗ ржХрж┐ржЫрзБржХрзНрж╖ржгрзЗрж░ ржЬржирзНржп <b>ржмржирзНржз</b> ржЖржЫрзЗред\n\n"
+                 "тП│ ржПржХржЯрзБ ржкрж░рзЗ ржЖржмрж╛рж░ ржЪрзЗрж╖рзНржЯрж╛ ржХрж░рзБржиред\nЁЯУв ржирждрзБржи ржЖржкржбрзЗржЯ ржкрзЗрждрзЗ Channel ржП ржерж╛ржХрзБржиред\n\nЁЯЩП ржзржирзНржпржмрж╛ржж")
+
+def permoff_html():
+    return ("тФПтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФУ\n  ЁЯЫС <b>ржХрж╛ржЬ ржПржЦржи ржмржирзНржз ржЖржЫрзЗ</b> ЁЯЫС\nтФЧтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФЫ\n\n"
+            "ЁЯШФ <b>ржжрзБржГржЦрж┐ржд!</b> ржПржЦржи ржХрж╛ржЬ ржмржирзНржз ржЖржЫрзЗред\n\n"
+            "тЬЕ ржЕрзНржпрж╛ржбржорж┐ржи ржХрж╛ржЬ ржЪрж╛рж▓рзБ ржХрж░рж▓рзЗ рждржЦржи ржЖржмрж╛рж░ ржХрж╛ржЬ ржХрж░рждрзЗ ржкрж╛рж░ржмрзЗржиред\n\n"
+            "ЁЯЩП ржкрзБржирж░рж╛ржпрж╝ ржзржирзНржпржмрж╛ржж ЁЯТЭ\n\nтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА\nЁЯдЦ <b>" + BRAND + "</b>")
 
 def live_html():
-    return fancy("🚀 BOT IS NOW LIVE", "🟢 <b>বট এখন সম্পূর্ণ চালু!</b>\n\n🎉 সবাই এখন আবার কাজ শুরু করতে পারবেন।\n💎 " + BRAND + "-এ স্বাগতম!\n\n👇 বট start করে কাজ শুরু করুন।")
+    return fancy("ЁЯЪА BOT IS NOW LIVE", "ЁЯЯв <b>ржмржЯ ржПржЦржи рж╕ржорзНржкрзВрж░рзНржг ржЪрж╛рж▓рзБ!</b>\n\nЁЯОЙ рж╕ржмрж╛ржЗ ржПржЦржи ржЖржмрж╛рж░ ржХрж╛ржЬ рж╢рзБрж░рзБ ржХрж░рждрзЗ ржкрж╛рж░ржмрзЗржиред\nЁЯТО " + BRAND + "-ржП рж╕рзНржмрж╛ржЧрждржо!\n\nЁЯСЗ ржмржЯ start ржХрж░рзЗ ржХрж╛ржЬ рж╢рзБрж░рзБ ржХрж░рзБржиред")
 
 def _mk(rows):
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
@@ -103,32 +109,32 @@ def _mk(rows):
     return InlineKeyboardMarkup(out)
 
 def home_markup():
-    return _mk([[("🚀 Open Auto Taka Machine 💰", {"web_app": WEBAPP_URL})],
-                [("📢 Official Channel", TG_CHANNEL_URL), ("👤 Admin ID", TG_ADMIN_URL)]])
+    return _mk([[("ЁЯЪА Open Auto Taka Machine ЁЯТ░", {"web_app": WEBAPP_URL})],
+                [("ЁЯУв Official Channel", TG_CHANNEL_URL), ("ЁЯСд Admin ID", TG_ADMIN_URL)]])
 
 # ---- fixed notices the admin can send to everybody (edit the texts here if you want) ----
 def notice_msg(key, s):
     if key == "payment":
-        return fancy("PAYMENT NOTICE", "💳 <b>Payment Update:</b> পেমেন্ট সংক্রান্ত আপডেটের জন্য অপেক্ষা করুন এবং সঠিক তথ্য অনুসরণ করুন।")
+        return fancy("PAYMENT NOTICE", "ЁЯТ│ <b>Payment Update:</b> ржкрзЗржорзЗржирзНржЯ рж╕ржВржХрзНрж░рж╛ржирзНржд ржЖржкржбрзЗржЯрзЗрж░ ржЬржирзНржп ржЕржкрзЗржХрзНрж╖рж╛ ржХрж░рзБржи ржПржмржВ рж╕ржарж┐ржХ рждржерзНржп ржЕржирзБрж╕рж░ржг ржХрж░рзБржиред")
     if key == "payrunning":
-        return fancy("🔄 PAYMENT RUNNING", "📣 যারা এখনো Withdraw Request দেননি, তাড়াতাড়ি দিয়ে দিন।\n\n💰 <b>All Payment Running</b>")
+        return fancy("ЁЯФД PAYMENT RUNNING", "ЁЯУг ржпрж╛рж░рж╛ ржПржЦржирзЛ Withdraw Request ржжрзЗржиржирж┐, рждрж╛ржбрж╝рж╛рждрж╛ржбрж╝рж┐ ржжрж┐ржпрж╝рзЗ ржжрж┐ржиред\n\nЁЯТ░ <b>All Payment Running</b>")
     if key == "allpayment":
-        return fancy("ALL PAYMENT COMPLETE ✅",
-                     "📣 এই পর্যন্ত যতগুলো রিকোয়েস্ট দিয়েছিলেন, সকল পেমেন্ট <b>ক্লিয়ার</b> ✅\n\n"
-                     "👍 সবাই নিজের একাউন্ট চেক করুন, পেমেন্ট চলে গেছে 🔔\n\n"
-                     "➡️ যারা এখনো Withdraw দেননি, দিয়ে দিন। এপ্রুভ করে নেওয়া হবে ✔️\n\n🙏 Thanks for your support 💝")
+        return fancy("ALL PAYMENT COMPLETE тЬЕ",
+                     "ЁЯУг ржПржЗ ржкрж░рзНржпржирзНржд ржпрждржЧрзБрж▓рзЛ рж░рж┐ржХрзЛржпрж╝рзЗрж╕рзНржЯ ржжрж┐ржпрж╝рзЗржЫрж┐рж▓рзЗржи, рж╕ржХрж▓ ржкрзЗржорзЗржирзНржЯ <b>ржХрзНрж▓рж┐ржпрж╝рж╛рж░</b> тЬЕ\n\n"
+                     "ЁЯСН рж╕ржмрж╛ржЗ ржирж┐ржЬрзЗрж░ ржПржХрж╛ржЙржирзНржЯ ржЪрзЗржХ ржХрж░рзБржи, ржкрзЗржорзЗржирзНржЯ ржЪрж▓рзЗ ржЧрзЗржЫрзЗ ЁЯФФ\n\n"
+                     "тЮбя╕П ржпрж╛рж░рж╛ ржПржЦржирзЛ Withdraw ржжрзЗржиржирж┐, ржжрж┐ржпрж╝рзЗ ржжрж┐ржиред ржПржкрзНрж░рзБржн ржХрж░рзЗ ржирзЗржУржпрж╝рж╛ рж╣ржмрзЗ тЬФя╕П\n\nЁЯЩП Thanks for your support ЁЯТЭ")
     if key == "hello":
-        return fancy("👋 Hello Everyone", "✨ <i>Hello everyone kaj koren sobai</i> 👋")
+        return fancy("ЁЯСЛ Hello Everyone", "тЬи <i>Hello everyone kaj koren sobai</i> ЁЯСЛ")
     if key == "bednotice":
         return maint_html()
     if key == "newstart":
-        return "🤖 <b>Bot updated করা হয়েছে</b>"
+        return "ЁЯдЦ <b>Bot updated ржХрж░рж╛ рж╣ржпрж╝рзЗржЫрзЗ</b>"
     if key == "autorate":
-        return fancy("⚡ AUTO ADS RATE", "⚡ প্রতিটা <b>Auto Ad</b> এ পাবেন <b>" + str(s.get("reward_auto")) + " TK</b>\n"
-                     "📊 দৈনিক লিমিট: <b>" + str(s.get("limit_auto")) + "</b> টা\n\n💡 Auto Loop চালু করে নিজে নিজেই ad দেখুন।")
+        return fancy("тЪб AUTO ADS RATE", "тЪб ржкрзНрж░рждрж┐ржЯрж╛ <b>Auto Ad</b> ржП ржкрж╛ржмрзЗржи <b>" + str(s.get("reward_auto")) + " TK</b>\n"
+                     "ЁЯУК ржжрзИржирж┐ржХ рж▓рж┐ржорж┐ржЯ: <b>" + str(s.get("limit_auto")) + "</b> ржЯрж╛\n\nЁЯТб Auto Loop ржЪрж╛рж▓рзБ ржХрж░рзЗ ржирж┐ржЬрзЗ ржирж┐ржЬрзЗржЗ ad ржжрзЗржЦрзБржиред")
     if key == "watchrate":
-        return fancy("▶️ WATCH ADS RATE", "▶️ প্রতিটা <b>Watch Ad</b> এ পাবেন <b>" + str(s.get("reward_watch")) + " TK</b> (সরাসরি Main Balance এ)\n"
-                     "📊 দৈনিক লিমিট: <b>" + str(s.get("limit_watch")) + "</b> টা")
+        return fancy("тЦ╢я╕П WATCH ADS RATE", "тЦ╢я╕П ржкрзНрж░рждрж┐ржЯрж╛ <b>Watch Ad</b> ржП ржкрж╛ржмрзЗржи <b>" + str(s.get("reward_watch")) + " TK</b> (рж╕рж░рж╛рж╕рж░рж┐ Main Balance ржП)\n"
+                     "ЁЯУК ржжрзИржирж┐ржХ рж▓рж┐ржорж┐ржЯ: <b>" + str(s.get("limit_watch")) + "</b> ржЯрж╛")
     return None
 
 NOTICE_LABEL = {"hello": "HELLO", "bednotice": "BED NOTICE", "newstart": "NEW START", "payment": "PAYMENT NOTICE", "payrunning": "PAYMENT RUNNING", "allpayment": "ALL PAYMENT COMPLETE",
@@ -163,7 +169,7 @@ def start_broadcast(html, button=None, report_to=None, label="Broadcast"):
                             fail += 1; break
                     await asyncio.sleep(0.05)
                 if report_to:
-                    try: await bot.send_message(report_to, "✅ " + label + ": " + str(ok) + " জনকে পাঠানো হয়েছে" + ((" • ব্যর্থ " + str(fail)) if fail else ""))
+                    try: await bot.send_message(report_to, "тЬЕ " + label + ": " + str(ok) + " ржЬржиржХрзЗ ржкрж╛ржарж╛ржирзЛ рж╣ржпрж╝рзЗржЫрзЗ" + ((" тАв ржмрзНржпрж░рзНрже " + str(fail)) if fail else ""))
                     except Exception: pass
         try: asyncio.run(run())
         except Exception:
@@ -187,14 +193,14 @@ async def refresh_menu(bot, user_id):
     """sets the Menu button + command list for this chat (admin = full list, others = only /start)."""
     try:
         from telegram import BotCommand, BotCommandScopeChat, MenuButtonCommands
-        cmds = ADMIN_COMMANDS if int(user_id) == ADMIN_ID else [("start", "🚀 বট চালু করুন")]
+        cmds = ADMIN_COMMANDS if int(user_id) == ADMIN_ID else [("start", "ЁЯЪА ржмржЯ ржЪрж╛рж▓рзБ ржХрж░рзБржи")]
         await bot.set_my_commands([BotCommand(c, d) for c, d in cmds], scope=BotCommandScopeChat(chat_id=int(user_id)))
         await bot.set_chat_menu_button(chat_id=int(user_id), menu_button=MenuButtonCommands())
     except Exception:
         import traceback; traceback.print_exc()
 
 async def h_id(update, context):
-    await update.effective_message.reply_text("🆔 Your ID: " + str(update.effective_user.id) + "\nAdmin ID in bot: " + str(ADMIN_ID))
+    await update.effective_message.reply_text("ЁЯЖФ Your ID: " + str(update.effective_user.id) + "\nAdmin ID in bot: " + str(ADMIN_ID))
 
 async def h_start(update, context):
     u = update.effective_user; msg = update.effective_message
@@ -206,13 +212,16 @@ async def h_start(update, context):
         if uid not in d["users"]:   # remember chat-only users so notices can reach them too (balance record is created later when the app opens)
             d["users"][uid] = {"id": u.id, "name": ((u.first_name or "") + " " + (u.last_name or "")).strip(), "username": u.username or "", "joined": int(time.time())}
             save(d)
-        stopped = bool(s.get("bot_stopped")); html = welcome_html(u.first_name or "User", s)
+        perm = bool(s.get("bot_perm_off")); stopped = bool(s.get("bot_stopped")) or perm; html = welcome_html(u.first_name or "User", s)
     admin = int(u.id) == ADMIN_ID
     await refresh_menu(context.bot, u.id)
-    if stopped and not admin:
-        await msg.reply_text(maint_html(), parse_mode="HTML", reply_markup=_mk([[("📢 Official Channel", TG_CHANNEL_URL), ("👤 Admin ID", TG_ADMIN_URL)]]))
+    if perm and not admin:
+        await msg.reply_text(permoff_html(), parse_mode="HTML", reply_markup=_mk([[("ЁЯУв Official Channel", TG_CHANNEL_URL), ("ЁЯСд Admin ID", TG_ADMIN_URL)]]))
         return
-    if stopped and admin: html = "🛑 <i>বট এখন বন্ধ আছে (শুধু Admin চালাতে পারছে)</i>\n\n" + html
+    if stopped and not admin:
+        await msg.reply_text(maint_html(), parse_mode="HTML", reply_markup=_mk([[("ЁЯУв Official Channel", TG_CHANNEL_URL), ("ЁЯСд Admin ID", TG_ADMIN_URL)]]))
+        return
+    if stopped and admin: html = "ЁЯЫС <i>ржмржЯ ржПржЦржи ржмржирзНржз ржЖржЫрзЗ (рж╢рзБржзрзБ Admin ржЪрж╛рж▓рж╛рждрзЗ ржкрж╛рж░ржЫрзЗ)</i>\n\n" + html
     await msg.reply_text(html, parse_mode="HTML", reply_markup=home_markup(), disable_web_page_preview=True)
 
 async def h_stopbot(update, context):
@@ -220,18 +229,30 @@ async def h_stopbot(update, context):
     with _lock:
         d = load(); settings_of(d)["bot_stopped"] = True; save(d)
     await update.effective_message.reply_text(
-        "🛑 <b>Bot বন্ধ করা হলো!</b>\n\n✅ এখন সাধারণ User রা Bot ওপেন করলে Update মেসেজ দেখবে!\n"
-        "✅ তোমার Admin ID (" + str(ADMIN_ID) + ") তে সব চলবে, Admin Panel ও চলবে!", parse_mode="HTML")
+        "ЁЯЫС <b>Bot ржмржирзНржз ржХрж░рж╛ рж╣рж▓рзЛ!</b>\n\nтЬЕ ржПржЦржи рж╕рж╛ржзрж╛рж░ржг User рж░рж╛ Bot ржУржкрзЗржи ржХрж░рж▓рзЗ Update ржорзЗрж╕рзЗржЬ ржжрзЗржЦржмрзЗ!\n"
+        "тЬЕ рждрзЛржорж╛рж░ Admin ID (" + str(ADMIN_ID) + ") рждрзЗ рж╕ржм ржЪрж▓ржмрзЗ, Admin Panel ржУ ржЪрж▓ржмрзЗ!", parse_mode="HTML")
+
+async def h_permoff(update, context):
+    """/parmanetbotoff -> bot is OFF for everybody except the admin until /startbot."""
+    if not _is_admin_update(update): return
+    with _lock:
+        d = load(); settings_of(d)["bot_perm_off"] = True; save(d)
+    await update.effective_message.reply_text(
+        "тЫФ <b>Bot ржкрж╛рж░рзНржорж╛ржирзЗржирзНржЯрж▓рж┐ ржмржирзНржз ржХрж░рж╛ рж╣рж▓рзЛ!</b>\n\n"
+        "тЬЕ рж╕рж╛ржзрж╛рж░ржг User /start ржжрж┐рж▓рзЗ ржмрж╛ ржмржЯ ржУржкрзЗржи ржХрж░рж▓рзЗ рж╢рзБржзрзБ \"ржХрж╛ржЬ ржПржЦржи ржмржирзНржз ржЖржЫрзЗ\" ржорзЗрж╕рзЗржЬ ржжрзЗржЦржмрзЗред\n"
+        "тЬЕ ржнрзЛрж░ рзмржЯрж╛рж░ Good Morning ржорзЗрж╕рзЗржЬ ржЖрж░ рж▓рж┐ржорж┐ржЯ ржмржжрж▓ ржмржирзНржз ржерж╛ржХржмрзЗред\n"
+        "тЬЕ рждрзЛржорж╛рж░ Admin ID (" + str(ADMIN_ID) + ") рждрзЗ рж╕ржм ржЪрж▓ржмрзЗред\n\n"
+        "ЁЯЯв ржЖржмрж╛рж░ ржЪрж╛рж▓рзБ ржХрж░рждрзЗ: /startbot", parse_mode="HTML")
 
 async def h_startbot(update, context):
     if not _is_admin_update(update): return
     with _lock:
-        d = load(); settings_of(d)["bot_stopped"] = False; save(d)
+        d = load(); _s = settings_of(d); _s["bot_stopped"] = False; _s["bot_perm_off"] = False; save(d)
     uname_ = context.bot.username or ""
-    btn = ("▶️ /start", "https://t.me/" + uname_ + "?start=live") if uname_ else None
-    started = start_broadcast(live_html(), button=btn, report_to=update.effective_user.id, label="BOT LIVE নোটিশ")
+    btn = ("тЦ╢я╕П /start", "https://t.me/" + uname_ + "?start=live") if uname_ else None
+    started = start_broadcast(live_html(), button=btn, report_to=update.effective_user.id, label="BOT LIVE ржирзЛржЯрж┐рж╢")
     await update.effective_message.reply_text(
-        "✅ <b>Bot চালু করা হলো!</b>\n\n📢 " + ("সব User-কে চালু হওয়ার নোটিশ পাঠানো হচ্ছে... (শেষ হলে রিপোর্ট আসবে)" if started else "আরেকটা Broadcast চলছে, তাই নোটিশ পাঠানো হয়নি।"), parse_mode="HTML")
+        "тЬЕ <b>Bot ржЪрж╛рж▓рзБ ржХрж░рж╛ рж╣рж▓рзЛ!</b>\n\nЁЯУв " + ("рж╕ржм User-ржХрзЗ ржЪрж╛рж▓рзБ рж╣ржУржпрж╝рж╛рж░ ржирзЛржЯрж┐рж╢ ржкрж╛ржарж╛ржирзЛ рж╣ржЪрзНржЫрзЗ... (рж╢рзЗрж╖ рж╣рж▓рзЗ рж░рж┐ржкрзЛрж░рзНржЯ ржЖрж╕ржмрзЗ)" if started else "ржЖрж░рзЗржХржЯрж╛ Broadcast ржЪрж▓ржЫрзЗ, рждрж╛ржЗ ржирзЛржЯрж┐рж╢ ржкрж╛ржарж╛ржирзЛ рж╣ржпрж╝ржирж┐ред"), parse_mode="HTML")
 
 async def h_notice_ask(update, context):
     """fixed notices: ask the admin to confirm first (the menu can be tapped by mistake)."""
@@ -240,17 +261,17 @@ async def h_notice_ask(update, context):
     with _lock:
         d = load(); s = settings_of(d); html = notice_msg(cmd, s)
     if not html: return
-    await update.effective_message.reply_text("👀 <b>Preview</b> — সবাইকে পাঠাবেন?\n\n" + html, parse_mode="HTML",
-                                              reply_markup=_mk([[("✅ সবাইকে পাঠান", {"cb": "bc:" + cmd}), ("❌ বাতিল", {"cb": "bcx"})]]))
+    await update.effective_message.reply_text("ЁЯСА <b>Preview</b> тАФ рж╕ржмрж╛ржЗржХрзЗ ржкрж╛ржарж╛ржмрзЗржи?\n\n" + html, parse_mode="HTML",
+                                              reply_markup=_mk([[("тЬЕ рж╕ржмрж╛ржЗржХрзЗ ржкрж╛ржарж╛ржи", {"cb": "bc:" + cmd}), ("тЭМ ржмрж╛рждрж┐рж▓", {"cb": "bcx"})]]))
 
 async def h_bc_cb(update, context):
     q = update.callback_query
     if not q or int(q.from_user.id) != ADMIN_ID:
-        if q: await q.answer("⛔", show_alert=False)
+        if q: await q.answer("тЫФ", show_alert=False)
         return
     data = q.data or ""
     if data == "bcx":
-        await q.answer("বাতিল"); await q.edit_message_text("❌ বাতিল করা হয়েছে।"); return
+        await q.answer("ржмрж╛рждрж┐рж▓"); await q.edit_message_text("тЭМ ржмрж╛рждрж┐рж▓ ржХрж░рж╛ рж╣ржпрж╝рзЗржЫрзЗред"); return
     key = data.split(":", 1)[1] if ":" in data else ""
     with _lock:
         d = load(); s = settings_of(d); html = notice_msg(key, s)
@@ -258,41 +279,41 @@ async def h_bc_cb(update, context):
     btn = None
     if key == "newstart":
         uname_ = context.bot.username or ""
-        btn = ("🆕 New Start", "https://t.me/" + uname_ + "?start=new") if uname_ else None
+        btn = ("ЁЯЖХ New Start", "https://t.me/" + uname_ + "?start=new") if uname_ else None
     started = start_broadcast(html, button=btn, report_to=q.from_user.id, label=NOTICE_LABEL.get(key, "Notice"))
-    await q.answer("শুরু হয়েছে" if started else "আরেকটা Broadcast চলছে")
-    await q.edit_message_text(("📢 <b>" + NOTICE_LABEL.get(key, "Notice") + "</b> পাঠানো শুরু হয়েছে... (শেষ হলে রিপোর্ট আসবে)") if started else "⏳ আরেকটা Broadcast চলছে, একটু পরে আবার চেষ্টা করুন।", parse_mode="HTML")
+    await q.answer("рж╢рзБрж░рзБ рж╣ржпрж╝рзЗржЫрзЗ" if started else "ржЖрж░рзЗржХржЯрж╛ Broadcast ржЪрж▓ржЫрзЗ")
+    await q.edit_message_text(("ЁЯУв <b>" + NOTICE_LABEL.get(key, "Notice") + "</b> ржкрж╛ржарж╛ржирзЛ рж╢рзБрж░рзБ рж╣ржпрж╝рзЗржЫрзЗ... (рж╢рзЗрж╖ рж╣рж▓рзЗ рж░рж┐ржкрзЛрж░рзНржЯ ржЖрж╕ржмрзЗ)") if started else "тП│ ржЖрж░рзЗржХржЯрж╛ Broadcast ржЪрж▓ржЫрзЗ, ржПржХржЯрзБ ржкрж░рзЗ ржЖржмрж╛рж░ ржЪрзЗрж╖рзНржЯрж╛ ржХрж░рзБржиред", parse_mode="HTML")
 
-def fancy2(title, body, e1="💎", e2="💰"):
-    return ("┏━━━━━━━━━━━━━━━━━━┓\n  " + e1 + " <b>" + title + "</b> " + e2 + "\n┗━━━━━━━━━━━━━━━━━━┛\n\n" + body +
-            "\n\n──────────────────\n🤖 <b>" + BRAND + "</b>")
+def fancy2(title, body, e1="ЁЯТО", e2="ЁЯТ░"):
+    return ("тФПтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФУ\n  " + e1 + " <b>" + title + "</b> " + e2 + "\nтФЧтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФЫ\n\n" + body +
+            "\n\nтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА\nЁЯдЦ <b>" + BRAND + "</b>")
 
 # keyword -> (words, emoji, closing line).  Works for Bangla and Banglish words.
 STYLE_CATS = [
-    (["problem", "somossa", "somosya", "সমস্যা", "error", "issue", "bug", "ঝামেলা", "jhamela"], "⚠️", "🙏 অসুবিধার জন্য দুঃখিত, দ্রুত সমাধানের চেষ্টা চলছে 🛠️"),
-    (["deri", "দেরি", "দেরী", "late", "delay", "wait", "অপেক্ষা", "opekkha", "soon", "শীঘ্রই"], "⏳", "🙏 একটু ধৈর্য ধরুন, দেরির জন্য আন্তরিকভাবে দুঃখিত 💝"),
-    (["running", "cholche", "cholse", "চলছে", "চলমান", "processing"], "🔄", "⏳ ধাপে ধাপে সবার পেমেন্ট দেওয়া হচ্ছে।"),
-    (["complete", "completed", "done", "sent", "pathano", "pathiye", "pathaisi", "পাঠানো", "পাঠিয়ে", "clear", "ক্লিয়ার", "সম্পন্ন", "paid", "হয়ে গেছে", "hoye gese", "hoye geche", "করা হয়েছে"], "✅", "🔔 সবাই নিজের একাউন্ট চেক করুন 💝"),
-    (["withdraw", "উইথড্র", "withdrawal", "request", "রিকোয়েস্ট"], "💸", "💸 Withdraw সংক্রান্ত আপডেটটা ভালোভাবে দেখে নিন।"),
-    (["update", "আপডেট", "notun", "নতুন"], "🆕", "📢 নতুন আপডেট পেতে Channel এ থাকুন।"),
-    (["sorry", "khoma", "ক্ষমা", "দুঃখিত", "dukkhito", "dukhito"], "🙏", "💝 আপনাদের সহযোগিতার জন্য ধন্যবাদ।"),
-    (["thanks", "thank", "dhonnobad", "ধন্যবাদ"], "🙏", "💝 Thanks for your support"),
-    (["bonus", "offer", "বোনাস", "অফার", "gift", "গিফট"], "🎁", "🎉 সুযোগটা কাজে লাগান!"),
-    (["rule", "rules", "নিয়ম", "রুলস", "warning", "সতর্ক", "ban", "ব্যান"], "📜", "👀 নিয়ম মেনে কাজ করুন, ধন্যবাদ।"),
+    (["problem", "somossa", "somosya", "рж╕ржорж╕рзНржпрж╛", "error", "issue", "bug", "ржЭрж╛ржорзЗрж▓рж╛", "jhamela"], "тЪая╕П", "ЁЯЩП ржЕрж╕рзБржмрж┐ржзрж╛рж░ ржЬржирзНржп ржжрзБржГржЦрж┐ржд, ржжрзНрж░рзБржд рж╕ржорж╛ржзрж╛ржирзЗрж░ ржЪрзЗрж╖рзНржЯрж╛ ржЪрж▓ржЫрзЗ ЁЯЫая╕П"),
+    (["deri", "ржжрзЗрж░рж┐", "ржжрзЗрж░рзА", "late", "delay", "wait", "ржЕржкрзЗржХрзНрж╖рж╛", "opekkha", "soon", "рж╢рзАржШрзНрж░ржЗ"], "тП│", "ЁЯЩП ржПржХржЯрзБ ржзрзИрж░рзНржп ржзрж░рзБржи, ржжрзЗрж░рж┐рж░ ржЬржирзНржп ржЖржирзНрждрж░рж┐ржХржнрж╛ржмрзЗ ржжрзБржГржЦрж┐ржд ЁЯТЭ"),
+    (["running", "cholche", "cholse", "ржЪрж▓ржЫрзЗ", "ржЪрж▓ржорж╛ржи", "processing"], "ЁЯФД", "тП│ ржзрж╛ржкрзЗ ржзрж╛ржкрзЗ рж╕ржмрж╛рж░ ржкрзЗржорзЗржирзНржЯ ржжрзЗржУржпрж╝рж╛ рж╣ржЪрзНржЫрзЗред"),
+    (["complete", "completed", "done", "sent", "pathano", "pathiye", "pathaisi", "ржкрж╛ржарж╛ржирзЛ", "ржкрж╛ржарж┐ржпрж╝рзЗ", "clear", "ржХрзНрж▓рж┐ржпрж╝рж╛рж░", "рж╕ржорзНржкржирзНржи", "paid", "рж╣ржпрж╝рзЗ ржЧрзЗржЫрзЗ", "hoye gese", "hoye geche", "ржХрж░рж╛ рж╣ржпрж╝рзЗржЫрзЗ"], "тЬЕ", "ЁЯФФ рж╕ржмрж╛ржЗ ржирж┐ржЬрзЗрж░ ржПржХрж╛ржЙржирзНржЯ ржЪрзЗржХ ржХрж░рзБржи ЁЯТЭ"),
+    (["withdraw", "ржЙржЗржержбрзНрж░", "withdrawal", "request", "рж░рж┐ржХрзЛржпрж╝рзЗрж╕рзНржЯ"], "ЁЯТ╕", "ЁЯТ╕ Withdraw рж╕ржВржХрзНрж░рж╛ржирзНржд ржЖржкржбрзЗржЯржЯрж╛ ржнрж╛рж▓рзЛржнрж╛ржмрзЗ ржжрзЗржЦрзЗ ржирж┐ржиред"),
+    (["update", "ржЖржкржбрзЗржЯ", "notun", "ржирждрзБржи"], "ЁЯЖХ", "ЁЯУв ржирждрзБржи ржЖржкржбрзЗржЯ ржкрзЗрждрзЗ Channel ржП ржерж╛ржХрзБржиред"),
+    (["sorry", "khoma", "ржХрзНрж╖ржорж╛", "ржжрзБржГржЦрж┐ржд", "dukkhito", "dukhito"], "ЁЯЩП", "ЁЯТЭ ржЖржкржирж╛ржжрзЗрж░ рж╕рж╣ржпрзЛржЧрж┐рждрж╛рж░ ржЬржирзНржп ржзржирзНржпржмрж╛ржжред"),
+    (["thanks", "thank", "dhonnobad", "ржзржирзНржпржмрж╛ржж"], "ЁЯЩП", "ЁЯТЭ Thanks for your support"),
+    (["bonus", "offer", "ржмрзЛржирж╛рж╕", "ржЕржлрж╛рж░", "gift", "ржЧрж┐ржлржЯ"], "ЁЯОБ", "ЁЯОЙ рж╕рзБржпрзЛржЧржЯрж╛ ржХрж╛ржЬрзЗ рж▓рж╛ржЧрж╛ржи!"),
+    (["rule", "rules", "ржирж┐ржпрж╝ржо", "рж░рзБрж▓рж╕", "warning", "рж╕рждрж░рзНржХ", "ban", "ржмрзНржпрж╛ржи"], "ЁЯУЬ", "ЁЯСА ржирж┐ржпрж╝ржо ржорзЗржирзЗ ржХрж╛ржЬ ржХрж░рзБржи, ржзржирзНржпржмрж╛ржжред"),
 ]
-STYLE_BASE = {"payment": ("PAYMENT NOTICE", "💳"), "important": ("IMPORTANT NOTICE", "⚠️"), "hello": ("HELLO EVERYONE", "👋")}
+STYLE_BASE = {"payment": ("PAYMENT NOTICE", "ЁЯТ│"), "important": ("IMPORTANT NOTICE", "тЪая╕П"), "hello": ("HELLO EVERYONE", "ЁЯСЛ")}
 
 def style_notice(kind, text):
     """admin writes plain text -> stylish message, emoji chosen from what the text means."""
     raw = (text or "").strip(); t = raw.lower()
     hits = [(e, c) for words, e, c in STYLE_CATS if any(w in t for w in words)]
-    title, base_e = STYLE_BASE.get(kind, ("NOTICE", "📣"))
+    title, base_e = STYLE_BASE.get(kind, ("NOTICE", "ЁЯУг"))
     lead = hits[0][0] if hits else base_e
     extra = " ".join(dict.fromkeys(e for e, _ in hits[1:3] if e != lead))
     body = lead + " <b>" + hesc(raw) + "</b>" + ((" " + extra) if extra else "")
     closings = list(dict.fromkeys(c for _, c in hits[:2]))
     if closings: body += "\n\n" + "\n".join(closings)
-    return fancy2(title, body, base_e, "💎")
+    return fancy2(title, body, base_e, "ЁЯТО")
 
 async def h_styled(update, context):
     """/payment <text>   /important <text>   /hello <text>  -> stylish broadcast. No text = old fixed notice (preview)."""
@@ -301,19 +322,19 @@ async def h_styled(update, context):
     a = _args_text(update, 1)
     if not a:
         if cmd == "important":
-            await update.effective_message.reply_text("✍️ ব্যবহার: /important আপনার লেখা (যেমন: /important আজ রাতে বট আপডেট হবে)"); return
+            await update.effective_message.reply_text("тЬНя╕П ржмрзНржпржмрж╣рж╛рж░: /important ржЖржкржирж╛рж░ рж▓рзЗржЦрж╛ (ржпрзЗржоржи: /important ржЖржЬ рж░рж╛рждрзЗ ржмржЯ ржЖржкржбрзЗржЯ рж╣ржмрзЗ)"); return
         return await h_notice_ask(update, context)
     started = start_broadcast(style_notice(cmd, a[0]), report_to=update.effective_user.id, label=cmd.upper())
-    await update.effective_message.reply_text("📢 সবাইকে পাঠানো শুরু হয়েছে... (শেষ হলে রিপোর্ট আসবে)" if started else "⏳ আরেকটা Broadcast চলছে, একটু পরে আবার চেষ্টা করুন।")
+    await update.effective_message.reply_text("ЁЯУв рж╕ржмрж╛ржЗржХрзЗ ржкрж╛ржарж╛ржирзЛ рж╢рзБрж░рзБ рж╣ржпрж╝рзЗржЫрзЗ... (рж╢рзЗрж╖ рж╣рж▓рзЗ рж░рж┐ржкрзЛрж░рзНржЯ ржЖрж╕ржмрзЗ)" if started else "тП│ ржЖрж░рзЗржХржЯрж╛ Broadcast ржЪрж▓ржЫрзЗ, ржПржХржЯрзБ ржкрж░рзЗ ржЖржмрж╛рж░ ржЪрзЗрж╖рзНржЯрж╛ ржХрж░рзБржиред")
 
 async def h_custom(update, context):
     """/alltopicsms <text> -> your text goes to everybody exactly as written (no style, no header)."""
     if not _is_admin_update(update): return
     a = _args_text(update, 1)
     if not a:
-        await update.effective_message.reply_text("✍️ ব্যবহার: /alltopicsms আপনার লেখা মেসেজ"); return
+        await update.effective_message.reply_text("тЬНя╕П ржмрзНржпржмрж╣рж╛рж░: /alltopicsms ржЖржкржирж╛рж░ рж▓рзЗржЦрж╛ ржорзЗрж╕рзЗржЬ"); return
     started = start_broadcast(hesc(a[0]), report_to=update.effective_user.id, label="Message")
-    await update.effective_message.reply_text("📢 সবাইকে পাঠানো শুরু হয়েছে... (শেষ হলে রিপোর্ট আসবে)" if started else "⏳ আরেকটা Broadcast চলছে, একটু পরে আবার চেষ্টা করুন।")
+    await update.effective_message.reply_text("ЁЯУв рж╕ржмрж╛ржЗржХрзЗ ржкрж╛ржарж╛ржирзЛ рж╢рзБрж░рзБ рж╣ржпрж╝рзЗржЫрзЗ... (рж╢рзЗрж╖ рж╣рж▓рзЗ рж░рж┐ржкрзЛрж░рзНржЯ ржЖрж╕ржмрзЗ)" if started else "тП│ ржЖрж░рзЗржХржЯрж╛ Broadcast ржЪрж▓ржЫрзЗ, ржПржХржЯрзБ ржкрж░рзЗ ржЖржмрж╛рж░ ржЪрзЗрж╖рзНржЯрж╛ ржХрж░рзБржиред")
 
 def _fmt_rate(v):
     v = round(float(v), 4)
@@ -329,35 +350,36 @@ async def h_setrate(update, context):
     try:
         new = float(context.args[0].replace(",", ".")); assert 0 < new <= 1000
     except Exception:
-        await update.effective_message.reply_text("✍️ ব্যবহার: /" + cmd + " 0.10"); return
-    key, name, icon = ("reward_watch", "Watch Ads", "▶️") if cmd == "watchrate" else ("reward_auto", "Auto Ads", "⚡")
+        await update.effective_message.reply_text("тЬНя╕П ржмрзНржпржмрж╣рж╛рж░: /" + cmd + " 0.10"); return
+    key, name, icon = ("reward_watch", "Watch Ads", "тЦ╢я╕П") if cmd == "watchrate" else ("reward_auto", "Auto Ads", "тЪб")
     with _lock:
         d = load(); st = settings_of(d); old = float(st.get(key, 0) or 0)
         st[key] = round(new, 4); save(d)
     n, o = _fmt_rate(new), _fmt_rate(old)
     if new > old:
-        html = fancy2(name.upper() + " RATE UP", "🔺 <b>" + name + " রেট আপ করা হয়েছে!</b> 🎉\n\n" + icon + " এখন প্রতিটা " + name[:-4].strip() + " Ad-এ পাবেন: <b>" + n + " TK</b> 💰\n\n"
-                      "━━━━━━━━━━━━━━━━━━\n🔥 এখনই কাজ করুন, ⏳ রেট পরে কমে যেতে পারে!", "🔺", icon)
+        html = fancy2(name.upper() + " RATE UP", "ЁЯФ║ <b>" + name + " рж░рзЗржЯ ржЖржк ржХрж░рж╛ рж╣ржпрж╝рзЗржЫрзЗ!</b> ЁЯОЙ\n\n" + icon + " ржПржЦржи ржкрзНрж░рждрж┐ржЯрж╛ " + name[:-4].strip() + " Ad-ржП ржкрж╛ржмрзЗржи: <b>" + n + " TK</b> ЁЯТ░\n\n"
+                      "тФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБ\nЁЯФе ржПржЦржиржЗ ржХрж╛ржЬ ржХрж░рзБржи, тП│ рж░рзЗржЯ ржкрж░рзЗ ржХржорзЗ ржпрзЗрждрзЗ ржкрж╛рж░рзЗ!", "ЁЯФ║", icon)
     elif new < old:
-        html = fancy2(name.upper() + " RATE DOWN", "🔻 <b>" + name + " রেট ডাউন করা হয়েছে</b>\n\n" + icon + " এখন প্রতিটা " + name[:-4].strip() + " Ad-এ পাবেন: <b>" + n + " TK</b> 💰\n\n"
-                      "━━━━━━━━━━━━━━━━━━\n🙏 সবাই কাজ চালিয়ে যান, সহযোগিতার জন্য ধন্যবাদ 💝", "🔻", icon)
+        html = fancy2(name.upper() + " RATE DOWN", "ЁЯФ╗ <b>" + name + " рж░рзЗржЯ ржбрж╛ржЙржи ржХрж░рж╛ рж╣ржпрж╝рзЗржЫрзЗ</b>\n\n" + icon + " ржПржЦржи ржкрзНрж░рждрж┐ржЯрж╛ " + name[:-4].strip() + " Ad-ржП ржкрж╛ржмрзЗржи: <b>" + n + " TK</b> ЁЯТ░\n\n"
+                      "тФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБтФБ\nЁЯЩП рж╕ржмрж╛ржЗ ржХрж╛ржЬ ржЪрж╛рж▓рж┐ржпрж╝рзЗ ржпрж╛ржи, рж╕рж╣ржпрзЛржЧрж┐рждрж╛рж░ ржЬржирзНржп ржзржирзНржпржмрж╛ржж ЁЯТЭ", "ЁЯФ╗", icon)
     else:
-        html = fancy2(name.upper() + " RATE", icon + " " + name + " রেট এখন: <b>" + n + " TK</b> 💰", icon, "💰")
+        html = fancy2(name.upper() + " RATE", icon + " " + name + " рж░рзЗржЯ ржПржЦржи: <b>" + n + " TK</b> ЁЯТ░", icon, "ЁЯТ░")
     started = start_broadcast(html, report_to=update.effective_user.id, label=name + " Rate")
-    await update.effective_message.reply_text("✅ " + name + " রেট: " + o + " → <b>" + n + " TK</b>\n📢 " + ("সবাইকে পাঠানো শুরু হয়েছে..." if started else "আরেকটা Broadcast চলছে, নোটিশ যায়নি (রেট সেভ হয়েছে)।"), parse_mode="HTML")
+    await update.effective_message.reply_text("тЬЕ " + name + " рж░рзЗржЯ: " + o + " тЖТ <b>" + n + " TK</b>\nЁЯУв " + ("рж╕ржмрж╛ржЗржХрзЗ ржкрж╛ржарж╛ржирзЛ рж╢рзБрж░рзБ рж╣ржпрж╝рзЗржЫрзЗ..." if started else "ржЖрж░рзЗржХржЯрж╛ Broadcast ржЪрж▓ржЫрзЗ, ржирзЛржЯрж┐рж╢ ржпрж╛ржпрж╝ржирж┐ (рж░рзЗржЯ рж╕рзЗржн рж╣ржпрж╝рзЗржЫрзЗ)ред"), parse_mode="HTML")
 
-ADMIN_COMMANDS = [("start", "🚀 বট চালু করুন"), ("newstart", "🤖 Bot notun update hoyese"),
-                  ("hello", "👋 Hello everyone kaj koren sobai"), ("bednotice", "📢 Broadcast bed notice"),
-                  ("autorate", "⚡ Auto Ads Rate (/autorate 0.05)"), ("watchrate", "▶️ Watch Ads Rate (/watchrate 0.10)"),
-                  ("alltopicsms", "📝 সবাইকে সাধারণ মেসেজ (/alltopicsms লেখা)"), ("important", "⚠️ Important Notice (/important লেখা)"),
-                  ("payment", "💳 Payment Notice (/payment লেখা)"), ("payrunning", "🔄 Payment Running"), ("allpayment", "✅ All Payment Complete"),
-                  ("stopbot", "🛑 Bot বন্ধ করুন"), ("startbot", "🟢 Bot চালু + সবাইকে নোটিশ")]
+ADMIN_COMMANDS = [("start", "ЁЯЪА ржмржЯ ржЪрж╛рж▓рзБ ржХрж░рзБржи"), ("newstart", "ЁЯдЦ Bot notun update hoyese"),
+                  ("hello", "ЁЯСЛ Hello everyone kaj koren sobai"), ("bednotice", "ЁЯУв Broadcast bed notice"),
+                  ("autorate", "тЪб Auto Ads Rate (/autorate 0.05)"), ("watchrate", "тЦ╢я╕П Watch Ads Rate (/watchrate 0.10)"),
+                  ("alltopicsms", "ЁЯУЭ рж╕ржмрж╛ржЗржХрзЗ рж╕рж╛ржзрж╛рж░ржг ржорзЗрж╕рзЗржЬ (/alltopicsms рж▓рзЗржЦрж╛)"), ("important", "тЪая╕П Important Notice (/important рж▓рзЗржЦрж╛)"),
+                  ("payment", "ЁЯТ│ Payment Notice (/payment рж▓рзЗржЦрж╛)"), ("payrunning", "ЁЯФД Payment Running"), ("allpayment", "тЬЕ All Payment Complete"),
+                  ("parmanetbotoff", "тЫФ Parmanet Bot Off (ржХрж╛ржЬ ржмржирзНржз)"), ("stopbot", "ЁЯЫС Bot ржмржирзНржз ржХрж░рзБржи"), ("startbot", "ЁЯЯв Bot ржЪрж╛рж▓рзБ + рж╕ржмрж╛ржЗржХрзЗ ржирзЛржЯрж┐рж╢")]
 
 def build_tg_app():
     from telegram.ext import Application, CommandHandler, CallbackQueryHandler
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", h_start))
     application.add_handler(CommandHandler(["stopbot", "botupdate", "stopped", "stop", "botstop"], h_stopbot))
+    application.add_handler(CommandHandler(["parmanetbotoff", "permanentbotoff", "parmanentbotoff"], h_permoff))
     application.add_handler(CommandHandler(["startbot", "started", "botstart"], h_startbot))
     application.add_handler(CommandHandler(["payrunning", "allpayment", "newstart", "bednotice"], h_notice_ask))
     application.add_handler(CommandHandler(["payment", "important", "hello"], h_styled))
@@ -366,6 +388,11 @@ def build_tg_app():
     application.add_handler(CommandHandler("id", h_id))
     application.add_handler(CallbackQueryHandler(h_bc_cb, pattern=r"^bc"))
     return application
+
+@app.route('/cronjobs')
+def cronjobs_route():
+    import sys, cronjobs
+    return cronjobs.handle(request, sys.modules[__name__])
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -391,7 +418,7 @@ def webhook():
 @app.route('/setwebhook')
 def set_webhook():
     if not BOT_TOKEN:
-        return "❌ BOT_TOKEN missing in Render Environment", 500
+        return "тЭМ BOT_TOKEN missing in Render Environment", 500
     try:
         import asyncio
         from telegram import BotCommand, BotCommandScopeDefault, BotCommandScopeChat
@@ -403,17 +430,17 @@ def set_webhook():
             me = await application.bot.get_me()
             menu = "ok"
             try:   # normal users see only /start, the admin sees the full command menu
-                await application.bot.set_my_commands([BotCommand("start", "🚀 বট চালু করুন")], scope=BotCommandScopeDefault())
+                await application.bot.set_my_commands([BotCommand("start", "ЁЯЪА ржмржЯ ржЪрж╛рж▓рзБ ржХрж░рзБржи")], scope=BotCommandScopeDefault())
                 await application.bot.set_my_commands([BotCommand(c, d) for c, d in ADMIN_COMMANDS], scope=BotCommandScopeChat(chat_id=ADMIN_ID))
             except Exception as e: menu = "menu error: " + str(e)
             await application.shutdown()
             return result, me, menu
         result, me, menu = asyncio.run(run())
-        return f"✅ Webhook set!<br>Bot: @{me.username}<br>URL: {WEBAPP_URL}/webhook<br>Result: {result}<br>Command menu: {menu}<br><br><a href='/'>Go to App</a>"
+        return f"тЬЕ Webhook set!<br>Bot: @{me.username}<br>URL: {WEBAPP_URL}/webhook<br>Result: {result}<br>Command menu: {menu}<br><br><a href='/'>Go to App</a>"
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return f"❌ Failed: {e}", 500
+        return f"тЭМ Failed: {e}", 500
 
 # ---- when the admin stops the bot, the mini-app is closed for normal users (admin still works) ----
 @app.before_request
@@ -422,8 +449,8 @@ def maintenance_gate():
     u = tg_user()
     if not u or is_admin(u): return None
     with _lock:
-        stopped = bool(settings_of(load()).get("bot_stopped"))
-    if stopped: return jsonify(error="maintenance")
+        _st = settings_of(load()); stopped = bool(_st.get("bot_stopped")) or bool(_st.get("bot_perm_off")); perm = bool(_st.get("bot_perm_off"))
+    if stopped: return jsonify(error="maintenance", perm=perm)
     return None
 
 @app.route('/dbcheck')
@@ -447,7 +474,7 @@ def check():
         webapp_files = os.listdir(WEBAPP_DIR)[:20]
     except: pass
     return f"""
-    <h2>✅ Bot Check - V4 Direct Read</h2>
+    <h2>тЬЕ Bot Check - V4 Direct Read</h2>
     BOT_TOKEN set: {bool(BOT_TOKEN)} (len={len(BOT_TOKEN) if BOT_TOKEN else 0})<br>
     WEBAPP_URL: {WEBAPP_URL}<br>
     BASE_DIR: {BASE_DIR}<br>
@@ -469,22 +496,22 @@ DEFAULT_GUIDELINES = ("1. Watch ads daily to earn 0.50 TK per ad\n"
                       "4. Confirm Pending Balance after 500 ads\n"
                       "5. Contact admin for support")
 DEFAULTS = {"settings": {"reward_watch": 0.5, "reward_auto": 0.10, "limit_watch": 100, "limit_auto": 100,
-                         "notice": "📢 VPN diye kaj korbe",
-                         "country_notice": "⚠️ {country} VPN/Proxy on korun, tarpor ad dekhun. Apnar current country: {current}",
+                         "notice": "ЁЯУв VPN diye kaj korbe",
+                         "country_notice": "тЪая╕П {country} VPN/Proxy on korun, tarpor ad dekhun. Apnar current country: {current}",
                          "ref_bonus": 10,
                          "min": {"bkash": 0, "nagad": 0, "rocket": 0, "binance": 0, "recharge": 0}, "vpn_country": "",
                          "bot_guidelines": DEFAULT_GUIDELINES,
                          # ====== NEW notice system ======
-                         # Welcome popup — shown to a user once per notice_version when they open the bot.
+                         # Welcome popup тАФ shown to a user once per notice_version when they open the bot.
                          "welcome_notice": "",
                          "welcome_btn_text": "Click Here",
                          "welcome_btn_url": "",
-                         # Thin red banner — broadcasts to active users immediately when notice_version bumps.
+                         # Thin red banner тАФ broadcasts to active users immediately when notice_version bumps.
                          "notice_banner": "",
                          # notice_version: incremented every time admin saves a notice. Users store the version they last saw.
                          "notice_version": 1,
                          "usdt_rate": 123.0,
-                         "confirm_ads": 500, "claim_ads": 5, "bot_stopped": False, "claim_enabled": True, "claim_gap_min": 2.0, "notice_every": 5,
+                         "confirm_ads": 500, "claim_ads": 5, "bot_stopped": False, "bot_perm_off": False, "next_limit_watch": None, "next_limit_auto": None, "morning_done": "", "claim_enabled": True, "claim_gap_min": 2.0, "notice_every": 5,
                          "payment_methods": {"bkash": True, "nagad": True, "rocket": True, "binance": True, "recharge": True}},
             "users": {}, "withdraws": [], "refs": {}}
 
@@ -615,9 +642,9 @@ def today_key():
 
 def new_bal():
     return {"main": 0.0, "pending": 0.0, "today_ads": 0, "total_ads": 0, "watch_today": 0, "auto_today": 0, "day": today_key(),
-            # Lifetime counters — never reset by admin "Reset Ads". Used by profile page.
+            # Lifetime counters тАФ never reset by admin "Reset Ads". Used by profile page.
             "lifetime_earned": 0.0, "lifetime_ads": 0,
-            # Lifetime WATCH-ad counter — used to detect every 5th watch ad (5, 10, 15...) for the special popup.
+            # Lifetime WATCH-ad counter тАФ used to detect every 5th watch ad (5, 10, 15...) for the special popup.
             "lifetime_watch_ads": 0,
             # Confirm-Pending system: cfill = ads counted toward the yellow bar, cclaim = confirm-ads already watched in the unlock stage
             "cfill": 0, "cclaim": 0}
@@ -689,14 +716,14 @@ ALIAS.update({"usa": "us", "america": "us", "united states of america": "us", "u
               "korea": "kr", "south korea": "kr", "czechia": "cz", "hong kong": "hk", "macau": "mo"})
 
 # Country flag emojis (rendered in Telegram WebApp)
-FLAG = {"US":"🇺🇸","CA":"🇨🇦","GB":"🇬🇧","AU":"🇦🇺","BD":"🇧🇩","IN":"🇮🇳","DE":"🇩🇪","SG":"🇸🇬","MY":"🇲🇾","AE":"🇦🇪",
-        "SA":"🇸🇦","FR":"🇫🇷","NL":"🇳🇱","JP":"🇯🇵","PK":"🇵🇰","NZ":"🇳🇿","IE":"🇮🇪","SE":"🇸🇪","CH":"🇨🇭","IT":"🇮🇹",
-        "ES":"🇪🇸","RU":"🇷🇺","BR":"🇧🇷","MX":"🇲🇽","ZA":"🇿🇦","KR":"🇰🇷","CN":"🇨🇳","ID":"🇮🇩","PH":"🇵🇭","VN":"🇻🇳",
-        "TH":"🇹🇭","TR":"🇹🇷","EG":"🇪🇬","NG":"🇳🇬","AR":"🇦🇷","CL":"🇨🇱","CO":"🇨🇴","PE":"🇵🇪","LK":"🇱🇰","NP":"🇳🇵",
-        "BN":"🇧🇳","HK":"🇭🇰","TW":"🇹🇼","IL":"🇮🇱","PT":"🇵🇹","AT":"🇦🇹","BE":"🇧🇪","DK":"🇩🇰","FI":"🇫🇮","NO":"🇳🇴",
-        "PL":"🇵🇱","CZ":"🇨🇿","GR":"🇬🇷","HU":"🇭🇺","RO":"🇷🇴","BG":"🇧🇬","HR":"🇭🇷","SK":"🇸🇰","SI":"🇸🇮","EE":"🇪🇪",
-        "LV":"🇱🇻","LT":"🇱🇹","UA":"🇺🇦","BY":"🇧🇾","KZ":"🇰🇿","UZ":"🇺🇿","QA":"🇶🇦","KW":"🇰🇼","BH":"🇧🇭","OM":"🇴🇲",
-        "JO":"🇯🇴","LB":"🇱🇧","IQ":"🇮🇶","IR":"🇮🇷","AF":"🇦🇫","MM":"🇲🇲","KH":"🇰🇭","LA":"🇱🇦","MO":"🇲🇴"}
+FLAG = {"US":"ЁЯЗ║ЁЯЗ╕","CA":"ЁЯЗиЁЯЗж","GB":"ЁЯЗмЁЯЗз","AU":"ЁЯЗжЁЯЗ║","BD":"ЁЯЗзЁЯЗй","IN":"ЁЯЗоЁЯЗ│","DE":"ЁЯЗйЁЯЗк","SG":"ЁЯЗ╕ЁЯЗм","MY":"ЁЯЗ▓ЁЯЗ╛","AE":"ЁЯЗжЁЯЗк",
+        "SA":"ЁЯЗ╕ЁЯЗж","FR":"ЁЯЗлЁЯЗ╖","NL":"ЁЯЗ│ЁЯЗ▒","JP":"ЁЯЗпЁЯЗ╡","PK":"ЁЯЗ╡ЁЯЗ░","NZ":"ЁЯЗ│ЁЯЗ┐","IE":"ЁЯЗоЁЯЗк","SE":"ЁЯЗ╕ЁЯЗк","CH":"ЁЯЗиЁЯЗн","IT":"ЁЯЗоЁЯЗ╣",
+        "ES":"ЁЯЗкЁЯЗ╕","RU":"ЁЯЗ╖ЁЯЗ║","BR":"ЁЯЗзЁЯЗ╖","MX":"ЁЯЗ▓ЁЯЗ╜","ZA":"ЁЯЗ┐ЁЯЗж","KR":"ЁЯЗ░ЁЯЗ╖","CN":"ЁЯЗиЁЯЗ│","ID":"ЁЯЗоЁЯЗй","PH":"ЁЯЗ╡ЁЯЗн","VN":"ЁЯЗ╗ЁЯЗ│",
+        "TH":"ЁЯЗ╣ЁЯЗн","TR":"ЁЯЗ╣ЁЯЗ╖","EG":"ЁЯЗкЁЯЗм","NG":"ЁЯЗ│ЁЯЗм","AR":"ЁЯЗжЁЯЗ╖","CL":"ЁЯЗиЁЯЗ▒","CO":"ЁЯЗиЁЯЗ┤","PE":"ЁЯЗ╡ЁЯЗк","LK":"ЁЯЗ▒ЁЯЗ░","NP":"ЁЯЗ│ЁЯЗ╡",
+        "BN":"ЁЯЗзЁЯЗ│","HK":"ЁЯЗнЁЯЗ░","TW":"ЁЯЗ╣ЁЯЗ╝","IL":"ЁЯЗоЁЯЗ▒","PT":"ЁЯЗ╡ЁЯЗ╣","AT":"ЁЯЗжЁЯЗ╣","BE":"ЁЯЗзЁЯЗк","DK":"ЁЯЗйЁЯЗ░","FI":"ЁЯЗлЁЯЗо","NO":"ЁЯЗ│ЁЯЗ┤",
+        "PL":"ЁЯЗ╡ЁЯЗ▒","CZ":"ЁЯЗиЁЯЗ┐","GR":"ЁЯЗмЁЯЗ╖","HU":"ЁЯЗнЁЯЗ║","RO":"ЁЯЗ╖ЁЯЗ┤","BG":"ЁЯЗзЁЯЗм","HR":"ЁЯЗнЁЯЗ╖","SK":"ЁЯЗ╕ЁЯЗ░","SI":"ЁЯЗ╕ЁЯЗо","EE":"ЁЯЗкЁЯЗк",
+        "LV":"ЁЯЗ▒ЁЯЗ╗","LT":"ЁЯЗ▒ЁЯЗ╣","UA":"ЁЯЗ║ЁЯЗж","BY":"ЁЯЗзЁЯЗ╛","KZ":"ЁЯЗ░ЁЯЗ┐","UZ":"ЁЯЗ║ЁЯЗ┐","QA":"ЁЯЗ╢ЁЯЗж","KW":"ЁЯЗ░ЁЯЗ╝","BH":"ЁЯЗзЁЯЗн","OM":"ЁЯЗ┤ЁЯЗ▓",
+        "JO":"ЁЯЗпЁЯЗ┤","LB":"ЁЯЗ▒ЁЯЗз","IQ":"ЁЯЗоЁЯЗ╢","IR":"ЁЯЗоЁЯЗ╖","AF":"ЁЯЗжЁЯЗл","MM":"ЁЯЗ▓ЁЯЗ▓","KH":"ЁЯЗ░ЁЯЗн","LA":"ЁЯЗ▒ЁЯЗж","MO":"ЁЯЗ▓ЁЯЗ┤"}
 
 # Country -> acceptable phone timezones (IANA). The user's phone timezone must match one of these
 # for at least one allowed country, otherwise the ad is blocked (even if the IP matches via VPN).
@@ -856,7 +883,7 @@ def tz_ok(allowed, user_tz):
     return False
 
 def tz_ok_for_any(allowed, user_tz):
-    """same as tz_ok but returns True also when no tz data — used internally for clarity."""
+    """same as tz_ok but returns True also when no tz data тАФ used internally for clarity."""
     return tz_ok(allowed, user_tz)
 
 def parse_allowed(allowed):
@@ -881,7 +908,7 @@ def allowed_display(allowed):
     """returns list of dicts {code, name, flag} for the allowed countries (for the popup)."""
     out = []
     for c in parse_allowed(allowed):
-        out.append({"code": c, "name": CNAME.get(c, c), "flag": FLAG.get(c, "🏳️")})
+        out.append({"code": c, "name": CNAME.get(c, c), "flag": FLAG.get(c, "ЁЯП│я╕П")})
     return out
 
 def country_notice(s, name, code):
@@ -894,26 +921,26 @@ def loc_block_response(s, code, name, ip, phone_tz):
     allowed = s.get("vpn_country", "")
     allowed_list = allowed_display(allowed)
     # Primary "selected server" = first allowed country (for the headline)
-    primary = allowed_list[0] if allowed_list else {"code": "", "name": "—", "flag": "🏳️"}
+    primary = allowed_list[0] if allowed_list else {"code": "", "name": "тАФ", "flag": "ЁЯП│я╕П"}
     c_ok = country_ok(allowed, code, name)
     t_ok = tz_ok(allowed, phone_tz)
     # Headline message
     if not c_ok and not t_ok:
-        msg = "আপনার IP লোকেশন এবং ফোনের টাইম জোন নির্বাচিত সার্ভারের সাথে মিলছে না।"
-        hint = "VPN/Proxy অন করুন এবং ফোনের Settings → টাইম জোন পরিবর্তন করুন।"
+        msg = "ржЖржкржирж╛рж░ IP рж▓рзЛржХрзЗрж╢ржи ржПржмржВ ржлрзЛржирзЗрж░ ржЯрж╛ржЗржо ржЬрзЛржи ржирж┐рж░рзНржмрж╛ржЪрж┐ржд рж╕рж╛рж░рзНржнрж╛рж░рзЗрж░ рж╕рж╛ржерзЗ ржорж┐рж▓ржЫрзЗ ржирж╛ред"
+        hint = "VPN/Proxy ржЕржи ржХрж░рзБржи ржПржмржВ ржлрзЛржирзЗрж░ Settings тЖТ ржЯрж╛ржЗржо ржЬрзЛржи ржкрж░рж┐ржмрж░рзНрждржи ржХрж░рзБржиред"
     elif not c_ok:
-        msg = "আপনার IP লোকেশন নির্বাচিত সার্ভারের সাথে মিলছে না।"
-        hint = "VPN/Proxy অন করুন এবং অনুমোদিত দেশ সিলেক্ট করুন।"
+        msg = "ржЖржкржирж╛рж░ IP рж▓рзЛржХрзЗрж╢ржи ржирж┐рж░рзНржмрж╛ржЪрж┐ржд рж╕рж╛рж░рзНржнрж╛рж░рзЗрж░ рж╕рж╛ржерзЗ ржорж┐рж▓ржЫрзЗ ржирж╛ред"
+        hint = "VPN/Proxy ржЕржи ржХрж░рзБржи ржПржмржВ ржЕржирзБржорзЛржжрж┐ржд ржжрзЗрж╢ рж╕рж┐рж▓рзЗржХрзНржЯ ржХрж░рзБржиред"
     elif not t_ok:
-        msg = "আপনার ফোনের টাইম জোন নির্বাচিত সার্ভারের সাথে মিলছে না।"
-        hint = "ফোনের Settings → টাইম জোন পরিবর্তন করুন। (VPN অন থাকলেও টাইম জোন ঠিক করতে হবে)"
+        msg = "ржЖржкржирж╛рж░ ржлрзЛржирзЗрж░ ржЯрж╛ржЗржо ржЬрзЛржи ржирж┐рж░рзНржмрж╛ржЪрж┐ржд рж╕рж╛рж░рзНржнрж╛рж░рзЗрж░ рж╕рж╛ржерзЗ ржорж┐рж▓ржЫрзЗ ржирж╛ред"
+        hint = "ржлрзЛржирзЗрж░ Settings тЖТ ржЯрж╛ржЗржо ржЬрзЛржи ржкрж░рж┐ржмрж░рзНрждржи ржХрж░рзБржиред (VPN ржЕржи ржерж╛ржХрж▓рзЗржУ ржЯрж╛ржЗржо ржЬрзЛржи ржарж┐ржХ ржХрж░рждрзЗ рж╣ржмрзЗ)"
     else:
-        msg = "লোকেশন যাচাই ব্যর্থ হয়েছে।"
+        msg = "рж▓рзЛржХрзЗрж╢ржи ржпрж╛ржЪрж╛ржЗ ржмрзНржпрж░рзНрже рж╣ржпрж╝рзЗржЫрзЗред"
         hint = ""
     return jsonify(error="country", notice=msg, hint=hint,
                    selected_server=primary,
                    allowed_countries=allowed_list,
-                   current_country={"code": code, "name": name or (CNAME.get(code, "") if code else ""), "flag": FLAG.get(code, "🏳️") if code else "🏳️"},
+                   current_country={"code": code, "name": name or (CNAME.get(code, "") if code else ""), "flag": FLAG.get(code, "ЁЯП│я╕П") if code else "ЁЯП│я╕П"},
                    ip=ip, phone_tz=phone_tz, country_ok=c_ok, tz_ok=t_ok)
 
 # ---------- public / user API ----------
@@ -965,6 +992,8 @@ def api_settings():
                 if "ref_bonus" in s: cur["ref_bonus"] = min(100.0, max(0.0, float(s["ref_bonus"])))
                 for k in ("limit_watch", "limit_auto"):
                     if k in s: cur[k] = max(0, int(float(s[k])))
+                for k in ("next_limit_watch", "next_limit_auto"):      # tomorrow's limits, applied by /cronjobs at 6:00 AM
+                    if k in s: cur[k] = None if s[k] in (None, "") else max(0, int(float(s[k])))
             except Exception: return jsonify(error="bad data"), 400
             save(d)
         return jsonify(cur)
@@ -1085,7 +1114,7 @@ def api_admin_tracker():
             if r.get("banned"): continue
             t = trk_of(r); cc = r.get("country") or ""
             out.append({"id": r.get("id"), "name": r.get("name", ""), "username": r.get("username", ""),
-                        "cc": cc, "flag": FLAG.get(cc, "🏳️") if cc else "🏳️",
+                        "cc": cc, "flag": FLAG.get(cc, "ЁЯП│я╕П") if cc else "ЁЯП│я╕П",
                         "v_today": t["v_today"], "c_today": t["c_today"], "v_all": t["v_all"], "c_all": t["c_all"],
                         "hist": list(reversed(t["hist"][-12:]))})
     out.sort(key=lambda x: (x["name"] or "").lower())
@@ -1155,7 +1184,7 @@ def api_ad_start():
         is_special = False
         if t == "watch":
             cur_watch = int(b.get("lifetime_watch_ads", 0))
-            # (cur_watch + 1) is the ad number we are ABOUT to serve. If divisible by 5 → special.
+            # (cur_watch + 1) is the ad number we are ABOUT to serve. If divisible by 5 тЖТ special.
             if (cur_watch + 1) % max(1, int(s.get("notice_every", 5) or 5)) == 0:
                 is_special = True
         rec["ad"] = {"type": t, "t": time.time(), "special": is_special}
@@ -1188,7 +1217,7 @@ def api_ad_claim():
             b["cclaim"] = int(b.get("cclaim", 0)) + 1; b["cclaim_t"] = time.time()
             done = b["cclaim"] >= steps
             if done:
-                # all confirm-ads watched → pending moves to MAIN, bar empties, everything starts again
+                # all confirm-ads watched тЖТ pending moves to MAIN, bar empties, everything starts again
                 b["main"] = round(b["main"] + b["pending"], 4); b["pending"] = 0.0
                 b["cclaim"] = 0; b["cfill"] = max(0, int(b["cfill"]) - need)
             save(d)
@@ -1198,8 +1227,8 @@ def api_ad_claim():
         if b[t + "_today"] >= lim:
             save(d); return jsonify(error="limit", type=t, limit=lim)
         reward = float(s["reward_watch"] if t == "watch" else s["reward_auto"])
-        # WATCH ad reward → goes DIRECTLY to MAIN balance (not pending).
-        # AUTO ad reward → still goes to PENDING balance (as before).
+        # WATCH ad reward тЖТ goes DIRECTLY to MAIN balance (not pending).
+        # AUTO ad reward тЖТ still goes to PENDING balance (as before).
         if t == "watch":
             b["main"] = round(b["main"] + reward, 4)
             b["lifetime_watch_ads"] = int(b.get("lifetime_watch_ads", 0)) + 1
@@ -1207,7 +1236,7 @@ def api_ad_claim():
             b["pending"] = round(b["pending"] + reward, 4)
         b["today_ads"] += 1; b["total_ads"] += 1; b[t + "_today"] += 1
         if t == "auto": b["cfill"] = int(b.get("cfill", 0)) + 1   # ONLY Auto-loop ads fill the yellow Confirm bar (watch ads go straight to main)
-        # Lifetime counters — these NEVER reset (even when admin clicks "Reset All Users Ads")
+        # Lifetime counters тАФ these NEVER reset (even when admin clicks "Reset All Users Ads")
         b["lifetime_earned"] = round(float(b.get("lifetime_earned", 0)) + reward, 4)
         b["lifetime_ads"] = int(b.get("lifetime_ads", 0)) + 1
         pct = float(s.get("ref_bonus", 0) or 0); rid = rec.get("ref")
@@ -1288,16 +1317,16 @@ def api_admin_wstatus():
     if w and BOT_TOKEN:
         try:
             import urllib.request, urllib.parse
-            status_txt = "✅ Withdrawal Approved!" if w["status"] == "Approved" else "❌ Withdrawal Rejected!"
-            color_emoji = "✅" if w["status"] == "Approved" else "❌"
+            status_txt = "тЬЕ Withdrawal Approved!" if w["status"] == "Approved" else "тЭМ Withdrawal Rejected!"
+            color_emoji = "тЬЕ" if w["status"] == "Approved" else "тЭМ"
             msg = (f"{color_emoji} *Withdrawal {w['status']}!*\n\n"
-                   f"💰 Amount: *{(str(w['usdt']) + ' USDT (' + str(w['amount']) + ' TK)') if w.get('usdt') else (str(w['amount']) + ' TK')}*\n"
-                   f"🏦 Method: *{w['method'].upper()}*\n"
-                   f"📱 Number: `{w['number']}`\n")
+                   f"ЁЯТ░ Amount: *{(str(w['usdt']) + ' USDT (' + str(w['amount']) + ' TK)') if w.get('usdt') else (str(w['amount']) + ' TK')}*\n"
+                   f"ЁЯПж Method: *{w['method'].upper()}*\n"
+                   f"ЁЯУ▒ Number: `{w['number']}`\n")
             if w["status"] == "Approved":
-                msg += "\n🎉 আপনার withdraw request approve করা হয়েছে।"
+                msg += "\nЁЯОЙ ржЖржкржирж╛рж░ withdraw request approve ржХрж░рж╛ рж╣ржпрж╝рзЗржЫрзЗред"
             else:
-                msg += "\n⚠️ আপনার withdraw request reject করা হয়েছে। প্রয়োজনে admin এর সাথে যোগাযোগ করুন।"
+                msg += "\nтЪая╕П ржЖржкржирж╛рж░ withdraw request reject ржХрж░рж╛ рж╣ржпрж╝рзЗржЫрзЗред ржкрзНрж░ржпрж╝рзЛржЬржирзЗ admin ржПрж░ рж╕рж╛ржерзЗ ржпрзЛржЧрж╛ржпрзЛржЧ ржХрж░рзБржиред"
             payload = urllib.parse.urlencode({
                 "chat_id": w["uid"],
                 "text": msg,
