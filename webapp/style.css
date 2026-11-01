@@ -1420,3 +1420,21 @@ div:has(> .sup-label) > div{background:linear-gradient(90deg,transparent,#e9c46a
 #homePage #confirmBtn.cf-locked{filter:saturate(.85)}
 #homePage #confirmBtn.cf-ready{box-shadow:0 0 0 2px #facc15,0 6px 22px rgba(250,204,21,.55) !important;animation:cfPulse 1.6s ease-in-out infinite}
 @keyframes cfPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.015)}}
+
+/* ===== Admin: User Ads Tracker ===== */
+.trk-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.trk-head h3{margin:0;font-size:19px;font-weight:800;color:#fff}
+.trk-count{font-size:14px;font-weight:800;color:#22e58b}
+.trk-user{background:#0b1730;border:1px solid #1c3a5e;border-radius:18px;padding:14px;margin-bottom:12px}
+.trk-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.trk-dot{width:14px;height:14px;border-radius:50%;background:#10f08a;box-shadow:0 0 10px #10f08a;flex:none}
+.trk-id{flex:1;min-width:0}.trk-id b{display:block;font-size:16px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.trk-id small{color:#8b9ab4;font-size:12.5px}
+.trk-on{font-size:12px;font-weight:800;color:#22e58b;letter-spacing:.3px}
+.trk-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.trk-box{background:#050d1e;border-radius:12px;padding:10px 12px}
+.trk-box small{display:block;font-size:10.5px;color:#8b9ab4;letter-spacing:.2px;margin-bottom:4px}
+.trk-box b{font-size:22px;color:#fff;font-weight:800}.trk-box b.v{color:#22d3ee}.trk-box b.c{color:#c4a1ff}
+.trk-h{font-size:11.5px;font-weight:800;color:#8b9ab4;margin:14px 0 8px;letter-spacing:.3px}
+.trk-hist{display:flex;flex-wrap:wrap;gap:6px}
+.trk-chip{background:#050d1e;border:1px solid #1c3a5e;border-radius:9px;padding:5px 9px;font-size:12px;color:#d6e2f5;white-space:nowrap}
+.trk-none{font-size:12.5px;color:#6f7f99}
